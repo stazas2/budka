@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фотобудка</title>
+    <!-- Подключаем шрифт Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Общие стили */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            color: #333;
+            background: linear-gradient(135deg, #f0f8ff, #cfe2f3);
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 30%),
+                        radial-gradient(circle, rgba(0, 0, 0, 0.05), transparent 50%),
+                        linear-gradient(135deg, #f0f8ff, #cfe2f3);
+            opacity: 0.8;
+            backdrop-filter: blur(25px);
+            animation: smoothGradientShift 20s ease-in-out infinite alternate;
+            z-index: -1;
+        }
+        @keyframes smoothGradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .screen {
+            display: none;
+            padding: 20px;
+            min-height: 100vh;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .active {
+            display: flex;
+        }
+        #style-buttons {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        /* Кнопки */
+        .button {
+            display: inline-block;
+            vertical-align: top;
+            margin: 10px;
+            padding: 19.5px;
+            font-size: 1.5em;
+            cursor: pointer;
+            border: none;
+            border-radius: 12px;
+            text-align: center;
+            width: 260px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px) saturate(180%);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            color: #000;
+            transition: transform 0.5s, box-shadow 0.5s;
+        }
+        .button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+        }
+        .button img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            pointer-events: none; /* Чтобы клики проходили к родителю */
+        }
+        .button div {
+            margin-top: 10px;
+            font-weight: 500;
+            color: #222;
+            pointer-events: none; /* Чтобы клики проходили к родителю */
+        }
+        button {
+            padding: 25.35px 50.7px;
+            font-size: 1.5em;
+            cursor: pointer;
+            border: none;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px) saturate(180%);
+            color: #000;
+            font-weight: 500;
+            transition: background-color 0.3s, transform 0.5s, box-shadow 0.5s;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+        button:hover {
+            transform: translateY(-5px);
+            background-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+        }
+#countdown {
+    font-size: 3.9em;
+    font-weight: 700;
+    color: #222;
+    margin-top: 20px; /* !!!!!!!!!!!!20 - 200 Добавляем дополнительный отступ сверху, чтобы учесть поворот видео */
+    position: relative; /* Обеспечиваем нормальное расположение относительно контейнера */
+}
+        /* Стили для прогресс-бара */
+        #progress-bar {
+            width: 90%;
+            max-width: 600px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.2);
+            margin: 40px auto;
+            border-radius: 40px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+        #progress-bar-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #36d1dc, #5b86e5);
+            text-align: center;
+            line-height: 40px;
+            color: white;
+            font-size: 1.17em;
+            transition: width 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        #progress-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 20%;
+            background: rgba(255, 255, 255, 0.5);
+            filter: blur(20px);
+            animation: glowAnimation 4s ease-in-out infinite;
+        }
+        @keyframes glowAnimation {
+            0% { transform: translateX(-100%); }
+            50% { transform: translateX(50%); }
+            100% { transform: translateX(100%); }
+        }
+        /* Стили для кнопок на экране результата */
+#result-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+.content-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px; /* Отступ между изображением и кнопками */
+}
+#result-image {
+    max-width: 80%;
+    max-height: 60vh;
+    object-fit: contain;
+    transform: rotate(0deg);
+}
+.video-container {
+    display: flex;
+    flex-direction: column; /* Располагаем видео и счётчик вертикально */
+    align-items: center; /* Центрируем оба элемента по горизонтали */
+    gap: 20px; /* Добавляем расстояние между видео и счётчиком */
+}
+
+#video {
+    max-width: 80vw; 
+    max-height: 60vh;
+    object-fit: contain;
+    transform: rotate(0deg); /* Поворот видео на 90 градусов */
+}
+#gender-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Расстояние между строками */
+    align-items: center; /* Центрирование строк по горизонтали */
+}
+
+.button-row {
+    display: flex;
+    gap: 20px; /* Расстояние между кнопками в строке */
+    justify-content: center;
+}
+
+#result-screen > div {
+    margin-top: 20px; /* Отступ между изображением и кнопками */
+    display: flex;
+    gap: 10px; /* Расстояние между кнопками */
+    justify-content: center;
+}
+
+/* Общие стили для заголовков */
+.screen h1 {
+    font-weight: 700;
+    font-size: 2.6em;
+    color: #222;
+    text-align: center;
+    margin: 0;
+}
+
+/* Заголовок для экрана стилей */
+#style-screen h1 {
+    margin-bottom: 20px; /* Отступ снизу, чтобы заголовок располагался над контентом */
+}
+
+/* Заголовок для экрана выбора пола */
+#gender-screen h1 {
+    margin-bottom: 20px;
+}
+
+/* Заголовок для экрана камеры */
+#camera-screen h1 {
+    position: absolute;
+    top: 50px; /* Отступ от верхней части экрана */
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    z-index: 1;
+}
+
+
+
+/* Заголовок для экрана обработки */
+#processing-screen h1 {
+    margin-bottom: 20px;
+}
+
+/* Заголовок для экрана результата */
+#result-screen h1 {
+    margin-bottom: 20px;
+}
+.buttons-container {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    padding-top: 10px; /* Отступ сверху для кнопок */
+}
+
+        }
+    </style>
+</head>
+<body>
+    <div id="style-screen" class="screen active">
+        <h1>Выберите стиль</h1>
+        <div id="style-buttons">
+            <!-- Кнопки стилей будут добавлены динамически -->
+        </div>
+    </div>
+
+    <div id="gender-screen" class="screen">
+        <h1>Выберите пол</h1>
+<div id="gender-buttons">
+    <div class="button-row">
+        <div class="button" data-gender="man">Мужчина</div>
+        <div class="button" data-gender="woman">Женщина</div>
+    </div>
+    <div class="button-row">
+        <div class="button" data-gender="boy">Мальчик</div>
+        <div class="button" data-gender="girl">Девочка</div>
+    </div>
+    <div class="button-row">
+        <div class="button" data-gender="man and woman">Групповое фото</div>
+    </div>
+</div>
+    </div>
+
+<div id="camera-screen" class="screen">
+    <h1>Приготовьтесь к фотографии!</h1>
+    <div class="video-container">
+        <video id="video" autoplay muted playsinline></video>
+        <div id="countdown"></div>
+    </div>
+</div>
+
+
+
+    <div id="processing-screen" class="screen">
+        <h1>Обработка фотографии...</h1>
+        <div id="progress-bar">
+            <div id="progress-bar-fill">0%</div>
+        </div>
+    </div>
+
+<div id="result-screen" class="screen">
+    <h1>Ваше фото готово!</h1>
+    <div class="content-container">
+        <img id="result-image" alt="Обработанное изображение">
+    </div>
+    <div class="buttons-container">
+        <button id="print-photo">Печать фото</button>
+        <button id="start-over">Начать заново</button>
+    </div>
+</div>
+
+
+    <!-- Скрытый canvas для захвата изображения -->
+    <canvas id="canvas" width="1280" height="720" style="display:none;"></canvas>
+
+    <!-- Подключаем скрипт перед закрывающим тегом body -->
+    <script src="script.js"></script>
+</body>
+</html>
