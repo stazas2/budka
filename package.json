@@ -2,7 +2,7 @@
   "name": "photobooth-electron",
   "version": "1.0.0",
   "description": "Photobooth application using Electron",
-  "main": "main.js",
+  "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder"

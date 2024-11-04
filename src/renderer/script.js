@@ -338,7 +338,7 @@ function sendImageToServer(imageData) {
 
     const headers = {
         'Accept': 'application/json',
-        'Authorization': `Bearer ${config.authToken}`,
+        'Authorization': `Bearer fc612550-06e8-4be3-9191-0f97336d9966`,
         'Content-Type': 'application/json'
     };
 
@@ -369,7 +369,7 @@ function sendImageToServer(imageData) {
         }
     }, 100);
 
-    fetch('http://85.95.186.114/api/handler', fetchOptions)
+    fetch('http://85.95.186.114/api/handler/', fetchOptions)
         .then(response => {
             console.log('HTTP response status:', response.status);
             if (!response.ok) {
