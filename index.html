@@ -13,15 +13,25 @@
     <script src="./script.js" defer></script>
   </head>
   <body>
-    <div id="style-screen" class="screen active">
-      <h1>Выберите стиль</h1>
+    <div id="splash-screen" class="screen active">
+      <h1></h1>
+      <!-- Заголовок будет установлен из config.json -->
+      <button id="start-button"></button>
+      <!-- Текст кнопки будет установлен из config.json -->
+    </div>
+
+    <div id="style-screen" class="screen">
+      <h1></h1>
+      <!-- Заголовок будет установлен из config.json -->
       <div id="style-buttons">
         <!-- Кнопки стилей будут добавлены динамически -->
       </div>
     </div>
 
     <div id="gender-screen" class="screen">
-      <h1>Выберите пол</h1>
+      <button class="back-button">Назад</button>
+      <h1></h1>
+      <!-- Заголовок будет установлен из config.json -->
       <div id="gender-buttons">
         <div class="button-row">
           <div class="button" data-gender="man">Мужчина</div>
@@ -38,7 +48,9 @@
     </div>
 
     <div id="camera-screen" class="screen">
-      <h1>Приготовьтесь к фотографии!</h1>
+      <button class="back-button">Назад</button>
+      <h1></h1>
+      <!-- Заголовок будет установлен из config.json -->
       <div class="video-container">
         <video id="video" autoplay muted playsinline></video>
         <div id="countdown"></div>
@@ -46,14 +58,18 @@
     </div>
 
     <div id="processing-screen" class="screen">
-      <h1>Обработка фотографии...</h1>
+      <button class="back-button">Назад</button>
+      <h1></h1>
+      <!-- Заголовок будет установлен из config.json -->
       <div id="progress-bar">
         <div id="progress-bar-fill">0%</div>
       </div>
     </div>
 
     <div id="result-screen" class="screen">
-      <h1>Ваше фото готово!</h1>
+      <button class="back-button">Назад</button>
+      <h1></h1>
+      <!-- Заголовок будет установлен из config.json -->
       <div class="content-container">
         <img id="result-image" alt="Обработанное изображение" />
       </div>
@@ -62,6 +78,9 @@
         <button id="start-over">Начать заново</button>
       </div>
     </div>
+
+    <!-- Кнопка переключения языка -->
+    <button id="language-switcher">KK</button>
 
     <!-- Скрытый canvas для захвата изображения -->
     <canvas
