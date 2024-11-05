@@ -506,3 +506,16 @@ body.dark #theme-switcher {
         max-height: 80vh;
     }
 }
+
+.selected-params {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin: 10px 0;
+    backdrop-filter: blur(5px);
+    font-size: 1.1em;
+}
+
+.selected-params span {
+    color: var(--text-color);
+}

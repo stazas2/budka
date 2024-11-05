@@ -416,6 +416,15 @@ async function handleServerResponse(responseData) {
         const finalImageWithLogo = await overlayLogoOnImage(cleanedBase64Image);
         resultImage.src = finalImageWithLogo;
 
+        // Отображаем выбранные параметры
+        const selectedParamsText = document.getElementById('selected-params-text');
+        const texts = translations[currentLanguage];
+        if (selectedParamsText && texts) {
+            const genderText = texts.genders[selectedGender] || selectedGender;
+            const styleText = document.querySelector(`[data-style="${selectedStyle}"]`)?.querySelector('div')?.textContent || selectedStyle;
+            selectedParamsText.innerHTML = `${texts.genderScreenTitleEnd}: <strong>${genderText}</strong> | ${texts.styleScreenTitleEnd}: <strong>${styleText}</strong>`;
+        }
+
         // Сохранение готового изображения с логотипом в папку "output"
         saveImage("output", finalImageWithLogo);
 
