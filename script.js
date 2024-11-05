@@ -130,7 +130,13 @@ function initStyleButtons(parsedStyles) {
         button.addEventListener('click', () => {
             selectedStyle = style.originalName;
             console.log(`Style selected: ${selectedStyle}`);
-            showScreen('gender-screen');
+            showScreen('camera-screen'); // Изменено с gender-screen на camera-screen
+            startCamera().then(() => {
+                startCountdown();
+            }).catch(err => {
+                alert('Unable to access the webcam.');
+                showScreen('style-screen');
+            });
         });
 
         styleButtonsContainer.appendChild(button);
@@ -144,13 +150,7 @@ genderButtons.forEach(button => {
     button.addEventListener('click', () => {
         selectedGender = button.getAttribute('data-gender');
         console.log(`Gender selected: ${selectedGender}`);
-        showScreen('camera-screen');
-        startCamera().then(() => {
-            startCountdown();
-        }).catch(err => {
-            alert('Unable to access the webcam.');
-            showScreen('style-screen');
-        });
+        showScreen('style-screen'); // После выбора пола показываем экран стилей
     });
 });
 
@@ -557,7 +557,7 @@ if (startOverButton) {
         selectedGender = '';
         resultImage.src = '';
         stopCamera();
-        showScreen('style-screen');
+        showScreen('gender-screen'); // Изменено с 'style-screen' на 'gender-screen'
     });
 } else {
     console.error('Start over button not found.');
@@ -596,21 +596,23 @@ backButtons.forEach(button => {
     button.addEventListener('click', () => {
         const currentScreen = document.querySelector('.screen.active');
         switch(currentScreen.id) {
-            case 'gender-screen':
-                showScreen('style-screen');
-                break;
             case 'style-screen':
+                showScreen('gender-screen');
+                break;
+            case 'gender-screen':
                 showScreen('splash-screen');
                 break;
             case 'camera-screen':
-                showScreen('gender-screen');
+                showScreen('style-screen');
                 stopCamera();
                 break;
             case 'processing-screen':
                 showScreen('camera-screen');
                 break;
             case 'result-screen':
-                showScreen('style-screen');
+                showScreen('gender-screen');
+                selectedStyle = '';
+                selectedGender = '';
                 break;
         }
     });
@@ -688,7 +690,7 @@ function showScreen(screenId) {
 const startButton = document.getElementById('start-button');
 if (startButton) {
     startButton.addEventListener('click', () => {
-        showScreen('style-screen');
+        showScreen('gender-screen'); // Меняем на gender-screen
     });
 } else {
     console.error('Start button not found on splash screen.');
@@ -739,11 +741,10 @@ document.addEventListener('DOMContentLoaded', () => {
     updateTexts();
 });
 
+//! Theme Switcher
 let currentLanguage = 'ru'; // Язык по умолчанию
-
 // Загрузка переводов
 const translations = require('./translations.json');
-
 // Функция для обновления текстов на основе выбранного языка
 function updateTexts() {
     const texts = translations[currentLanguage];
@@ -769,7 +770,7 @@ function updateTexts() {
         }
     }
 
-    // Обновляем тек��ты кнопок
+    // Обновляем тексты кнопок
     const startButton = document.getElementById('start-button');
     if (startButton) {
         startButton.textContent = texts.startButtonText;
@@ -816,9 +817,9 @@ if (languageSwitcher) {
 // Вызываем функцию обновления текстов после загрузки страницы
 document.addEventListener('DOMContentLoaded', () => {
     updateTexts();
-    // ...existing code...
 });
 
+//! Theme Switcher
 const themeSwitcher = document.getElementById('theme-switcher');
 
 // Функция для применения темы

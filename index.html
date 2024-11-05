@@ -26,11 +26,14 @@
     </div>
 
     <div id="style-screen" class="screen">
+      <button class="back-button">Назад</button>
       <h1></h1>
       <!-- Заголовок будет установлен из config.json -->
-      <button class="back-button" disabled>Назад</button>
       <div id="style-buttons">
         <!-- Кнопки стилей будут добавлены динамически -->
+      </div>
+      <div id="selected-params" class="selected-params">
+        <span id="selected-params-text"></span>
       </div>
     </div>
 
@@ -48,7 +51,7 @@
           <div class="button" data-gender="girl">Девочка</div>
         </div>
         <div class="button-row">
-          <div class="button" data-gender="man and woman">Групповое фото</div>
+          <div class="button" data-gender="group">Групповое фото</div>
         </div>
       </div>
     </div>
