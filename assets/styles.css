@@ -1,552 +1,565 @@
 /* Общие стили */
 * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    user-select: none; /* Запрещаем выделение элементов */
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none; /* Запрещаем выделение элементов */
 }
 body {
-    font-family: "Roboto", sans-serif;
-    color: var(--text-color, #333);
-    background-color: var(--bg-color, #f0f8ff);
-    background-image: var(--bg-image, none);
-    background-size: cover;
-    background-repeat: no-repeat;
-    height: 100vh;
-    overflow: hidden;
-    position: relative;
-    display: flex;
-    flex-direction: column;
+  font-family: "Roboto", sans-serif;
+  color: var(--text-color, #333);
+  background-color: var(--bg-color, #f0f8ff);
+  background-image: var(--bg-image, none);
+  background-size: cover;
+  background-repeat: no-repeat;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
 }
 body::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle, rgba(255, 255, 255, var(--bg-opacity, 0.8)), transparent 30%),
-        radial-gradient(circle, rgba(0, 0, 0, 0.05), transparent 50%);
-    backdrop-filter: blur(25px);
-    animation: smoothGradientShift 20s ease-in-out infinite alternate;
-    z-index: -1;
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+      circle,
+      rgba(255, 255, 255, var(--bg-opacity, 0.8)),
+      transparent 30%
+    ),
+    radial-gradient(circle, rgba(0, 0, 0, 0.05), transparent 50%);
+  backdrop-filter: blur(25px);
+  animation: smoothGradientShift 20s ease-in-out infinite alternate;
+  z-index: -1;
 }
 @keyframes smoothGradientShift {
-    0% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0% 50%;
-    }
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 .screen {
-    display: none;
-    padding: 20px;
-    min-height: 100vh;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
+  display: none;
+  padding: 20px;
+  min-height: 100vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
 }
 .active {
-    display: flex;
+  display: flex;
 }
 #style-buttons {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 15px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
 /* Кнопки */
 .button {
-    display: inline-block;
-    vertical-align: top;
-    margin: 10px;
-    padding: 19.5px;
-    font-size: 1.5em;
-    cursor: pointer;
-    border: none;
-    border-radius: 12px;
-    text-align: center;
-    width: 260px;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px) saturate(180%);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-    color: #000;
-    transition:
-        transform 0.5s,
-        box-shadow 0.5s;
-    transition: all 0.3s ease;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  display: inline-block;
+  vertical-align: top;
+  margin: 10px;
+  padding: 19.5px;
+  font-size: 1.5em;
+  cursor: pointer;
+  border: none;
+  border-radius: 12px;
+  text-align: center;
+  width: 260px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px) saturate(180%);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  color: #000;
+  transition: transform 0.5s, box-shadow 0.5s;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 .button:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
-    box-shadow:
-        0 8px 25px rgb(221, 124, 124),
-        0 0 20px rgba(255, 255, 255, 0.5);
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 25px rgb(221, 124, 124), 0 0 20px rgba(255, 255, 255, 0.5);
 }
 .button img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-    pointer-events: none; /* Чтобы клики проходили к родителю */
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  pointer-events: none; /* Чтобы клики проходили к родителю */
 }
 .button div {
-    margin-top: 10px;
-    font-weight: 500;
-    color: #222;
-    pointer-events: none; /* Чтобы клики проходили к родителю */
+  margin-top: 10px;
+  font-weight: 500;
+  color: #222;
+  pointer-events: none; /* Чтобы клики проходили к родителю */
 }
 button {
-    padding: 25.35px 50.7px;
-    font-size: 1.5em;
-    cursor: pointer;
-    border: none;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px) saturate(180%);
-    color: #000;
-    font-weight: 500;
-    transition:
-        background-color 0.3s,
-        transform 0.5s,
-        box-shadow 0.5s;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  padding: 25.35px 50.7px;
+  font-size: 1.5em;
+  cursor: pointer;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px) saturate(180%);
+  color: #000;
+  font-weight: 500;
+  transition: background-color 0.3s, transform 0.5s, box-shadow 0.5s;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 button:hover {
-    transform: translateY(-5px);
-    background-color: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+  transform: translateY(-5px);
+  background-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
 }
 #countdown {
-    font-size: 3.9em;
-    font-weight: 700;
-    color: #222;
-    margin-top: 20px; /* !!!!!!!!!!!!20 - 200 Добавляем дополнительный отступ сверху, чтобы учесть поворот видео */
-    position: relative; /* Обеспечиваем нормальное расположение относительно контейнера */
+  font-size: 3.9em;
+  font-weight: 700;
+  color: #222;
+  margin-top: 20px; /* !!!!!!!!!!!!20 - 200 Добавляем дополнительный отступ сверху, чтобы учесть поворот видео */
+  position: relative; /* Обеспечиваем нормальное расположение относительно контейнера */
 }
 /* Стили для прогресс-бара */
 #progress-bar {
-    width: 90%;
-    max-width: 600px;
-    height: 40px;
-    background-color: rgba(255, 255, 255, 0.2);
-    margin: 40px auto;
-    border-radius: 40px;
-    overflow: hidden;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    position: relative;
+  width: 90%;
+  max-width: 600px;
+  height: 40px;
+  background-color: rgba(255, 255, 255, 0.2);
+  margin: 40px auto;
+  border-radius: 40px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  position: relative;
 }
 
 /* todo */
 #progress-bar-fill {
-    width: 0%;
-    height: 100%;
-    background: linear-gradient(90deg, #36d1dc, #5b86e5);
-    text-align: center;
-    line-height: 40px;
-    color: white;
-    font-size: 1.17em;
-    transition: width 0.8s cubic-bezier(0.25, 1, 0.5, 1);
-    position: relative;
-    overflow: hidden;
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #36d1dc, #5b86e5);
+  text-align: center;
+  line-height: 40px;
+  color: white;
+  font-size: 1.17em;
+  transition: width 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+  position: relative;
+  overflow: hidden;
 }
 #progress-bar-fill::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 20%;
-    background: rgba(255, 255, 255, 0.5);
-    filter: blur(20px);
-    animation: glowAnimation 4s ease-in-out infinite;
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 20%;
+  background: rgba(255, 255, 255, 0.5);
+  filter: blur(20px);
+  animation: glowAnimation 4s ease-in-out infinite;
 }
 @keyframes glowAnimation {
-    0% {
-        transform: translateX(-100%);
-    }
-    50% {
-        transform: translateX(50%);
-    }
-    100% {
-        transform: translateX(100%);
-    }
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(50%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 /* Стили для кнопок на экране результата */
 #result-screen {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
 }
 .content-container {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 20px; /* Отступ между изображением и кнопками */
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px; /* Отступ между изображением и кнопками */
 }
 #result-image {
-    max-width: 80%;
-    max-height: 60vh;
-    object-fit: contain;
-    transform: rotate(0deg);
+  max-width: 80%;
+  max-height: 60vh;
+  object-fit: contain;
+  transform: rotate(0deg);
 }
+/* Стили для видео-контейнера и видео */
 .video-container {
-    display: flex;
-    flex-direction: column; /* Располагаем видео и счётчик вертикально */
-    align-items: center; /* Центрируем оба элемента по горизонтали */
-    gap: 20px; /* Добавляем расстояние между видео и счётчиком */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 30vh; /* Увеличиваем высоту контейнера */
+  gap: 20px;
+  margin: 20px 0;
+  /* Отступ видео-окна */
+  margin-top: 10vh;
 }
 
 #video {
-    max-width: 80vw;
-    max-height: 60vh;
-    object-fit: contain;
-    transform: rotate(0deg); /* Поворот видео на 90 градусов */
+  width: 90%; /* Увеличиваем ширину видео */
+  height: 90%; /* Увеличиваем высоту видео */
+  object-fit: contain;
+  transform: rotate(0deg);
+}
+
+/* Медиа-запросы для адаптивности */
+@media (orientation: portrait) {
+  #video {
+    width: 95%;
+    height: 70vh;
+  }
+}
+
+@media (orientation: landscape) {
+  #video {
+    width: 85%;
+    height: 75vh;
+  }
 }
 #gender-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 20px; /* Расстояние между строками */
-    align-items: center; /* Центрирование строк по горизонтали */
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Расстояние между строками */
+  align-items: center; /* Центрирование строк по горизонтали */
 }
 
 .button-row {
-    display: flex;
-    gap: 20px; /* Расстояние между кнопками в строке */
-    justify-content: center;
+  display: flex;
+  gap: 20px; /* Расстояние между кнопками в строке */
+  justify-content: center;
 }
 
 #result-screen > div {
-    margin-top: 20px; /* Отступ между изображением и кнопками */
-    display: flex;
-    gap: 10px; /* Расстояние между кнопками */
-    justify-content: center;
+  margin-top: 20px; /* Отступ между изображением и кнопками */
+  display: flex;
+  gap: 10px; /* Расстояние между кнопками */
+  justify-content: center;
 }
 
 /* Общие стили для заголовков */
 .screen h1 {
-    font-weight: 700;
-    font-size: 2.6em;
-    color: var(--text-color, #222);
-    text-align: center;
-    margin: 0;
+  font-weight: 700;
+  font-size: 2.6em;
+  color: var(--text-color, #222);
+  text-align: center;
+  margin: 0;
 }
 
 /* Заголовок для экрана стилей */
 #style-screen h1 {
-    margin-bottom: 20px; /* Отступ снизу, чтобы заголовок располагался над контентом */
+  margin-bottom: 20px; /* Отступ снизу, чтобы заголовок располагался над контентом */
 }
 
 /* Заголовок для экрана выбора пола */
 #gender-screen h1 {
-    margin-bottom: 20px;
+  margin-bottom: 20px;
 }
 
 /* Заголовок для экрана камеры */
 #camera-screen h1 {
-    position: absolute;
-    top: 50px; /* Отступ от верхней части экрана */
-    left: 50%;
-    transform: translateX(-50%);
-    margin: 0;
-    z-index: 1;
+  position: absolute;
+  top: 50px; /* Отступ от верхней части экрана */
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  z-index: 1;
 }
 
 /* Заголовок для экрана обработки */
 #processing-screen h1 {
-    margin-bottom: 20px;
+  margin-bottom: 20px;
 }
 
 /* Заголовок для экрана результата */
 #result-screen h1 {
-    margin-bottom: 20px;
+  margin-bottom: 20px;
 }
 .buttons-container {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    padding-top: 10px; /* Отступ сверху для кнопок */
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  padding-top: 10px; /* Отступ сверху для кнопок */
 }
 
 /* Стили для кнопки "Назад" */
 .back-button {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    padding: 15px 30px;
-    font-size: 1.2em;
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    z-index: 1000;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  padding: 15px 30px;
+  font-size: 1.2em;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1000;
 }
 
 .back-button:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
 }
 
 /* Стили для неактивной кнопки "Назад" */
 .back-button:disabled {
-    background: rgba(255, 255, 255, 0.2);
-    cursor: not-allowed;
-    opacity: 0.5;
+  background: rgba(255, 255, 255, 0.2);
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 /* Стили для кнопки переключения языка */
 #language-switcher {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    padding: 15px 30px;
-    font-size: 1.2em;
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    z-index: 1000;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 15px 30px;
+  font-size: 1.2em;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1000;
 }
 
 #language-switcher:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
 }
 
 /* Стили для переключателя темы */
 .theme-switcher {
-    position: absolute;
-    top: 90px;
-    right: 20px;
-    width: 60px;
-    height: 34px;
+  position: absolute;
+  top: 90px;
+  right: 20px;
+  width: 60px;
+  height: 34px;
 }
 
 .theme-switcher input {
-    opacity: 0;
-    width: 0;
-    height: 0;
+  opacity: 0;
+  width: 0;
+  height: 0;
 }
 
 .slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: 0.4s;
-    border-radius: 34px;
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 34px;
 }
 
 .slider:before {
-    position: absolute;
-    content: "";
-    height: 26px;
-    width: 26px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    transition: 0.4s;
-    border-radius: 50%;
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
 }
 
 input:checked + .slider {
-    background-color: #2196f3;
+  background-color: #2196f3;
 }
 
 input:checked + .slider:before {
-    transform: translateX(26px);
+  transform: translateX(26px);
 }
 
 /* Стили для светлой темы */
 body.light {
-    --bg-color: var(--light-bg-color);
-    --bg-image: var(--light-bg-image);
-    --bg-opacity: var(--light-bg-opacity);
-    --text-color: #333;
+  --bg-color: var(--light-bg-color);
+  --bg-image: var(--light-bg-image);
+  --bg-opacity: var(--light-bg-opacity);
+  --text-color: #333;
 }
 
 body.light .button {
-    background: rgba(255, 255, 255, 0.2);
-    color: #000;
+  background: rgba(255, 255, 255, 0.2);
+  color: #000;
 }
 
 body.light .back-button {
-    background: rgba(255, 255, 255, 0.2);
-    color: #000;
+  background: rgba(255, 255, 255, 0.2);
+  color: #000;
 }
 
 body.light #theme-switcher {
-    background: rgba(0, 0, 0, 0.2);
-    color: #000;
+  background: rgba(0, 0, 0, 0.2);
+  color: #000;
 }
 
 /* Стили для темной темы */
 body.dark {
-    --bg-color: var(--dark-bg-color);
-    --bg-image: var(--dark-bg-image);
-    --bg-opacity: var(--dark-bg-opacity);
-    --text-color: #fff;
+  --bg-color: var(--dark-bg-color);
+  --bg-image: var(--dark-bg-image);
+  --bg-opacity: var(--dark-bg-opacity);
+  --text-color: #fff;
 }
 
 body.dark .button {
-    background: rgba(0, 0, 0, 0.2);
-    color: #fff;
+  background: rgba(0, 0, 0, 0.2);
+  color: #fff;
 }
 
 body.dark .back-button {
-    background: rgba(0, 0, 0, 0.2);
-    color: #fff;
+  background: rgba(0, 0, 0, 0.2);
+  color: #fff;
 }
 
 body.dark #theme-switcher {
-    background: rgba(0, 0, 0, 0.2);
-    color: #fff;
+  background: rgba(0, 0, 0, 0.2);
+  color: #fff;
 }
 
 /* Стили для заставки */
 #splash-screen {
-    /* Стили аналогичны другим экранам */
+  /* Стили аналогичны другим экранам */
 }
 
 #splash-screen h1 {
-    font-size: 3em;
-    margin-bottom: 40px;
-    color: var(--text-color, #222);
+  font-size: 3em;
+  margin-bottom: 40px;
+  color: var(--text-color, #222);
 }
 
 #start-button {
-    padding: 20px 40px;
-    font-size: 1.8em;
-    cursor: pointer;
-    border: none;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.25);
-    backdrop-filter: blur(10px);
-    color: #000;
-    font-weight: 600;
-    transition:
-        background-color 0.3s,
-        transform 0.5s,
-        box-shadow 0.5s;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  padding: 20px 40px;
+  font-size: 1.8em;
+  cursor: pointer;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  color: #000;
+  font-weight: 600;
+  transition: background-color 0.3s, transform 0.5s, box-shadow 0.5s;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 
 #start-button:hover {
-    transform: translateY(-5px);
-    background-color: rgba(255, 255, 255, 0.35);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+  transform: translateY(-5px);
+  background-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
 }
 
 /* Скрываем кнопку "Назад" на заставке */
 #splash-screen .back-button {
-    display: none;
+  display: none;
 }
 
 /* Адаптивность под разные экраны */
 
 /* Вертикальная ориентация */
 @media (orientation: portrait) {
-    #style-buttons,
-    #gender-buttons {
-        flex-direction: column;
-        align-items: center;
-    }
-    .button {
-        width: 80%;
-    }
-    .button-row {
-        flex-direction: column;
-        align-items: center;
-    }
-    #result-image {
-        max-width: 90%;
-        max-height: 50vh;
-    }
-    #video {
-        max-width: 90%;
-        max-height: 50vh;
-    }
+  #style-buttons,
+  #gender-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  .button {
+    width: 80%;
+  }
+  .button-row {
+    flex-direction: column;
+    align-items: center;
+  }
+  #result-image {
+    max-width: 90%;
+    max-height: 50vh;
+  }
+  #video {
+    max-width: 90%;
+    max-height: 50vh;
+  }
 }
 
 /* Горизонтальная ориентация */
 @media (orientation: landscape) {
-    #style-buttons,
-    #gender-buttons {
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-    .button {
-        width: 200px;
-    }
-    .button-row {
-        flex-direction: row;
-        justify-content: center;
-    }
-    #result-image {
-        max-width: 60%;
-        max-height: 80vh;
-    }
-    #video {
-        max-width: 60%;
-        max-height: 80vh;
-    }
+  #style-buttons,
+  #gender-buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .button {
+    width: 200px;
+  }
+  .button-row {
+    flex-direction: row;
+    justify-content: center;
+  }
+  #result-image {
+    max-width: 60%;
+    max-height: 80vh;
+  }
+  #video {
+    max-width: 60%;
+    max-height: 80vh;
+  }
 }
 
 .selected-params {
-    background: rgba(255, 255, 255, 0.2);
-    padding: 10px 20px;
-    border-radius: 8px;
-    margin: 10px 0;
-    backdrop-filter: blur(5px);
-    font-size: 1.1em;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 10px 20px;
+  border-radius: 8px;
+  margin: 10px 0;
+  backdrop-filter: blur(5px);
+  font-size: 1.1em;
 }
 
 .selected-params span {
-    color: var(--text-color);
+  color: var(--text-color);
 }
 
 body::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 300%;
-    height: 300%;
-    background: radial-gradient(circle, rgba(255, 165, 0, 0.2), transparent 50%),
-                radial-gradient(circle, rgba(255, 0, 255, 0.2), transparent 50%),
-                radial-gradient(circle, rgba(0, 255, 255, 0.2), transparent 50%);
-    background-size: 25% 25%;
-    background-position: 0 0, 50% 50%, 100% 100%;
-    animation: backgroundAnimation 30s infinite linear;
-    z-index: -2;
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 300%;
+  height: 300%;
+  background: radial-gradient(circle, rgba(255, 165, 0, 0.2), transparent 50%),
+    radial-gradient(circle, rgba(188, 174, 255, 0.2), transparent 50%),
+    radial-gradient(circle, rgba(0, 255, 255, 0.2), transparent 50%);
+  background-size: 25% 25%;
+  background-position: 0 0, 50% 50%, 100% 100%;
+  animation: backgroundAnimation 30s infinite linear;
+  z-index: -2;
 }
 
 @keyframes backgroundAnimation {
-    0% {
-        background-position: 0 0, 50% 50%, 100% 100%;
-    }
-    50% {
-        background-position: 50% 50%, 0 0, 50% 50%;
-    }
-    100% {
-        background-position: 100% 100%, 50% 50%, 0 0;
-    }
+  0% {
+    background-position: 0 0, 50% 50%, 100% 100%;
+  }
+  50% {
+    background-position: 50% 50%, 0 0, 50% 50%;
+  }
+  100% {
+    background-position: 100% 100%, 50% 50%, 0 0;
+  }
 }
-
-
-

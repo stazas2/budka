@@ -1,44 +1,44 @@
 {
-    "ru": {
-        "welcomeMessage": "Добро пожаловать в фотобудку!",
-        "startButtonText": "Начать",
-        "styleScreenTitle": "Выберите стиль",
-        "genderScreenTitle": "Выберите пол",
-        "styleScreenTitleEnd": "Выбранный стиль",
-        "genderScreenTitleEnd": "Выбранный пол",
-        "cameraScreenTitle": "Приготовьтесь к фотографии!",
-        "processingScreenTitle": "Обработка фотографии...",
-        "resultScreenTitle": "Ваше фото готово!",
-        "backButtonText": "Назад",
-        "printButtonText": "Печать фото",
-        "startOverButtonText": "Начать заново",
-        "genders": {
-            "man": "Мужчина",
-            "woman": "Женщина",
-            "boy": "Мальчик",
-            "girl": "Девочка",
-            "group": "Групповое фото"
-        }
-    },
-    "kk": {
-        "welcomeMessage": "Фотобудкаға қош келдіңіз!",
-        "startButtonText": "Бастау",
-        "styleScreenTitle": "Стильді таңдаңыз",
-        "genderScreenTitle": "Жынысты таңдаңыз",
-        "styleScreenTitleEnd": "Таңдалған стиль",
-        "genderScreenTitleEnd": "Таңдалған жыныс",
-        "cameraScreenTitle": "Фотосуретке дайындалыңыз!",
-        "processingScreenTitle": "Фотосурет өңделуде...",
-        "resultScreenTitle": "Сіздің фотосуретіңіз дайын!",
-        "backButtonText": "Артқа",
-        "printButtonText": "Фотосуретті басып шығару",
-        "startOverButtonText": "Қайта бастау",
-        "genders": {
-            "man": "Ер адам",
-            "woman": "Әйел адам",
-            "boy": "Ұл бала",
-            "girl": "Қыз бала",
-            "group": "Топтық фото"
-        }
+  "ru": {
+    "welcomeMessage": "Добро пожаловать в фотобудку!",
+    "startButtonText": "Начать",
+    "styleScreenTitle": "Выберите стиль",
+    "genderScreenTitle": "Выберите пол",
+    "styleScreenTitleEnd": "Выбранный стиль",
+    "genderScreenTitleEnd": "Выбранный пол",
+    "cameraScreenTitle": "Приготовьтесь к фотографии!",
+    "processingScreenTitle": "Обработка фотографии...",
+    "resultScreenTitle": "Ваше фото готово!",
+    "backButtonText": "Назад",
+    "printButtonText": "Печать фото",
+    "startOverButtonText": "Начать заново",
+    "genders": {
+      "man": "Мужчина",
+      "woman": "Женщина",
+      "boy": "Мальчик",
+      "girl": "Девочка",
+      "group": "Групповое фото"
     }
+  },
+  "kk": {
+    "welcomeMessage": "Фотобудкаға қош келдіңіз!",
+    "startButtonText": "Бастау",
+    "styleScreenTitle": "Стильді таңдаңыз",
+    "genderScreenTitle": "Жынысты таңдаңыз",
+    "styleScreenTitleEnd": "Таңдалған стиль",
+    "genderScreenTitleEnd": "Таңдалған жыныс",
+    "cameraScreenTitle": "Фотосуретке дайындалыңыз!",
+    "processingScreenTitle": "Фотосурет өңделуде...",
+    "resultScreenTitle": "Сіздің фотосуретіңіз дайын!",
+    "backButtonText": "Артқа",
+    "printButtonText": "Фотосуретті басып шығару",
+    "startOverButtonText": "Қайта бастау",
+    "genders": {
+      "man": "Ер адам",
+      "woman": "Әйел адам",
+      "boy": "Ұл бала",
+      "girl": "Қыз бала",
+      "group": "Топтық фото"
+    }
+  }
 }

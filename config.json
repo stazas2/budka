@@ -1,24 +1,24 @@
 {
-   "authToken": "fc612550-06e8-4be3-9191-0f97336d9966",
-   "prePhotoTimer": 5,
-   "stylesDir": "assets/styles",
-   "camera_rotation": 0,
-   "final_image_rotation": 0,
-   "send_image_rotation": 0,
-   "logoPath": "assets/logo.png",
-   "logoPosition": "bottom-right",
-   "logoOffsetX": 30,
-   "logoOffsetY": 30,
-   "inactivityTimeout": 60000,
-   "theme": "light",
-   "lightTheme": {
-       "backgroundColor": "#f0f8ff",
-       "backgroundImage": "",
-       "backgroundOpacity": 0.8
-   },
-   "darkTheme": {
-       "backgroundColor": "#708090",
-       "backgroundImage": "",
-       "backgroundOpacity": 0.8
-   }
+  "authToken": "fc612550-06e8-4be3-9191-0f97336d9966",
+  "prePhotoTimer": 5,
+  "stylesDir": "assets/styles",
+  "camera_rotation": 0,
+  "final_image_rotation": 0,
+  "send_image_rotation": 0,
+  "logoPath": "assets/logo.png",
+  "logoPosition": "bottom-right",
+  "logoOffsetX": 30,
+  "logoOffsetY": 30,
+  "inactivityTimeout": 60000,
+  "theme": "light",
+  "lightTheme": {
+    "backgroundColor": "#f0f8ff",
+    "backgroundImage": "",
+    "backgroundOpacity": 0.8
+  },
+  "darkTheme": {
+    "backgroundColor": "#708090",
+    "backgroundImage": "",
+    "backgroundOpacity": 0.8
+  }
 }
