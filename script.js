@@ -1,6 +1,7 @@
 const { ipcRenderer } = require('electron');
 const fs = require('fs');
 const path = require('path');
+const { loadConfig } = require('./utils/configLoader');
 
 // DOM Elements
 const styleScreen = document.getElementById('style-screen');
@@ -30,20 +31,6 @@ let cameraInitialized = false;
 
 // Основная папка для хранения изображений
 const baseDir = 'C:\\MosPhotoBooth';
-
-function loadConfig() {
-    const configPath = path.join(__dirname, 'config.json');
-    try {
-        const rawData = fs.readFileSync(configPath, 'utf-8');
-        const config = JSON.parse(rawData);
-        console.log('Config loaded:', config);
-        return config;
-    } catch (error) {
-        console.error('Failed to load config:', error);
-        return null;
-    }
-}
-
 const config = loadConfig();
 
 // Применяем вращение для элементов на основе конфигурации

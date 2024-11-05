@@ -5,7 +5,7 @@
     padding: 0;
 }
 body {
-    font-family: 'Roboto', sans-serif;
+    font-family: "Roboto", sans-serif;
     color: #333;
     background: linear-gradient(135deg, #f0f8ff, #cfe2f3);
     height: 100vh;
@@ -13,24 +13,29 @@ body {
     position: relative;
 }
 body::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     background: radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 30%),
-                radial-gradient(circle, rgba(0, 0, 0, 0.05), transparent 50%),
-                linear-gradient(135deg, #f0f8ff, #cfe2f3);
+        radial-gradient(circle, rgba(0, 0, 0, 0.05), transparent 50%), linear-gradient(135deg, #f0f8ff, #cfe2f3);
     opacity: 0.8;
     backdrop-filter: blur(25px);
     animation: smoothGradientShift 20s ease-in-out infinite alternate;
     z-index: -1;
 }
 @keyframes smoothGradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
 }
 .screen {
     display: none;
@@ -66,7 +71,9 @@ body::before {
     backdrop-filter: blur(10px) saturate(180%);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
     color: #000;
-    transition: transform 0.5s, box-shadow 0.5s;
+    transition:
+        transform 0.5s,
+        box-shadow 0.5s;
 }
 .button:hover {
     transform: translateY(-5px);
@@ -94,7 +101,10 @@ button {
     backdrop-filter: blur(10px) saturate(180%);
     color: #000;
     font-weight: 500;
-    transition: background-color 0.3s, transform 0.5s, box-shadow 0.5s;
+    transition:
+        background-color 0.3s,
+        transform 0.5s,
+        box-shadow 0.5s;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 button:hover {
@@ -103,11 +113,11 @@ button:hover {
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
 }
 #countdown {
-font-size: 3.9em;
-font-weight: 700;
-color: #222;
-margin-top: 20px; /* !!!!!!!!!!!!20 - 200 Добавляем дополнительный отступ сверху, чтобы учесть поворот видео */
-position: relative; /* Обеспечиваем нормальное расположение относительно контейнера */
+    font-size: 3.9em;
+    font-weight: 700;
+    color: #222;
+    margin-top: 20px; /* !!!!!!!!!!!!20 - 200 Добавляем дополнительный отступ сверху, чтобы учесть поворот видео */
+    position: relative; /* Обеспечиваем нормальное расположение относительно контейнера */
 }
 /* Стили для прогресс-бара */
 #progress-bar {
@@ -134,7 +144,7 @@ position: relative; /* Обеспечиваем нормальное распо�
     overflow: hidden;
 }
 #progress-bar-fill::after {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
@@ -145,108 +155,111 @@ position: relative; /* Обеспечиваем нормальное распо�
     animation: glowAnimation 4s ease-in-out infinite;
 }
 @keyframes glowAnimation {
-    0% { transform: translateX(-100%); }
-    50% { transform: translateX(50%); }
-    100% { transform: translateX(100%); }
+    0% {
+        transform: translateX(-100%);
+    }
+    50% {
+        transform: translateX(50%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
 }
 /* Стили для кнопок на экране результата */
 #result-screen {
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
 }
 .content-container {
-flex: 1;
-display: flex;
-align-items: center;
-justify-content: center;
-margin-bottom: 20px; /* Отступ между изображением и кнопками */
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px; /* Отступ между изображением и кнопками */
 }
 #result-image {
-max-width: 80%;
-max-height: 60vh;
-object-fit: contain;
-transform: rotate(0deg);
+    max-width: 80%;
+    max-height: 60vh;
+    object-fit: contain;
+    transform: rotate(0deg);
 }
 .video-container {
-display: flex;
-flex-direction: column; /* Располагаем видео и счётчик вертикально */
-align-items: center; /* Центрируем оба элемента по горизонтали */
-gap: 20px; /* Добавляем расстояние между видео и счётчиком */
+    display: flex;
+    flex-direction: column; /* Располагаем видео и счётчик вертикально */
+    align-items: center; /* Центрируем оба элемента по горизонтали */
+    gap: 20px; /* Добавляем расстояние между видео и счётчиком */
 }
 
 #video {
-max-width: 80vw; 
-max-height: 60vh;
-object-fit: contain;
-transform: rotate(0deg); /* Поворот видео на 90 градусов */
+    max-width: 80vw;
+    max-height: 60vh;
+    object-fit: contain;
+    transform: rotate(0deg); /* Поворот видео на 90 градусов */
 }
 #gender-buttons {
-display: flex;
-flex-direction: column;
-gap: 20px; /* Расстояние между строками */
-align-items: center; /* Центрирование строк по горизонтали */
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Расстояние между строками */
+    align-items: center; /* Центрирование строк по горизонтали */
 }
 
 .button-row {
-display: flex;
-gap: 20px; /* Расстояние между кнопками в строке */
-justify-content: center;
+    display: flex;
+    gap: 20px; /* Расстояние между кнопками в строке */
+    justify-content: center;
 }
 
 #result-screen > div {
-margin-top: 20px; /* Отступ между изображением и кнопками */
-display: flex;
-gap: 10px; /* Расстояние между кнопками */
-justify-content: center;
+    margin-top: 20px; /* Отступ между изображением и кнопками */
+    display: flex;
+    gap: 10px; /* Расстояние между кнопками */
+    justify-content: center;
 }
 
 /* Общие стили для заголовков */
 .screen h1 {
-font-weight: 700;
-font-size: 2.6em;
-color: #222;
-text-align: center;
-margin: 0;
+    font-weight: 700;
+    font-size: 2.6em;
+    color: #222;
+    text-align: center;
+    margin: 0;
 }
 
 /* Заголовок для экрана стилей */
 #style-screen h1 {
-margin-bottom: 20px; /* Отступ снизу, чтобы заголовок располагался над контентом */
+    margin-bottom: 20px; /* Отступ снизу, чтобы заголовок располагался над контентом */
 }
 
 /* Заголовок для экрана выбора пола */
 #gender-screen h1 {
-margin-bottom: 20px;
+    margin-bottom: 20px;
 }
 
 /* Заголовок для экрана камеры */
 #camera-screen h1 {
-position: absolute;
-top: 50px; /* Отступ от верхней части экрана */
-left: 50%;
-transform: translateX(-50%);
-margin: 0;
-z-index: 1;
+    position: absolute;
+    top: 50px; /* Отступ от верхней части экрана */
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    z-index: 1;
 }
-
-
 
 /* Заголовок для экрана обработки */
 #processing-screen h1 {
-margin-bottom: 20px;
+    margin-bottom: 20px;
 }
 
 /* Заголовок для экрана результата */
 #result-screen h1 {
-margin-bottom: 20px;
+    margin-bottom: 20px;
 }
 .buttons-container {
-display: flex;
-gap: 10px;
-justify-content: center;
-padding-top: 10px; /* Отступ сверху для кнопок */
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    padding-top: 10px; /* Отступ сверху для кнопок */
 }
-

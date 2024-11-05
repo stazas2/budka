@@ -1,72 +1,77 @@
 <!DOCTYPE html>
 <html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Фотобудка</title>
     <!-- Подключаем шрифт Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./assets/styles.css">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./assets/styles.css" />
     <script src="./script.js" defer></script>
-</head>
-<body>
+  </head>
+  <body>
     <div id="style-screen" class="screen active">
-        <h1>Выберите стиль</h1>
-        <div id="style-buttons">
-            <!-- Кнопки стилей будут добавлены динамически -->
-        </div>
+      <h1>Выберите стиль</h1>
+      <div id="style-buttons">
+        <!-- Кнопки стилей будут добавлены динамически -->
+      </div>
     </div>
 
     <div id="gender-screen" class="screen">
-        <h1>Выберите пол</h1>
-<div id="gender-buttons">
-    <div class="button-row">
-        <div class="button" data-gender="man">Мужчина</div>
-        <div class="button" data-gender="woman">Женщина</div>
-    </div>
-    <div class="button-row">
-        <div class="button" data-gender="boy">Мальчик</div>
-        <div class="button" data-gender="girl">Девочка</div>
-    </div>
-    <div class="button-row">
-        <div class="button" data-gender="man and woman">Групповое фото</div>
-    </div>
-</div>
+      <h1>Выберите пол</h1>
+      <div id="gender-buttons">
+        <div class="button-row">
+          <div class="button" data-gender="man">Мужчина</div>
+          <div class="button" data-gender="woman">Женщина</div>
+        </div>
+        <div class="button-row">
+          <div class="button" data-gender="boy">Мальчик</div>
+          <div class="button" data-gender="girl">Девочка</div>
+        </div>
+        <div class="button-row">
+          <div class="button" data-gender="man and woman">Групповое фото</div>
+        </div>
+      </div>
     </div>
 
-<div id="camera-screen" class="screen">
-    <h1>Приготовьтесь к фотографии!</h1>
-    <div class="video-container">
+    <div id="camera-screen" class="screen">
+      <h1>Приготовьтесь к фотографии!</h1>
+      <div class="video-container">
         <video id="video" autoplay muted playsinline></video>
         <div id="countdown"></div>
+      </div>
     </div>
-</div>
-
-
 
     <div id="processing-screen" class="screen">
-        <h1>Обработка фотографии...</h1>
-        <div id="progress-bar">
-            <div id="progress-bar-fill">0%</div>
-        </div>
+      <h1>Обработка фотографии...</h1>
+      <div id="progress-bar">
+        <div id="progress-bar-fill">0%</div>
+      </div>
     </div>
 
-<div id="result-screen" class="screen">
-    <h1>Ваше фото готово!</h1>
-    <div class="content-container">
-        <img id="result-image" alt="Обработанное изображение">
-    </div>
-    <div class="buttons-container">
+    <div id="result-screen" class="screen">
+      <h1>Ваше фото готово!</h1>
+      <div class="content-container">
+        <img id="result-image" alt="Обработанное изображение" />
+      </div>
+      <div class="buttons-container">
         <button id="print-photo">Печать фото</button>
         <button id="start-over">Начать заново</button>
+      </div>
     </div>
-</div>
-
 
     <!-- Скрытый canvas для захвата изображения -->
-    <canvas id="canvas" width="1280" height="720" style="display:none;"></canvas>
+    <canvas
+      id="canvas"
+      width="1280"
+      height="720"
+      style="display: none"
+    ></canvas>
 
     <!-- Подключаем скрипт перед закрывающим тегом body -->
     <script src="script.js"></script>
-</body>
+  </body>
 </html>

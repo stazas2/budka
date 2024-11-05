@@ -5,10 +5,11 @@ const os = require('os');
 const { PDFDocument } = require('pdf-lib');
 const { print } = require('pdf-to-printer');
 const iconv = require('iconv-lite'); // Импортируем iconv-lite для обработки кодировки
+const { loadConfig } = require('./utils/configLoader');
+
 
 // Загружаем конфигурацию после импорта необходимых модулей
-const configPath = path.join(__dirname, 'config.json');
-const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+const config = loadConfig();
 
 function createWindow() {
     const win = new BrowserWindow({
@@ -27,25 +28,30 @@ function createWindow() {
 
 // Обработчик для получения списка стилей из папки styles
 ipcMain.handle('get-styles', async () => {
-    const stylesDir = config.stylesDir;
+    const stylesDir = config?.stylesDir || path.join(__dirname, 'styles');
     console.log(`Loading styles from directory: ${stylesDir}`);
 
     try {
         if (!fs.existsSync(stylesDir)) {
-            console.error('Styles directory does not exist:', stylesDir);
+            console.warn(`Creating styles directory: ${stylesDir}`);
+            fs.mkdirSync(stylesDir, { recursive: true });
             return [];
         }
 
         const files = fs.readdirSync(stylesDir, { encoding: 'utf8' });
         const imageFiles = files.filter(file => /\.(jpg|jpeg|png)$/i.test(file));
-        const styles = imageFiles.map(file => {
-            const match = file.match(/^(.+?)(\((.+?)\))?\.jpg$/i);
-            return match
-                ? { originalName: match[1].trim(), displayName: match[3] ? match[3].trim() : match[1].trim() }
-                : { originalName: path.parse(file).name, displayName: path.parse(file).name };
-        });
+        
+        if (imageFiles.length === 0) {
+            console.warn('No style images found in directory');
+            return [];
+        }
 
-        return styles;
+        return imageFiles.map(file => {
+            const match = file.match(/^(.+?)(?:\((.+?)\))?\.(?:jpg|jpeg|png)$/i);
+            const name = match ? match[1].trim() : path.parse(file).name;
+            const display = match?.[2]?.trim() || name;
+            return { originalName: name, displayName: display };
+        });
     } catch (error) {
         console.error('Error reading styles directory:', error);
         return [];
