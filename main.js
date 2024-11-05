@@ -7,7 +7,7 @@ const { print } = require('pdf-to-printer');
 const iconv = require('iconv-lite'); // Импортируем iconv-lite для обработки кодировки
 
 // Загружаем конфигурацию после импорта необходимых модулей
-const configPath = path.join('C:', 'MosPhotoBooth', 'config.json');
+const configPath = path.join(__dirname, 'config.json');
 const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 
 function createWindow() {

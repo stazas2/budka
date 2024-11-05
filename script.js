@@ -32,7 +32,7 @@ let cameraInitialized = false;
 const baseDir = 'C:\\MosPhotoBooth';
 
 function loadConfig() {
-    const configPath = path.join('C:', 'MosPhotoBooth', 'config.json');
+    const configPath = path.join(__dirname, 'config.json');
     try {
         const rawData = fs.readFileSync(configPath, 'utf-8');
         const config = JSON.parse(rawData);
