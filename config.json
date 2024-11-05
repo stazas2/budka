@@ -11,6 +11,10 @@
   "logoOffsetY": 30,
   "inactivityTimeout": 60000,
   "theme": "light",
+  "language": {
+    "current": "kk",    
+    "showSwitcher": false
+  },
   "lightTheme": {
     "backgroundColor": "#f0f8ff",
     "backgroundImage": "",
