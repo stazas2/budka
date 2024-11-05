@@ -166,7 +166,7 @@ function showScreen(screenId) {
         activeScreen.classList.add('active');
         const backButton = activeScreen.querySelector('.back-button');
         if (backButton) {
-            if (screenId === 'style-screen' || screenId === 'splash-screen' || screenId === 'camera-screen' || screenId === 'processing-screen') {
+            if (screenId === 'splash-screen' || screenId === 'camera-screen' || screenId === 'processing-screen') {
                 backButton.disabled = true;
                 backButton.style.display = 'block';
             } else if (screenId === 'result-screen') {
@@ -660,79 +660,63 @@ function resetInactivityTimer() {
 // Вызываем resetInactivityTimer при загрузке страницы
 resetInactivityTimer();
 
-// Модифицируем функцию showScreen для обработки заставки
-function showScreen(screenId) {
-    console.log(`Switching to screen: ${screenId}`);
-    document.querySelectorAll('.screen').forEach(screen => {
-        screen.classList.remove('active');
-    });
-
-    const activeScreen = document.getElementById(screenId);
-    if (activeScreen) {
-        activeScreen.classList.add('active');
-        // Скрываем кнопку "Назад" на первом экране и заставке
-        const backButton = activeScreen.querySelector('.back-button');
-        if (backButton) {
-            backButton.style.display = (screenId === 'style-screen' || screenId === 'splash-screen') ? 'none' : 'block';
-        }
-
-        if (screenId === 'result-screen') {
-            resultTitle.style.display = 'block';
-        } else {
-            resultTitle.style.display = 'none';
-        }
-    } else {
-        console.error(`Screen with ID "${screenId}" not found.`);
-    }
-}
-
-// Добавляем обработчик для кнопки "Начать" на заставке
-const startButton = document.getElementById('start-button');
-if (startButton) {
-    startButton.addEventListener('click', () => {
-        showScreen('gender-screen'); // Меняем на gender-screen
-    });
-} else {
-    console.error('Start button not found on splash screen.');
-}
-
 // Обновляем тексты на основе конфигурации
 function updateTexts() {
-    // Обновляем приветственное сообщение на заставке
-    if (config.welcomeMessage) {
-        const splashTitle = document.querySelector('#splash-screen h1');
-        if (splashTitle) {
-            splashTitle.textContent = config.welcomeMessage;
-        }
-    }
-
-    // Обновляем текст кнопки "Начать"
-    if (config.startButtonText) {
-        const startButton = document.getElementById('start-button');
-        if (startButton) {
-            startButton.textContent = config.startButtonText;
-        }
-    }
-
+    const texts = translations[currentLanguage];
+    if (!texts) return;
+    
     // Обновляем заголовки экранов
     const screenTitles = {
-        'style-screen': config.styleScreenTitle,
-        'gender-screen': config.genderScreenTitle,
-        'camera-screen': config.cameraScreenTitle,
-        'processing-screen': config.processingScreenTitle,
-        'result-screen': config.resultScreenTitle
+        'splash-screen': texts.welcomeMessage,
+        'style-screen': texts.styleScreenTitle,
+        'gender-screen': texts.genderScreenTitle,
+        'camera-screen': texts.cameraScreenTitle,
+        'processing-screen': texts.processingScreenTitle,
+        'result-screen': texts.resultScreenTitle
     };
 
     for (const [screenId, titleText] of Object.entries(screenTitles)) {
-        if (titleText) {
-            const screen = document.getElementById(screenId);
-            if (screen) {
-                const titleElement = screen.querySelector('h1');
-                if (titleElement) {
-                    titleElement.textContent = titleText;
-                }
+        const screen = document.getElementById(screenId);
+        if (screen) {
+            const titleElement = screen.querySelector('h1');
+            if (titleElement) {
+                titleElement.textContent = titleText;
             }
         }
+    }
+
+    // Обновляем тексты кнопок
+    const startButton = document.getElementById('start-button');
+    if (startButton) {
+        startButton.textContent = texts.startButtonText;
+    }
+
+    const backButtons = document.querySelectorAll('.back-button');
+    backButtons.forEach(button => {
+        button.textContent = texts.backButtonText;
+    });
+
+    const printPhotoButton = document.getElementById('print-photo');
+    if (printPhotoButton) {
+        printPhotoButton.textContent = texts.printButtonText;
+    }
+
+    const startOverButton = document.getElementById('start-over');
+    if (startOverButton) {
+        startOverButton.textContent = texts.startOverButtonText;
+    }
+
+    // Обновляем тексты гендерных кнопок
+    const genderButtons = document.querySelectorAll('#gender-buttons .button');
+    genderButtons.forEach(button => {
+        const genderKey = button.getAttribute('data-gender');
+        button.textContent = texts.genders[genderKey];
+    });
+
+    // Обновляем текст на кнопке переключения языка
+    const languageSwitcher = document.getElementById('language-switcher');
+    if (languageSwitcher) {
+        languageSwitcher.textContent = currentLanguage === 'ru' ? 'KK' : 'RU';
     }
 }
 
@@ -850,3 +834,14 @@ themeSwitcher.addEventListener('change', () => {
     config.theme = newTheme;
     fs.writeFileSync(path.join(__dirname, '..', 'config.json'), JSON.stringify(config, null, 2));
 });
+
+// После обработчиков для backButtons добавляем:
+// Добавляем обработчик для кнопки "Начать" на заставке
+const startButton = document.getElementById('start-button');
+if (startButton) {
+    startButton.addEventListener('click', () => {
+        showScreen('gender-screen'); // Переход к экрану выбора пола
+    });
+} else {
+    console.error('Start button not found on splash screen.');
+}
