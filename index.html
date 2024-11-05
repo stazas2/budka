@@ -18,11 +18,17 @@
       <!-- Заголовок будет установлен из config.json -->
       <button id="start-button"></button>
       <!-- Текст кнопки будет установлен из config.json -->
+      <!-- Кнопка переключения темы -->
+      <label class="theme-switcher">
+        <input type="checkbox" id="theme-switcher" />
+        <span class="slider"></span>
+      </label>
     </div>
 
     <div id="style-screen" class="screen">
       <h1></h1>
       <!-- Заголовок будет установлен из config.json -->
+      <button class="back-button" disabled>Назад</button>
       <div id="style-buttons">
         <!-- Кнопки стилей будут добавлены динамически -->
       </div>
@@ -48,7 +54,7 @@
     </div>
 
     <div id="camera-screen" class="screen">
-      <button class="back-button">Назад</button>
+      <button class="back-button" disabled>Назад</button>
       <h1></h1>
       <!-- Заголовок будет установлен из config.json -->
       <div class="video-container">
@@ -58,7 +64,7 @@
     </div>
 
     <div id="processing-screen" class="screen">
-      <button class="back-button">Назад</button>
+      <button class="back-button" disabled>Назад</button>
       <h1></h1>
       <!-- Заголовок будет установлен из config.json -->
       <div id="progress-bar">
@@ -67,7 +73,6 @@
     </div>
 
     <div id="result-screen" class="screen">
-      <button class="back-button">Назад</button>
       <h1></h1>
       <!-- Заголовок будет установлен из config.json -->
       <div class="content-container">

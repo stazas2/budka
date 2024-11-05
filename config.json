@@ -9,5 +9,16 @@
    "logoPosition": "bottom-right",
    "logoOffsetX": 30,
    "logoOffsetY": 30,
-   "inactivityTimeout": 60000
+   "inactivityTimeout": 60000,
+   "theme": "light",
+   "lightTheme": {
+       "backgroundColor": "#f0f8ff",
+       "backgroundImage": "",
+       "backgroundOpacity": 0.8
+   },
+   "darkTheme": {
+       "backgroundColor": "blue",
+       "backgroundImage": "",
+       "backgroundOpacity": 0.8
+   }
 }

@@ -164,12 +164,26 @@ function showScreen(screenId) {
     const activeScreen = document.getElementById(screenId);
     if (activeScreen) {
         activeScreen.classList.add('active');
-        // Скрываем кнопку "Назад" на первом экране и заставке
         const backButton = activeScreen.querySelector('.back-button');
         if (backButton) {
-            backButton.style.display = (screenId === 'style-screen' || screenId === 'splash-screen') ? 'none' : 'block';
+            if (screenId === 'style-screen' || screenId === 'splash-screen' || screenId === 'camera-screen' || screenId === 'processing-screen') {
+                backButton.disabled = true;
+                backButton.style.display = 'block';
+            } else if (screenId === 'result-screen') {
+                backButton.style.display = 'none';
+            } else {
+                backButton.disabled = false;
+                backButton.style.display = 'block';
+            }
         }
-        
+
+        // Управляем видимостью кнопки переключения темы
+        if (screenId === 'splash-screen' || screenId === 'gender-screen') {
+            themeSwitcher.style.display = 'block';
+        } else {
+            themeSwitcher.style.display = 'none';
+        }
+
         if (screenId === 'result-screen') {
             resultTitle.style.display = 'block';
         } else {
@@ -585,6 +599,9 @@ backButtons.forEach(button => {
             case 'gender-screen':
                 showScreen('style-screen');
                 break;
+            case 'style-screen':
+                showScreen('splash-screen');
+                break;
             case 'camera-screen':
                 showScreen('gender-screen');
                 stopCamera();
@@ -752,7 +769,7 @@ function updateTexts() {
         }
     }
 
-    // Обновляем тексты кнопок
+    // Обновляем тек��ты кнопок
     const startButton = document.getElementById('start-button');
     if (startButton) {
         startButton.textContent = texts.startButtonText;
@@ -800,4 +817,35 @@ if (languageSwitcher) {
 document.addEventListener('DOMContentLoaded', () => {
     updateTexts();
     // ...existing code...
+});
+
+const themeSwitcher = document.getElementById('theme-switcher');
+
+// Функция для применения темы
+function applyTheme(theme) {
+    const themeConfig = config[`${theme}Theme`];
+    document.body.classList.remove('light', 'dark');
+    document.body.classList.add(theme);
+    themeSwitcher.checked = theme === 'dark';
+
+    if (themeConfig) {
+        document.documentElement.style.setProperty('--light-bg-color', themeConfig.backgroundColor || '');
+        document.documentElement.style.setProperty('--light-bg-image', themeConfig.backgroundImage ? `url(${themeConfig.backgroundImage})` : 'none');
+        document.documentElement.style.setProperty('--light-bg-opacity', themeConfig.backgroundOpacity || 0.8);
+        document.documentElement.style.setProperty('--dark-bg-color', themeConfig.backgroundColor || '');
+        document.documentElement.style.setProperty('--dark-bg-image', themeConfig.backgroundImage ? `url(${themeConfig.backgroundImage})` : 'none');
+        document.documentElement.style.setProperty('--dark-bg-opacity', themeConfig.backgroundOpacity || 0.8);
+    }
+}
+
+// Устанавливаем начальную тему из конфигурации
+applyTheme(config.theme || 'light');
+
+// Обработчик для переключения темы
+themeSwitcher.addEventListener('change', () => {
+    const newTheme = themeSwitcher.checked ? 'dark' : 'light';
+    applyTheme(newTheme);
+    // Сохраняем новую тему в конфигурацию
+    config.theme = newTheme;
+    fs.writeFileSync(path.join(__dirname, '..', 'config.json'), JSON.stringify(config, null, 2));
 });

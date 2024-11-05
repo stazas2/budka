@@ -6,8 +6,11 @@
 }
 body {
     font-family: "Roboto", sans-serif;
-    color: #333;
-    background: linear-gradient(135deg, #f0f8ff, #cfe2f3);
+    color: var(--text-color, #333);
+    background-color: var(--bg-color, #f0f8ff);
+    background-image: var(--bg-image, none);
+    background-size: cover;
+    background-repeat: no-repeat;
     height: 100vh;
     overflow: hidden;
     position: relative;
@@ -21,9 +24,8 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 30%),
-        radial-gradient(circle, rgba(0, 0, 0, 0.05), transparent 50%), linear-gradient(135deg, #f0f8ff, #cfe2f3);
-    opacity: 0.8;
+    background: radial-gradient(circle, rgba(255, 255, 255, var(--bg-opacity, 0.8)), transparent 30%),
+        radial-gradient(circle, rgba(0, 0, 0, 0.05), transparent 50%);
     backdrop-filter: blur(25px);
     animation: smoothGradientShift 20s ease-in-out infinite alternate;
     z-index: -1;
@@ -231,7 +233,7 @@ button:hover {
 .screen h1 {
     font-weight: 700;
     font-size: 2.6em;
-    color: #222;
+    color: var(--text-color, #222);
     text-align: center;
     margin: 0;
 }
@@ -292,6 +294,13 @@ button:hover {
     transform: translateY(-2px);
 }
 
+/* Стили для неактивной кнопки "Назад" */
+.back-button:disabled {
+    background: rgba(255, 255, 255, 0.2);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
 /* Стили для кнопки переключения языка */
 #language-switcher {
     position: absolute;
@@ -312,6 +321,99 @@ button:hover {
     transform: translateY(-2px);
 }
 
+/* Стили для переключателя темы */
+.theme-switcher {
+    position: absolute;
+    top: 90px;
+    right: 20px;
+    width: 60px;
+    height: 34px;
+}
+
+.theme-switcher input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #2196f3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+/* Стили для светлой темы */
+body.light {
+    --bg-color: var(--light-bg-color);
+    --bg-image: var(--light-bg-image);
+    --bg-opacity: var(--light-bg-opacity);
+    --text-color: #333;
+}
+
+body.light .button {
+    background: rgba(255, 255, 255, 0.2);
+    color: #000;
+}
+
+body.light .back-button {
+    background: rgba(255, 255, 255, 0.2);
+    color: #000;
+}
+
+body.light #theme-switcher {
+    background: rgba(0, 0, 0, 0.2);
+    color: #000;
+}
+
+/* Стили для темной темы */
+body.dark {
+    --bg-color: var(--dark-bg-color);
+    --bg-image: var(--dark-bg-image);
+    --bg-opacity: var(--dark-bg-opacity);
+    --text-color: #fff;
+}
+
+body.dark .button {
+    background: rgba(0, 0, 0, 0.2);
+    color: #fff;
+}
+
+body.dark .back-button {
+    background: rgba(0, 0, 0, 0.2);
+    color: #fff;
+}
+
+body.dark #theme-switcher {
+    background: rgba(0, 0, 0, 0.2);
+    color: #fff;
+}
+
 /* Стили для заставки */
 #splash-screen {
     /* Стили аналогичны другим экранам */
@@ -320,7 +422,7 @@ button:hover {
 #splash-screen h1 {
     font-size: 3em;
     margin-bottom: 40px;
-    color: #222;
+    color: var(--text-color, #222);
 }
 
 #start-button {
