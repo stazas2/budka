@@ -1,6 +1,6 @@
 {
   "authToken": "fc612550-06e8-4be3-9191-0f97336d9966",
-  "prePhotoTimer": 5,
+  "prePhotoTimer": 50,
   "stylesDir": "assets/styles",
   "camera_rotation": 0,
   "final_image_rotation": 0,
@@ -12,7 +12,7 @@
   "inactivityTimeout": 60000,
   "theme": "light",
   "language": {
-    "current": "kk",    
+    "current": "ru",    
     "showSwitcher": false
   },
   "lightTheme": {

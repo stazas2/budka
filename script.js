@@ -166,7 +166,7 @@ function showScreen(screenId) {
         activeScreen.classList.add('active');
         const backButton = activeScreen.querySelector('.back-button');
         if (backButton) {
-            if (screenId === 'splash-screen' || screenId === 'camera-screen' || screenId === 'processing-screen') {
+            if (screenId === 'splash-screen' || screenId === 'processing-screen') { // Убрали camera-screen из этого условия
                 backButton.disabled = true;
                 backButton.style.display = 'block';
             } else if (screenId === 'result-screen') {
@@ -191,6 +191,12 @@ function showScreen(screenId) {
         }
     } else {
         console.error(`Screen with ID "${screenId}" not found.`);
+    }
+
+    if (screenId !== 'camera-screen' && countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+        countdownElement.textContent = '';
     }
 }
 
@@ -266,16 +272,20 @@ function startCountdown() {
     }
 }
 
-// Начало обратного отсчета
+// В начале файла добавим переменную для хранения интервала
+let countdownInterval; // Добавляем глобальную переменную для отслеживания интервала
+
+// Изменим функцию beginCountdown
 function beginCountdown() {
     let countdown = config.prePhotoTimer || 5; // Значение по умолчанию - 5, если нет в конфиге
     countdownElement.textContent = countdown;
-    const interval = setInterval(() => {
+    // Сохраняем интервал в переменную
+    countdownInterval = setInterval(() => {
         countdown--;
         if (countdown > 0) {
             countdownElement.textContent = countdown;
         } else {
-            clearInterval(interval);
+            clearInterval(countdownInterval);
             countdownElement.textContent = '';
             takePicture();
         }
@@ -612,8 +622,13 @@ backButtons.forEach(button => {
                 showScreen('splash-screen');
                 break;
             case 'camera-screen':
+                if (countdownInterval) {
+                    clearInterval(countdownInterval); // Очищаем интервал
+                    countdownInterval = null; // Обнуляем переменную
+                }
+                countdownElement.textContent = ''; // Очищаем текст счетчика
+                stopCamera(); // Останавливаем камеру
                 showScreen('style-screen');
-                stopCamera();
                 break;
             case 'processing-screen':
                 showScreen('camera-screen');
