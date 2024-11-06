@@ -889,3 +889,40 @@ if (languageSwitcher) {
         updateTexts();
     });
 }
+
+// Получаем кнопку и добавляем слушатель событий для переключения
+const fullscreenToggleButton = document.getElementById('fullscreen-toggle');
+
+let clickCount = 0;
+let clickTimer;
+
+fullscreenToggleButton.addEventListener('click', function() {
+    clickCount++;
+
+    if (clickCount === 3) {
+        clickCount = 0; // сброс счетчика для следующей тройки кликов
+
+        // Переключение полноэкранного режима на третий клик
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+            });
+            clearTimeout(clickTimer);
+        } else {
+            document.exitFullscreen();
+            clearTimeout(clickTimer);
+        }
+    }
+
+    // Сброс счётчика, если третий клик не произошел за 500 мс
+    if (!clickTimer) {
+        clickTimer = setTimeout(() => {
+            clickCount = 0;
+        }, 500);
+    } else {
+        clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => {
+            clickCount = 0;
+        }, 500);
+    }
+    });
