@@ -1,6 +1,6 @@
 {
   "authToken": "fc612550-06e8-4be3-9191-0f97336d9966",
-  "prePhotoTimer": 50,
+  "prePhotoTimer": 2,
   "stylesDir": "assets/styles",
   "camera_rotation": 0,
   "final_image_rotation": 0,

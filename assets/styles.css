@@ -25,11 +25,7 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(
-      circle,
-      rgba(255, 255, 255, var(--bg-opacity, 0.8)),
-      transparent 30%
-    ),
+  background: radial-gradient(circle, rgba(255, 255, 255, var(--bg-opacity, 0.8)), transparent 30%),
     radial-gradient(circle, rgba(0, 0, 0, 0.05), transparent 50%);
   backdrop-filter: blur(25px);
   animation: smoothGradientShift 20s ease-in-out infinite alternate;
@@ -81,14 +77,18 @@ body::before {
   backdrop-filter: blur(10px) saturate(180%);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
   color: #000;
-  transition: transform 0.5s, box-shadow 0.5s;
+  transition:
+    transform 0.5s,
+    box-shadow 0.5s;
   transition: all 0.3s ease;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 .button:hover {
   transform: translateY(-5px);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
-  box-shadow: 0 8px 25px rgb(221, 124, 124), 0 0 20px rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 8px 25px rgb(221, 124, 124),
+    0 0 20px rgba(255, 255, 255, 0.5);
 }
 .button img {
   max-width: 100%;
@@ -112,7 +112,10 @@ button {
   backdrop-filter: blur(10px) saturate(180%);
   color: #000;
   font-weight: 500;
-  transition: background-color 0.3s, transform 0.5s, box-shadow 0.5s;
+  transition:
+    background-color 0.3s,
+    transform 0.5s,
+    box-shadow 0.5s;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 button:hover {
@@ -125,7 +128,7 @@ button:hover {
   font-weight: 700;
   color: #222;
   margin-top: 20px; /* !!!!!!!!!!!!20 - 200 Добавляем дополнительный отступ сверху, чтобы учесть поворот видео */
-  position: relative; /* Обеспечиваем нормальное расположение относительно контейнера */
+  position: relative;
 }
 /* Стили для прогресс-бара */
 #progress-bar {
@@ -133,7 +136,7 @@ button:hover {
   max-width: 600px;
   height: 40px;
   background-color: rgba(255, 255, 255, 0.2);
-  margin: 40px auto;
+  margin: 30px auto 15px;
   border-radius: 40px;
   overflow: hidden;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
@@ -145,36 +148,51 @@ button:hover {
   width: 0%;
   height: 100%;
   background: linear-gradient(90deg, #36d1dc, #5b86e5);
-  text-align: center;
-  line-height: 40px;
-  color: white;
-  font-size: 1.17em;
-  transition: width 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+  transition: width 0.8s;
   position: relative;
   overflow: hidden;
 }
-#progress-bar-fill::after {
+
+#progress-bar-fill::before {
   content: "";
   position: absolute;
   top: 0;
   left: 0;
+  width: 100%;
   height: 100%;
-  width: 20%;
-  background: rgba(255, 255, 255, 0.5);
-  filter: blur(20px);
-  animation: glowAnimation 4s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 20%);
+  background-size: 20px 20px;
+  animation: floatParticles 2s linear infinite;
 }
-@keyframes glowAnimation {
-  0% {
-    transform: translateX(-100%);
+
+#progress-percentage {
+  margin-top: 5px;
+  font-size: 2em;
+  color: #000;
+  font-weight: bold;
+  text-align: center;
+  animation: pulse .9s 10 ease-in-out;
+  animation-delay: .9s;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
   }
   50% {
-    transform: translateX(50%);
-  }
-  100% {
-    transform: translateX(100%);
+    transform: scale(1.05);
   }
 }
+
+@keyframes floatParticles {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-20px);
+  }
+}
+
 /* Стили для кнопок на экране результата */
 #result-screen {
   display: flex;
@@ -197,7 +215,7 @@ button:hover {
   transform: rotate(0deg);
 
   padding: 20px;
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(196,213,217,0.7511379551820728) 100%);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(196, 213, 217, 0.7511379551820728) 100%);
   box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
   border-radius: 40px;
   backdrop-filter: blur(100px);
@@ -209,7 +227,7 @@ button:hover {
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 30vh; 
+  height: 30vh;
   gap: 10px;
   margin: 20px 0;
   /* Отступ видео-окна */
@@ -220,12 +238,13 @@ button:hover {
   width: 90%; /* Увеличиваем ширину видео */
   height: 90%; /* Увеличиваем высоту видео */
   object-fit: contain;
-  
-  padding: 20px;
+
+  /* ? */
+  /* padding: 20px;
   background: linear-gradient(90deg, rgba(249,181,241,0.6615021008403361) 0%, rgba(0,212,255,0.35898109243697474) 100%);
   box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
   border-radius: 40px;
-  backdrop-filter: blur(100px);
+  backdrop-filter: blur(100px); */
 }
 
 /* Медиа-запросы для адаптивности */
@@ -329,12 +348,16 @@ button:hover {
   display: inline-flex;
   padding: 20px;
   cursor: pointer;
-  transition: transform 0.5s, box-shadow 0.5s;
+  transition:
+    transform 0.5s,
+    box-shadow 0.5s;
 }
 
 .button-row_item:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgb(221, 124, 124), 0 0 20px rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 8px 25px rgb(221, 124, 124),
+    0 0 20px rgba(255, 255, 255, 0.5);
 }
 
 /* Общие стили для заголовков */
@@ -547,7 +570,10 @@ body.dark #theme-switcher {
   backdrop-filter: blur(10px);
   color: #000;
   font-weight: 600;
-  transition: background-color 0.3s, transform 0.5s, box-shadow 0.5s;
+  transition:
+    background-color 0.3s,
+    transform 0.5s,
+    box-shadow 0.5s;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 
@@ -636,19 +662,31 @@ body::after {
     radial-gradient(circle, rgba(188, 174, 255, 0.2), transparent 50%),
     radial-gradient(circle, rgba(0, 255, 255, 0.2), transparent 50%);
   background-size: 25% 25%;
-  background-position: 0 0, 50% 50%, 100% 100%;
+  background-position:
+    0 0,
+    50% 50%,
+    100% 100%;
   animation: backgroundAnimation 30s infinite linear;
   z-index: -2;
 }
 
 @keyframes backgroundAnimation {
   0% {
-    background-position: 0 0, 50% 50%, 100% 100%;
+    background-position:
+      0 0,
+      50% 50%,
+      100% 100%;
   }
   50% {
-    background-position: 50% 50%, 0 0, 50% 50%;
+    background-position:
+      50% 50%,
+      0 0,
+      50% 50%;
   }
   100% {
-    background-position: 100% 100%, 50% 50%, 0 0;
+    background-position:
+      100% 100%,
+      50% 50%,
+      0 0;
   }
 }

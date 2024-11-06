@@ -23,6 +23,7 @@ const startOverButton = document.getElementById('start-over');
 const printPhotoButton = document.getElementById('print-photo');
 const progressBar = document.getElementById('progress-bar');
 const progressBarFill = document.getElementById('progress-bar-fill');
+const progressPercentage = document.getElementById('progress-percentage');
 
 const backButtons = document.querySelectorAll('.back-button');
 
@@ -145,12 +146,14 @@ function initStyleButtons(parsedStyles) {
 
 fetchStyles();
 
-// Выбор пола
-genderButtons.forEach(button => {
-    button.addEventListener('click', () => {
-        selectedGender = button.getAttribute('data-gender');
+// Заменить обработчики кнопок на обработчики button-row_item
+const genderItems = document.querySelectorAll('.button-row_item');
+genderItems.forEach(item => {
+    item.addEventListener('click', () => {
+        const button = item.querySelector('.button');
+        const selectedGender = button.getAttribute('data-gender');
         console.log(`Gender selected: ${selectedGender}`);
-        showScreen('style-screen'); // После выбора пола показываем экран стилей
+        showScreen('style-screen');
     });
 });
 
@@ -372,20 +375,24 @@ function sendImageToServer(imageData) {
     fs.writeFileSync(logFilePath, logContent, 'utf-8');
     console.log(`Request saved to ${logFilePath}`);
 
+    function updateProgressBar(percent) {
+        progressBarFill.style.width = percent + '%';
+        progressPercentage.textContent = percent + '%';
+    }
+
     progressBar.style.display = 'block';
     progressBarFill.style.width = '0%';
-    progressBarFill.textContent = '0%';
+    progressPercentage.textContent = '0%';
 
     let progress = 0;
     const progressInterval = setInterval(() => {
-        if (progress < 100) {
-            progress += 1;
-            progressBarFill.style.width = progress + '%';
-            progressBarFill.textContent = progress + '%';
+        if (progress >= 100) {
+            clearInterval(interval);
         } else {
-            clearInterval(progressInterval);
+            progress += 10;
+            updateProgressBar(progress);
         }
-    }, 100);
+    }, 900); // Обновление каждые полсекунды
 
     fetch('http://85.95.186.114/api/handler/', fetchOptions)
         .then(response => {
@@ -414,7 +421,8 @@ async function handleServerResponse(responseData) {
     console.log('handleServerResponse() function called');
     progressBar.style.display = 'none';
     progressBarFill.style.width = '0%';
-    progressBarFill.textContent = '0%';
+    //! Убраны проценты
+    progressBarFill.textContent = '';
 
     const imagesArray = Object.values(responseData)[0];
 
