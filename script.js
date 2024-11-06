@@ -151,7 +151,7 @@ const genderItems = document.querySelectorAll('.button-row_item');
 genderItems.forEach(item => {
     item.addEventListener('click', () => {
         const button = item.querySelector('.button');
-        const selectedGender = button.getAttribute('data-gender');
+        selectedGender = button.getAttribute('data-gender'); // Сохраняем выбранный пол
         console.log(`Gender selected: ${selectedGender}`);
         showScreen('style-screen');
     });
@@ -347,7 +347,7 @@ function sendImageToServer(imageData) {
     const fonImage = getRandomImageFromStyleFolder(selectedStyle);
     const base64FonImage = fonImage ? fonImage.split(',')[1] : base64Image; // Используем изображение с камеры, если `Fon` не найдено
 
-    const data = {
+    const data = { 
         mode: "style_sdxl",
         style: selectedStyle,
         params: {
@@ -387,7 +387,7 @@ function sendImageToServer(imageData) {
     let progress = 0;
     const progressInterval = setInterval(() => {
         if (progress >= 100) {
-            clearInterval(interval);
+            clearInterval(progressInterval);
         } else {
             progress += 10;
             updateProgressBar(progress);
@@ -437,6 +437,7 @@ async function handleServerResponse(responseData) {
         // Отображаем выбранные параметры
         const selectedParamsText = document.getElementById('selected-params-text');
         const texts = translations[currentLanguage];
+        console.log(selectedGender)
         if (selectedParamsText && texts) {
             const genderText = texts.genders[selectedGender] || selectedGender;
             const styleText = document.querySelector(`[data-style="${selectedStyle}"]`)?.querySelector('div')?.textContent || selectedStyle;

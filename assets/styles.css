@@ -171,12 +171,13 @@ button:hover {
   color: #000;
   font-weight: bold;
   text-align: center;
-  animation: pulse .9s 10 ease-in-out;
-  animation-delay: .9s;
+  animation: pulse 0.9s 10 ease-in-out;
+  animation-delay: 0.9s;
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
@@ -644,7 +645,7 @@ body.dark #theme-switcher {
   border-radius: 8px;
   margin: 10px 0;
   backdrop-filter: blur(5px);
-  font-size: 1.1em;
+  font-size: 1.5em;
 }
 
 .selected-params span {
