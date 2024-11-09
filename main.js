@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require("electron")
+const { app, BrowserWindow, ipcMain, protocol } = require("electron")
 const path = require("path")
 const fs = require("fs")
 const os = require("os")
@@ -30,9 +30,20 @@ function createWindow() {
   win.loadFile("index.html")
 }
 
+// Регистрируем протокол для загрузки локальных ресурсов
+// app.whenReady().then(() => {
+//   protocol.registerFileProtocol('local', (request, callback) => {
+//     const url = request.url.substr(8)    // Убираем 'local://' из начала URL
+//     const resolvedPath = path.join(config.stylesDir, url)
+//     callback({ path: path.normalize(resolvedPath) })
+//   })
+
+//   createWindow()
+// })
+
 // Обработчик для получения списка стилей из папки styles
 ipcMain.handle("get-styles", async () => {
-  const stylesDir = config?.stylesDir || path.join(__dirname, "styles")
+  const stylesDir = config?.stylesDir || "C:\\MosPhotoBooth2\\styles"
   console.log(`Loading styles from directory: ${stylesDir}`)
 
   try {
@@ -42,20 +53,29 @@ ipcMain.handle("get-styles", async () => {
       return []
     }
 
-    const files = fs.readdirSync(stylesDir, { encoding: "utf8" })
-    const imageFiles = files.filter((file) => /\.(jpg|jpeg|png)$/i.test(file))
+    const styleFolders = fs.readdirSync(stylesDir, { encoding: "utf8" }).filter(folder => fs.statSync(path.join(stylesDir, folder)).isDirectory());
+    const styles = [];
 
-    if (imageFiles.length === 0) {
+    for (const folder of styleFolders) {
+      const folderPath = path.join(stylesDir, folder);
+      const files = fs.readdirSync(folderPath, { encoding: "utf8" });
+      const imageFiles = files.filter((file) => /\.(jpg|jpeg|png)$/i.test(file));
+
+      if (imageFiles.length > 0) {
+        styles.push({
+          originalName: folder,
+          displayName: folder
+        });
+      }
+    }
+
+    if (styles.length === 0) {
       console.warn("No style images found in directory")
       return []
     }
 
-    return imageFiles.map((file) => {
-      const match = file.match(/^(.+?)(?:\((.+?)\))?\.(?:jpg|jpeg|png)$/i)
-      const name = match ? match[1].trim() : path.parse(file).name
-      const display = match?.[2]?.trim() || name
-      return { originalName: name, displayName: display }
-    })
+    console.log('Styles found:', styles)
+    return styles;
   } catch (error) {
     console.error("Error reading styles directory:", error)
     return []

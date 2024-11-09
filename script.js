@@ -118,8 +118,9 @@ function initStyleButtons(parsedStyles) {
         button.setAttribute('data-style', style.originalName);
 
         const img = document.createElement('img');
-        img.src = `${config.stylesDir}\\${style.originalName}${style.displayName !== style.originalName ? ` (${style.displayName})` : ''}.jpg`;
-
+        // Updated image path to include style folder
+        img.src = `${config.stylesDir}\\${style.originalName}\\1${style.originalName}${style.displayName !== style.originalName ? ` (${style.displayName})` : ''}.jpg`;
+        console.log(img.src);
         img.alt = style.displayName;
 
         const label = document.createElement('div');
@@ -546,15 +547,15 @@ function getRandomImageFromStyleFolder(style) {
     try {
         // Загружаем путь из конфигурации
         const styleFolderPath = path.join(config.stylesDir, style);
-        
+
         if (!fs.existsSync(styleFolderPath)) {
             console.warn(`Folder for style "${style}" does not exist.`);
             return null;
         }
 
         // Получаем все файлы изображений из папки
-        const files = fs.readdirSync(styleFolderPath).filter(file => /\.(jpg|jpeg|png)$/i.test(file));
-        
+        const files = fs.readdirSync(styleFolderPath).filter(file => /\.(jpg|jpeg|png)$/i.test(file)).filter(file => file !== `#${style}.jpg`);
+
         if (files.length === 0) {
             console.warn(`No images found in the folder for style: ${style}`);
             return null;

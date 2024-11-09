@@ -457,6 +457,7 @@ button:hover {
 
 /* Стили для переключателя темы */
 .theme-switcher {
+  display: none;
   position: absolute;
   top: 90px;
   right: 20px;
