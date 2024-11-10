@@ -59,7 +59,9 @@ ipcMain.handle("get-styles", async () => {
     for (const folder of styleFolders) {
       const folderPath = path.join(stylesDir, folder);
       const files = fs.readdirSync(folderPath, { encoding: "utf8" });
-      const imageFiles = files.filter((file) => /\.(jpg|jpeg|png)$/i.test(file));
+      // todo
+      // Исключаем авы, начинающиеся на 1
+      const imageFiles = files.filter((file) => /\.(jpg|jpeg|png)$/i.test(file) && !file.startsWith("1"));
 
       if (imageFiles.length > 0) {
         styles.push({
@@ -74,7 +76,6 @@ ipcMain.handle("get-styles", async () => {
       return []
     }
 
-    console.log('Styles found:', styles)
     return styles;
   } catch (error) {
     console.error("Error reading styles directory:", error)

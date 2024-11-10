@@ -33,7 +33,7 @@ let videoStream = null;
 let cameraInitialized = false;
 
 // Основная папка для хранения изображений
-const baseDir = 'C:\\MosPhotoBooth';
+const baseDir = path.join('C:\\MosPhotoBooth2', 'SavedPhotos'); 
 const config = loadConfig();
 
 // Применяем вращение для элементов на основе конфигурации
@@ -62,12 +62,12 @@ function createDateFolders() {
     const inputDir = path.join(dateFolder, 'input');
     const outputDir = path.join(dateFolder, 'output');
 
-    if (!fs.existsSync(inputDir)) {
-        fs.mkdirSync(inputDir, { recursive: true });
-    }
-    if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
-    }
+    // Создаем все необходимые папки рекурсивно 
+    [baseDir, dateFolder, inputDir, outputDir].forEach(dir => { 
+        if (!fs.existsSync(dir)) { 
+            fs.mkdirSync(dir, { recursive: true }); 
+        } 
+    });
 
     return { inputDir, outputDir };
 }
@@ -853,15 +853,6 @@ function applyTheme(theme) {
 // Устанавливаем начальную тему из конфигурации
 applyTheme(config.theme || 'light');
 
-// Обработчик для переключения темы
-themeSwitcher.addEventListener('change', () => {
-    const newTheme = themeSwitcher.checked ? 'dark' : 'light';
-    applyTheme(newTheme);
-    // Сохраняем новую тему в конфигурацию
-    config.theme = newTheme;
-    fs.writeFileSync(path.join(__dirname, '..', 'config.json'), JSON.stringify(config, null, 2));
-});
-
 // После обработчиков для backButtons добавляем:
 // Добавляем обработчик для кнопки "Начать" на заставке
 const startButton = document.getElementById('start-button');
@@ -877,19 +868,6 @@ if (startButton) {
 let currentLanguage = config.language?.current || 'ru';
 const languageSwitcher = document.getElementById('language-switcher');
 
-// Управление видимостью переключателя языка
-if (languageSwitcher) {
-    languageSwitcher.style.display = config.language?.showSwitcher ? 'block' : 'none';
-    
-    languageSwitcher.addEventListener('click', () => {
-        currentLanguage = currentLanguage === 'ru' ? 'kk' : 'ru';
-        // Обновляем конфигурацию
-        config.language.current = currentLanguage;
-        fs.writeFileSync(path.join(__dirname, 'config.json'), 
-            JSON.stringify(config, null, 2));
-        updateTexts();
-    });
-}
 
 // Получаем кнопку и добавляем слушатель событий для переключения
 const fullscreenToggleButton = document.getElementById('fullscreen-toggle');
