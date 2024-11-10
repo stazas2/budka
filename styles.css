@@ -125,7 +125,6 @@ button {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-
 button:active {
   transform: scale(0.95) translateY(2px);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
@@ -263,7 +262,6 @@ button:active {
   backdrop-filter: blur(100px); */
 }
 
-
 #gender-buttons {
   display: flex;
   flex-direction: column;
@@ -320,7 +318,6 @@ button:active {
   transition: none; /* Отключаем анимацию перехода */
 }
 
-
 .button-row {
   display: flex;
   flex-direction: column;
@@ -343,19 +340,21 @@ button:active {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 20px;
   display: inline-flex;
-  padding: 20px;
+  padding: 5px;
   cursor: pointer;
   transition: transform 0.5s, box-shadow 0.5s;
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-
 .button-row_item:active {
   transform: scale(0.95) translateY(2px);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.button-row_item img {
+  pointer-events: none;
 }
 
 /* Общие стили для заголовков */
@@ -417,7 +416,6 @@ button:active {
   transition: all 0.3s ease;
   z-index: 1000;
 }
-
 
 /* Стили для неактивной кнопки "Назад" */
 .back-button:disabled {
@@ -521,6 +519,10 @@ body.light #theme-switcher {
   color: #000;
 }
 
+body.light .invert-image {
+  filter: invert(1);
+}
+
 /* Стили для темной темы */
 body.dark {
   --bg-color: var(--dark-bg-color);
@@ -542,6 +544,10 @@ body.dark .back-button {
 body.dark #theme-switcher {
   background: rgba(0, 0, 0, 0.2);
   color: #fff;
+}
+
+body.dark .invert-image {
+  filter: invert(0);
 }
 
 /* Стили для заставки */
@@ -571,7 +577,6 @@ body.dark #theme-switcher {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-
 #start-button:active {
   transform: scale(0.95) translateY(2px);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
@@ -599,7 +604,7 @@ body.dark #theme-switcher {
     /* align-items: center; */
   }
 
-  .button-row_item{
+  .button-row_item {
     padding: 0;
   }
 
@@ -608,8 +613,8 @@ body.dark #theme-switcher {
     max-height: 55vh;
   }
   /* #video { */
-    /* max-width: 90%; */
-    /* max-height: 50vh; */
+  /* max-width: 90%; */
+  /* max-height: 50vh; */
   /* } */
   #video {
     width: 95%;
@@ -663,35 +668,35 @@ body.dark #theme-switcher {
     margin-top: 65px;
     margin-bottom: 0;
   }
-  .back-button{
+  .back-button {
     padding: 10px;
   }
-  .button-row_item{
+  .button-row_item {
     box-shadow: 0px 2px 8px rgba(105.36, 97.05, 200.93, 0.25);
     padding: 5px;
   }
-  .button{
+  .button {
     margin: 5px;
   }
 }
 
 @media (max-width: 600px) {
-  .button-row_item{
+  .button-row_item {
     padding: 0;
   }
-  .button-row_item{
+  .button-row_item {
     width: 220px;
   }
-  .button-row_item-last{
+  .button-row_item-last {
     width: auto;
   }
 }
 
 @media (max-width: 480px) {
-  .button-row_item{
+  .button-row_item {
     width: 160px;
   }
-  .button-row_item-last{
+  .button-row_item-last {
     width: auto;
   }
   #style-buttons {
@@ -764,3 +769,7 @@ body::after {
   border-radius: 5px;
   opacity: 0;
 }
+
+/* .invert-image{
+  filter: invert(1);
+} */
