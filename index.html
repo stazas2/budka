@@ -43,26 +43,46 @@
         <div class="button-row">
           <div class="button-row_block">
             <div class="button-row_item">
-              <img src="C:/MosPhotoBooth2/gender/man.png" class="invert-image" alt="Мужчина" />
+              <img
+                src="C:/MosPhotoBooth2/gender/man.png"
+                class="invert-image"
+                alt="Мужчина"
+              />
               <div class="button" data-gender="man">Мужчина</div>
             </div>
             <div class="button-row_item">
-              <img src="C:/MosPhotoBooth2/gender/woman.png" class="invert-image" alt="Женщина" />
+              <img
+                src="C:/MosPhotoBooth2/gender/woman.png"
+                class="invert-image"
+                alt="Женщина"
+              />
               <div class="button" data-gender="woman">Женщина</div>
             </div>
           </div>
           <div class="button-row_block">
             <div class="button-row_item">
-              <img src="C:/MosPhotoBooth2/gender/boy.png" class="invert-image" alt="Мальчик" />
+              <img
+                src="C:/MosPhotoBooth2/gender/boy.png"
+                class="invert-image"
+                alt="Мальчик"
+              />
               <div class="button" data-gender="boy">Мальчик</div>
             </div>
             <div class="button-row_item">
-              <img src="C:/MosPhotoBooth2/gender/girl.png" class="invert-image" alt="Девочка" />
+              <img
+                src="C:/MosPhotoBooth2/gender/girl.png"
+                class="invert-image"
+                alt="Девочка"
+              />
               <div class="button" data-gender="girl">Девочка</div>
             </div>
           </div>
           <div class="button-row_item button-row_item-last">
-            <img src="C:/MosPhotoBooth2/gender/group.png" class="invert-image" alt="Групповое фото" />
+            <img
+              src="C:/MosPhotoBooth2/gender/group.png"
+              class="invert-image"
+              alt="Групповое фото"
+            />
             <div class="button" data-gender="group">Групповое фото</div>
           </div>
         </div>
@@ -93,11 +113,12 @@
       <h1></h1>
       <!-- Заголовок будет установлен из config.json -->
       <!-- Добавляем блок для отображения параметров -->
-      <div id="selected-params" class="selected-params">
-        <span id="selected-params-text"></span>
-      </div>
+
       <div class="content-container">
         <img id="result-image" alt="Обработанное изображение" />
+        <div id="selected-params" class="selected-params">
+          <div id="selected-params-text"></div>
+        </div>
       </div>
       <div class="buttons-container">
         <button id="print-photo">Печать фото</button>
@@ -106,8 +127,8 @@
     </div>
 
     <!-- Скрытый canvas для захвата изображения -->
-          <!-- todo -->
-      <!-- адаптив -->
+    <!-- todo -->
+    <!-- адаптив -->
     <canvas
       id="canvas"
       width="1280"

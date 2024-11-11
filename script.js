@@ -282,12 +282,18 @@ let countdownInterval; // Добавляем глобальную перемен
 // Изменим функцию beginCountdown
 function beginCountdown() {
     let countdown = config.prePhotoTimer || 5; // Значение по умолчанию - 5, если нет в конфиге
+    const backButton = document.querySelector('#camera-screen .back-button');
     countdownElement.textContent = countdown;
     // Сохраняем интервал в переменную
     countdownInterval = setInterval(() => {
         countdown--;
         if (countdown > 0) {
             countdownElement.textContent = countdown;
+            // Блокируем кнопку "Назад" за 2 секунды до конца
+            if (countdown <= 2 && backButton) {
+                backButton.disabled = true;
+                backButton.style.opacity = '0.5';
+            }
         } else {
             clearInterval(countdownInterval);
             countdownElement.textContent = '';
@@ -442,7 +448,7 @@ async function handleServerResponse(responseData) {
         if (selectedParamsText && texts) {
             const genderText = texts.genders[selectedGender] || selectedGender;
             const styleText = document.querySelector(`[data-style="${selectedStyle}"]`)?.querySelector('div')?.textContent || selectedStyle;
-            selectedParamsText.innerHTML = `${texts.genderScreenTitleEnd}: <strong>${genderText}</strong> | ${texts.styleScreenTitleEnd}: <strong>${styleText}</strong>`;
+            selectedParamsText.innerHTML = `&emsp;${texts.genderScreenTitleEnd}:&emsp;<strong>${genderText}</strong><br/>${texts.styleScreenTitleEnd}:&emsp;<strong>${styleText}</strong>`;
         }
 
         // Сохранение готового изображения с логотипом в папку "output"
@@ -632,13 +638,15 @@ backButtons.forEach(button => {
                 showScreen('splash-screen');
                 break;
             case 'camera-screen':
-                if (countdownInterval) {
-                    clearInterval(countdownInterval); // Очищаем интервал
-                    countdownInterval = null; // Обнуляем переменную
+                if (!button.disabled) { // Проверяем, не заблокирована ли кнопка
+                    if (countdownInterval) {
+                        clearInterval(countdownInterval); // Очищаем интервал
+                        countdownInterval = null; // Обнуляем переменную
+                    }
+                    countdownElement.textContent = ''; // Очищаем текст счетчика
+                    stopCamera(); // Останавливаем камеру
+                    showScreen('style-screen');
                 }
-                countdownElement.textContent = ''; // Очищаем текст счетчика
-                stopCamera(); // Останавливаем камеру
-                showScreen('style-screen');
                 break;
             case 'processing-screen':
                 showScreen('camera-screen');
