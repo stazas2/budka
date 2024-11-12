@@ -200,10 +200,19 @@ button:active {
 #progress-bar-fill {
   width: 0%;
   height: 100%;
-  background: linear-gradient(90deg, #36d1dc, #5b86e5);
   transition: width 0.8s;
   position: relative;
   overflow: hidden;
+}
+
+/* Градиент для светлой темы */
+body.light #progress-bar-fill {
+  background: linear-gradient(90deg, #36d1dc, #5b86e5);
+}
+
+/* Градиент для темной темы */
+body.dark #progress-bar-fill {
+  background: linear-gradient(90deg, #FF6B6B, #4ECDC4);
 }
 
 #progress-bar-fill::before {
