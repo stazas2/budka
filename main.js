@@ -53,21 +53,27 @@ ipcMain.handle("get-styles", async () => {
       return []
     }
 
-    const styleFolders = fs.readdirSync(stylesDir, { encoding: "utf8" }).filter(folder => fs.statSync(path.join(stylesDir, folder)).isDirectory());
-    const styles = [];
+    const styleFolders = fs
+      .readdirSync(stylesDir, { encoding: "utf8" })
+      .filter((folder) =>
+        fs.statSync(path.join(stylesDir, folder)).isDirectory()
+      )
+    const styles = []
 
     for (const folder of styleFolders) {
-      const folderPath = path.join(stylesDir, folder);
-      const files = fs.readdirSync(folderPath, { encoding: "utf8" });
+      const folderPath = path.join(stylesDir, folder)
+      const files = fs.readdirSync(folderPath, { encoding: "utf8" })
       // todo
       // Исключаем авы, начинающиеся на 1
-      const imageFiles = files.filter((file) => /\.(jpg|jpeg|png)$/i.test(file) && !file.startsWith("1"));
+      const imageFiles = files.filter(
+        (file) => /\.(jpg|jpeg|png)$/i.test(file) && !file.startsWith("1")
+      )
 
       if (imageFiles.length > 0) {
         styles.push({
           originalName: folder,
-          displayName: folder
-        });
+          displayName: folder,
+        })
       }
     }
 
@@ -76,7 +82,7 @@ ipcMain.handle("get-styles", async () => {
       return []
     }
 
-    return styles;
+    return styles
   } catch (error) {
     console.error("Error reading styles directory:", error)
     return []

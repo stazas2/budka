@@ -7,8 +7,8 @@
 }
 body {
   font-family: "Roboto", sans-serif;
-  color: var(--text-color, #333);
-  background-color: var(--bg-color, #f0f8ff);
+  color: var(--text-color, var(--dark-text-color, #ffffff));
+  background-color: var(--bg-color, #f0f8ff); /* fallback цвет */
   background-image: var(--bg-image, none);
   background-size: cover;
   background-repeat: no-repeat;
@@ -27,7 +27,11 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to bottom right, rgba(255, 255, 255, var(--bg-opacity, 0.8)), rgba(0, 0, 0, 0.05));
+  background: linear-gradient(
+    to bottom right,
+    rgba(255, 255, 255, var(--bg-opacity, 0.8)),
+    rgba(0, 0, 0, 0.05)
+  );
   backdrop-filter: blur(25px);
   animation: smoothGradientShift 20s ease-in-out infinite alternate;
   z-index: -1;
@@ -52,8 +56,8 @@ body::after {
   width: 300%;
   height: 300%;
   background: radial-gradient(circle, rgba(255, 100, 100, 0.3), transparent 50%),
-              radial-gradient(circle, rgba(100, 200, 255, 0.3), transparent 50%),
-              radial-gradient(circle, rgba(150, 255, 100, 0.3), transparent 50%);
+    radial-gradient(circle, rgba(100, 200, 255, 0.3), transparent 50%),
+    radial-gradient(circle, rgba(150, 255, 100, 0.3), transparent 50%);
   background-size: 25% 25%;
   background-position: 0 0, 50% 50%, 100% 100%;
   animation: rotateAndPulse 20s infinite ease-in-out;
@@ -74,7 +78,6 @@ body::after {
     transform: scale(1) rotate(360deg);
   }
 }
-
 
 .screen {
   display: none;
@@ -103,7 +106,7 @@ body::after {
   opacity: 1; /* Показываем активный экран */
 }
 #style-buttons {
-  display: flex;
+  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 10px;
   width: 100%;
@@ -130,9 +133,7 @@ body::after {
   backdrop-filter: blur(10px) saturate(180%);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
   color: #000;
-  transition:
-    transform 0.5s,
-    box-shadow 0.5s;
+  transition: transform 0.5s, box-shadow 0.5s;
   transition: all 0.3s ease;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   transform: translateY(0);
@@ -165,10 +166,7 @@ button {
   backdrop-filter: blur(10px) saturate(180%);
   color: #000;
   font-weight: 500;
-  transition:
-    background-color 0.3s,
-    transform 0.5s,
-    box-shadow 0.5s;
+  transition: background-color 0.3s, transform 0.5s, box-shadow 0.5s;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -181,7 +179,7 @@ button:active {
 #countdown {
   font-size: 3.9em;
   font-weight: 700;
-  color: #222;
+  color: var(--text-color);
   margin-top: 20px; /* !!!!!!!!!!!!20 - 200 Добавляем дополнительный отступ сверху, чтобы учесть поворот видео */
   position: relative;
 }
@@ -215,7 +213,11 @@ button:active {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 20%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.2),
+    transparent 20%
+  );
   background-size: 20px 20px;
   animation: floatParticles 2s linear infinite;
 }
@@ -223,7 +225,7 @@ button:active {
 #progress-percentage {
   margin-top: 5px;
   font-size: 2em;
-  color: #000;
+  color: var(--text-color);
   font-weight: bold;
   text-align: center;
   animation: pulse 0.9s 10 ease-in-out;
@@ -272,7 +274,11 @@ button:active {
   transform: rotate(0deg);
 
   padding: 20px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(196, 213, 217, 0.7511379551820728) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(196, 213, 217, 0.7511379551820728) 100%
+  );
   box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
   border-radius: 40px;
   backdrop-filter: blur(100px);
@@ -379,9 +385,7 @@ button:active {
   display: inline-flex;
   padding: 5px;
   cursor: pointer;
-  transition:
-    transform 0.5s,
-    box-shadow 0.5s;
+  transition: transform 0.5s, box-shadow 0.5s;
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -531,12 +535,45 @@ input:checked + .slider:before {
   transform: translateX(26px);
 }
 
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 /* Стили для светлой темы */
 body.light {
   --bg-color: var(--light-bg-color);
   --bg-image: var(--light-bg-image);
   --bg-opacity: var(--light-bg-opacity);
-  --text-color: #333;
+}
+
+body.light .button {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--text-color);
+}
+
+body.light .back-button {
+  background: rgba(255, 255, 255, 0.2);
+  color: #000;
+}
+
+/* body.light #theme-switcher {
+  background: rgba(0, 0, 0, 0.2);
+  color: #000;
+} */
+
+body.light #style-buttons div {
+  color: var(--text-color);
+}
+
+body.light .invert-image {
+  filter: invert(1);
+}
+
+body.light #camera-loader .loader-spinner {
+  border-color: rgba(0, 0, 0, 0.3);
+  border-top-color: #000;
+  animation: spin-light 1s ease-in-out infinite;
+}
+
+body.light #camera-loader .loader-text {
+  color: var(--text-color);
 }
 
 body.light .button {
@@ -565,7 +602,7 @@ body.light #camera-loader .loader-spinner {
 }
 
 body.light #camera-loader .loader-text {
-  color: #000;
+  color: var(--text-color);
 }
 
 /* Стили для темной темы */
@@ -573,17 +610,21 @@ body.dark {
   --bg-color: var(--dark-bg-color);
   --bg-image: var(--dark-bg-image);
   --bg-opacity: var(--dark-bg-opacity);
-  --text-color: #E6E6FA;
+  --text-color: var(--dark-text-color, #ffffff);
 }
 
 body.dark .button {
   background: rgba(0, 0, 0, 0.2);
-  color: #E6E6FA;
+  color: var(--text-color);
+}
+
+body.dark #style-buttons div {
+  color: var(--text-color);
 }
 
 body.dark .back-button {
   background: rgba(0, 0, 0, 0.2);
-  color: #E6E6FA;
+  color: var(--text-color);
 }
 
 body.dark .invert-image {
@@ -597,7 +638,7 @@ body.dark #camera-loader .loader-spinner {
 }
 
 body.dark #camera-loader .loader-text {
-  color: #E6E6FA;
+  color: #e6e6fa;
 }
 
 @keyframes spin-light {
@@ -606,60 +647,11 @@ body.dark #camera-loader .loader-text {
   }
 }
 
-
-/* Стили для светлой темы */
-body.light {
-  --bg-color: var(--light-bg-color);
-  --bg-image: var(--light-bg-image);
-  --bg-opacity: var(--light-bg-opacity);
-  --text-color: #333;
-}
-
-body.light .button {
-  background: rgba(255, 255, 255, 0.2);
-  color: #000;
-}
-
-body.light .back-button {
-  background: rgba(255, 255, 255, 0.2);
-  color: #000;
-}
-
-body.light #theme-switcher {
-  background: rgba(0, 0, 0, 0.2);
-  color: #000;
-}
-
-body.light .invert-image {
-  filter: invert(1);
-}
-
-body.light #camera-loader .loader-spinner {
-  border-color: rgba(0, 0, 0, 0.3);
-  border-top-color: #000;
-  animation: spin-light 1s ease-in-out infinite;
-}
-
-body.light #camera-loader .loader-text {
-  color: #000;
-}
-
 /* Стили для темной темы */
-body.dark {
-  --bg-color: var(--dark-bg-color);
-  --bg-image: var(--dark-bg-image);
-  --bg-opacity: var(--dark-bg-opacity);
-  --text-color: #E6E6FA;
-}
-
-body.dark .button {
-  background: rgba(0, 0, 0, 0.2);
-  color: #E6E6FA;
-}
 
 body.dark .back-button {
   background: rgba(0, 0, 0, 0.2);
-  color: #E6E6FA;
+  color: var(--text-color);
 }
 
 body.dark .invert-image {
@@ -673,9 +665,8 @@ body.dark #camera-loader .loader-spinner {
 }
 
 body.dark #camera-loader .loader-text {
-  color: #E6E6FA;
+  color: var(--text-color);
 }
-
 
 @keyframes spin-dark {
   to {
@@ -691,8 +682,17 @@ body.dark #camera-loader .loader-spinner {
 }
 
 body.dark #camera-loader .loader-text {
-  color: #E6E6FA;
+  color: var(--text-color);
 }
+
+/* Стили для загрузчика камеры в светлой теме */
+body.light #camera-loader .loader-spinner {
+  border-color: rgba(0, 0, 0, 0.3);
+  border-top-color: #000;
+  animation: spin-light 1s ease-in-out infinite;
+}
+
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 /* Стили для заставки */
 #splash-screen {
@@ -713,12 +713,9 @@ body.dark #camera-loader .loader-text {
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(10px);
-  color: #000;
+  color: var(--text-color);
   font-weight: 600;
-  transition:
-    background-color 0.3s,
-    transform 0.5s,
-    box-shadow 0.5s;
+  transition: background-color 0.3s, transform 0.5s, box-shadow 0.5s;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -913,7 +910,10 @@ body.dark #camera-loader .loader-text {
   justify-content: space-between;
 }
 
-
+#print-photo,
+#start-over {
+  color: var(--text-color);
+}
 
 #fullscreen-toggle {
   z-index: 2;
@@ -958,23 +958,6 @@ body.dark #camera-loader .loader-text {
   font-size: 1.2em;
   text-align: center;
 }
-
-/* Стили для загрузчика камеры в светлой теме */
-body.light #camera-loader .loader-spinner {
-  border-color: rgba(0, 0, 0, 0.3);
-  border-top-color: #000;
-  animation: spin-light 1s ease-in-out infinite;
-}
-
-body.light #camera-loader .loader-text {
-  color: #000;
-}
-
-
-
-
-
-
 
 /* Добавляем стиль для скрытия видео во время загрузки */
 .video-container.loading #video {
