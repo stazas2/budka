@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, protocol } = require("electron")
+const { app, BrowserWindow, ipcMain } = require("electron")
 const path = require("path")
 const fs = require("fs")
 const os = require("os")
@@ -16,30 +16,34 @@ const config = loadConfig()
 //     { width: 640, height: 480 }    // SD
 //  ];
 function createWindow() {
-  const win = new BrowserWindow({
-    width: 1920,
-    height: 1080,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-    },
-    autoHideMenuBar: true,
-  })
+  console.log('Creating main window...');
+  try {
+    const win = new BrowserWindow({
+      width: 1920,
+      height: 1080,
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false,
+      },
+      autoHideMenuBar: true,
+    });
 
-  win.setMenuBarVisibility(false)
-  win.loadFile("index.html")
+    win.setMenuBarVisibility(false);
+    win.loadFile("index.html");
+
+    win.webContents.on('did-finish-load', () => {
+      console.log('Window loaded successfully');
+      win.webContents.setZoomFactor(1);
+    });
+
+    win.on('error', (error) => {
+      console.error('Window error:', error);
+    });
+  } catch (error) {
+    console.error('Failed to create window:', error);
+    app.quit();
+  }
 }
-
-// Регистрируем протокол для загрузки локальных ресурсов
-// app.whenReady().then(() => {
-//   protocol.registerFileProtocol('local', (request, callback) => {
-//     const url = request.url.substr(8)    // Убираем 'local://' из начала URL
-//     const resolvedPath = path.join(config.stylesDir, url)
-//     callback({ path: path.normalize(resolvedPath) })
-//   })
-
-//   createWindow()
-// })
 
 // Обработчик для получения списка стилей из папки styles
 ipcMain.handle("get-styles", async () => {
@@ -141,23 +145,33 @@ ipcMain.on("print-photo", async (event, data) => {
 })
 
 async function addLogoToPdf(tempImagePath, tempPdfPath) {
-  const pdfDoc = await PDFDocument.create()
-  const page = pdfDoc.addPage()
+  console.log('Adding logo to PDF...');
+  try {
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage();
 
-  const imageBytes = fs.readFileSync(tempImagePath)
-  const jpgImage = await pdfDoc.embedJpg(imageBytes)
-  const { width, height } = jpgImage.scale(1)
-  page.setSize(width, height)
-  page.drawImage(jpgImage, {
-    x: 0,
-    y: 0,
-    width: width,
-    height: height,
-  })
+    console.log('Reading image file...');
+    const imageBytes = fs.readFileSync(tempImagePath);
+    const jpgImage = await pdfDoc.embedJpg(imageBytes);
+    
+    const { width, height } = jpgImage.scale(1);
+    console.log(`Image dimensions: ${width}x${height}`);
+    
+    page.setSize(width, height);
+    page.drawImage(jpgImage, {
+      x: 0,
+      y: 0,
+      width: width,
+      height: height,
+    });
 
-  const pdfBytes = await pdfDoc.save()
-  fs.writeFileSync(tempPdfPath, pdfBytes)
-  console.log(`PDF file saved: ${tempPdfPath}`)
+    const pdfBytes = await pdfDoc.save();
+    fs.writeFileSync(tempPdfPath, pdfBytes);
+    console.log(`PDF created successfully: ${tempPdfPath}`);
+  } catch (error) {
+    console.error('Failed to create PDF:', error);
+    throw error;
+  }
 }
 
 app.whenReady().then(createWindow)
@@ -165,3 +179,15 @@ app.whenReady().then(createWindow)
 app.on("window-all-closed", () => {
   app.quit()
 })
+
+app.on('error', (error) => {
+  console.error('Application error:', error);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception:', error);
+});
+
+process.on('unhandledRejection', (error) => {
+  console.error('Unhandled rejection:', error);
+});

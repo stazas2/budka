@@ -86,14 +86,20 @@ function generateFileName() {
 
 // Функция сохранения изображения в формате JPG
 function saveImage(folderType, base64Image) {
-  const { inputDir, outputDir } = createDateFolders() // Создаем папки с датой
-
-  const folderPath = folderType === "input" ? inputDir : outputDir
-  const fileName = generateFileName()
-  const filePath = path.join(folderPath, fileName)
-  const imageData = base64Image.replace(/^data:image\/\w+;base64,/, "")
-  fs.writeFileSync(filePath, imageData, "base64")
-  console.log(`Image saved to ${filePath}`)
+  console.log(`Saving ${folderType} image...`);
+  try {
+    const { inputDir, outputDir } = createDateFolders();
+    const folderPath = folderType === "input" ? inputDir : outputDir;
+    const fileName = generateFileName();
+    const filePath = path.join(folderPath, fileName);
+    
+    const imageData = base64Image.replace(/^data:image\/\w+;base64,/, "");
+    fs.writeFileSync(filePath, imageData, "base64");
+    console.log(`Image saved successfully to ${filePath}`);
+  } catch (error) {
+    console.error(`Failed to save ${folderType} image:`, error);
+    throw error;
+  }
 }
 
 // Функция для получения доступных стилей
@@ -251,41 +257,38 @@ async function findBestResolution() {
 
 // Используем найденное разрешение при запуске камеры
 async function startCamera() {
-  const videoContainer = document.querySelector(".video-container")
+  console.log('Attempting to start camera...');
+  const videoContainer = document.querySelector(".video-container");
 
   try {
-    // Показываем загрузчик
-    videoContainer.classList.add("loading")
+    videoContainer.classList.add("loading");
+    const bestResolution = await findBestResolution();
+    console.log(`Using resolution: ${bestResolution.width}x${bestResolution.height}`);
 
-    const bestResolution = await findBestResolution()
     const stream = await navigator.mediaDevices.getUserMedia({
       video: {
         width: bestResolution.width,
         height: bestResolution.height,
       },
-    })
+    });
 
-    videoStream = stream
-    video.srcObject = stream
+    videoStream = stream;
+    video.srcObject = stream;
 
-    // Ждем, пока видео действительно загрузится
     await new Promise((resolve) => {
       video.onloadedmetadata = () => {
-        cameraInitialized = true
-        resolve()
-      }
-    })
+        cameraInitialized = true;
+        console.log('Camera metadata loaded successfully');
+        resolve();
+      };
+    });
 
-    // Скрываем загрузчик
-    videoContainer.classList.remove("loading")
-    console.log(
-      `Camera initialized with resolution ${bestResolution.width}x${bestResolution.height}`
-    )
+    videoContainer.classList.remove("loading");
+    console.log('Camera started successfully');
   } catch (error) {
-    console.error("Failed to start camera:", error)
-    // Скрываем загрузчик в случае ошибки
-    videoContainer.classList.remove("loading")
-    throw error
+    console.error('Camera initialization failed:', error);
+    videoContainer.classList.remove("loading");
+    throw error;
   }
 }
 
@@ -328,7 +331,7 @@ function beginCountdown() {
     if (countdown > 0) {
       countdownElement.textContent = countdown
       backButton.style.opacity = "1"
-      // Блокируем кнопку "Назад" за 2 секунды до конца
+      // Бл��кируем кнопку "Назад" за 2 секунды до конца
       if (countdown <= 2 && backButton) {
         backButton.disabled = true
         backButton.style.opacity = "0.5"
@@ -343,54 +346,69 @@ function beginCountdown() {
 
 // Функция для создания снимка
 function takePicture() {
-  const context = canvas.getContext("2d")
-  const rotationAngle = config.send_image_rotation || 0
+  console.log('Taking picture...');
+  try {
+    const context = canvas.getContext("2d");
+    const rotationAngle = config.send_image_rotation || 0;
+    console.log(`Applying rotation: ${rotationAngle} degrees`);
 
-  // Определяем размеры для canvas в зависимости от угла поворота
-  if (rotationAngle === 90 || rotationAngle === 270) {
-    canvas.width = video.videoHeight
-    canvas.height = video.videoWidth
-  } else {
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
+    // Определяем размеры для canvas в зависимости от угла поворота
+    if (rotationAngle === 90 || rotationAngle === 270) {
+      canvas.width = video.videoHeight
+      canvas.height = video.videoWidth
+    } else {
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+    }
+
+    // Очищаем canvas перед рисованием
+    context.clearRect(0, 0, canvas.width, canvas.height)
+
+    // Поворачиваем и рисуем изображение
+    context.save()
+    context.translate(canvas.width / 2, canvas.height / 2)
+    context.rotate((rotationAngle * Math.PI) / 180)
+
+    // Рисуем изображение в зависимости от поворота
+    if (rotationAngle === 90 || rotationAngle === 270) {
+      context.drawImage(
+        video,
+        -video.videoWidth / 2,
+        -video.videoHeight / 2,
+        video.videoWidth,
+        video.videoHeight
+      )
+    } else {
+      context.drawImage(
+        video,
+        -canvas.width / 2,
+        -canvas.height / 2,
+        canvas.width,
+        canvas.height
+      )
+    }
+
+    //? Восстанавливаем контекст
+    context.restore()
+    stopCamera()
+
+    // Получаем данные изображения и сохраняем их
+    const imageData = canvas.toDataURL("image/jpeg", 1.0)
+    console.log('Picture captured successfully');
+    
+    try {
+      saveImage("input", imageData);
+      console.log('Input image saved successfully');
+    } catch (error) {
+      console.error('Failed to save input image:', error);
+    }
+
+    sendImageToServer(imageData);
+  } catch (error) {
+    console.error('Failed to take picture:', error);
+    alert('Failed to take picture. Please try again.');
+    showScreen("style-screen");
   }
-
-  // Очищаем canvas перед рисованием
-  context.clearRect(0, 0, canvas.width, canvas.height)
-
-  // Поворачиваем и рисуем изображение
-  context.save()
-  context.translate(canvas.width / 2, canvas.height / 2)
-  context.rotate((rotationAngle * Math.PI) / 180)
-
-  // Рисуем изображение в зависимости от поворота
-  if (rotationAngle === 90 || rotationAngle === 270) {
-    context.drawImage(
-      video,
-      -video.videoWidth / 2,
-      -video.videoHeight / 2,
-      video.videoWidth,
-      video.videoHeight
-    )
-  } else {
-    context.drawImage(
-      video,
-      -canvas.width / 2,
-      -canvas.height / 2,
-      canvas.width,
-      canvas.height
-    )
-  }
-
-  context.restore()
-
-  stopCamera()
-
-  // Получаем данные изображения и сохраняем их
-  const imageData = canvas.toDataURL("image/jpeg", 1.0)
-  saveImage("input", imageData)
-
-  sendImageToServer(imageData)
 }
 
 // Отправка изображения на сервер
@@ -622,7 +640,7 @@ function getRandomImageFromStyleFolder(style) {
     const files = fs
       .readdirSync(styleFolderPath)
       .filter((file) => /\.(jpg|jpeg|png)$/i.test(file))
-      .filter((file) => file !== `#${style}.jpg`)
+      .filter((file) => file !== `1${style}.jpg`)
 
     if (files.length === 0) {
       console.warn(`No images found in the folder for style: ${style}`)
