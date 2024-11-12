@@ -27,8 +27,7 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle, rgba(255, 255, 255, var(--bg-opacity, 0.8)), transparent 30%),
-    radial-gradient(circle, rgba(0, 0, 0, 0.05), transparent 50%);
+  background: linear-gradient(to bottom right, rgba(255, 255, 255, var(--bg-opacity, 0.8)), rgba(0, 0, 0, 0.05));
   backdrop-filter: blur(25px);
   animation: smoothGradientShift 20s ease-in-out infinite alternate;
   z-index: -1;
@@ -44,6 +43,39 @@ body::before {
     background-position: 0% 50%;
   }
 }
+
+body::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 300%;
+  height: 300%;
+  background: radial-gradient(circle, rgba(255, 100, 100, 0.3), transparent 50%),
+              radial-gradient(circle, rgba(100, 200, 255, 0.3), transparent 50%),
+              radial-gradient(circle, rgba(150, 255, 100, 0.3), transparent 50%);
+  background-size: 25% 25%;
+  background-position: 0 0, 50% 50%, 100% 100%;
+  animation: rotateAndPulse 20s infinite ease-in-out;
+  z-index: -2;
+}
+
+@keyframes rotateAndPulse {
+  0% {
+    background-position: 0 0, 50% 50%, 100% 100%;
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    background-position: 100% 0, 0 100%, 50% 50%;
+    transform: scale(1.1) rotate(180deg);
+  }
+  100% {
+    background-position: 0 100%, 100% 0, 50% 50%;
+    transform: scale(1) rotate(360deg);
+  }
+}
+
+
 .screen {
   display: none;
   padding: 20px;
@@ -544,10 +576,6 @@ body.dark .back-button {
   color: #fff;
 }
 
-body.dark #theme-switcher {
-  background: rgba(0, 0, 0, 0.2);
-  color: #fff;
-}
 
 body.dark .invert-image {
   filter: invert(0);
@@ -772,45 +800,7 @@ body.dark .invert-image {
   justify-content: space-between;
 }
 
-body::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 300%;
-  height: 300%;
-  background: radial-gradient(circle, rgba(255, 165, 0, 0.2), transparent 50%),
-    radial-gradient(circle, rgba(188, 174, 255, 0.2), transparent 50%),
-    radial-gradient(circle, rgba(0, 255, 255, 0.2), transparent 50%);
-  background-size: 25% 25%;
-  background-position:
-    0 0,
-    50% 50%,
-    100% 100%;
-  animation: backgroundAnimation 30s infinite linear;
-  z-index: -2;
-}
 
-@keyframes backgroundAnimation {
-  0% {
-    background-position:
-      0 0,
-      50% 50%,
-      100% 100%;
-  }
-  50% {
-    background-position:
-      50% 50%,
-      0 0,
-      50% 50%;
-  }
-  100% {
-    background-position:
-      100% 100%,
-      50% 50%,
-      0 0;
-  }
-}
 
 #fullscreen-toggle {
   z-index: 2;

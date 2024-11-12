@@ -308,6 +308,7 @@ function beginCountdown() {
         countdown--;
         if (countdown > 0) {
             countdownElement.textContent = countdown;
+            backButton.style.opacity = '1';
             // Блокируем кнопку "Назад" за 2 секунды до конца
             if (countdown <= 2 && backButton) {
                 backButton.disabled = true;
@@ -445,9 +446,9 @@ function sendImageToServer(imageData) {
 // Обработка ответа от сервера
 async function handleServerResponse(responseData) {
     console.log('handleServerResponse() function called');
-    progressBar.style.display = 'none';
-    progressBarFill.style.width = '0%';
-    //! Убраны проценты
+    //! Удалены эти строки для плавного перехода
+    // progressBar.style.display = 'none';
+    // progressBarFill.style.width = '0%';
     progressBarFill.textContent = '';
 
     const imagesArray = Object.values(responseData)[0];
