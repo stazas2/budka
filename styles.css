@@ -103,7 +103,7 @@ body::after {
   opacity: 1; /* Показываем активный экран */
 }
 #style-buttons {
-  display: grid;
+  display: flex;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 10px;
   width: 100%;
@@ -558,27 +558,140 @@ body.light .invert-image {
   filter: invert(1);
 }
 
+body.light #camera-loader .loader-spinner {
+  border-color: rgba(0, 0, 0, 0.3);
+  border-top-color: #000;
+  animation: spin-light 1s ease-in-out infinite;
+}
+
+body.light #camera-loader .loader-text {
+  color: #000;
+}
+
 /* Стили для темной темы */
 body.dark {
   --bg-color: var(--dark-bg-color);
   --bg-image: var(--dark-bg-image);
   --bg-opacity: var(--dark-bg-opacity);
-  --text-color: #fff;
+  --text-color: #E6E6FA;
 }
 
 body.dark .button {
   background: rgba(0, 0, 0, 0.2);
-  color: #fff;
+  color: #E6E6FA;
 }
 
 body.dark .back-button {
   background: rgba(0, 0, 0, 0.2);
-  color: #fff;
+  color: #E6E6FA;
 }
-
 
 body.dark .invert-image {
   filter: invert(0);
+}
+
+body.dark #camera-loader .loader-spinner {
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  animation: spin-dark 1s ease-in-out infinite;
+}
+
+body.dark #camera-loader .loader-text {
+  color: #E6E6FA;
+}
+
+@keyframes spin-light {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* Стили для светлой темы */
+body.light {
+  --bg-color: var(--light-bg-color);
+  --bg-image: var(--light-bg-image);
+  --bg-opacity: var(--light-bg-opacity);
+  --text-color: #333;
+}
+
+body.light .button {
+  background: rgba(255, 255, 255, 0.2);
+  color: #000;
+}
+
+body.light .back-button {
+  background: rgba(255, 255, 255, 0.2);
+  color: #000;
+}
+
+body.light #theme-switcher {
+  background: rgba(0, 0, 0, 0.2);
+  color: #000;
+}
+
+body.light .invert-image {
+  filter: invert(1);
+}
+
+body.light #camera-loader .loader-spinner {
+  border-color: rgba(0, 0, 0, 0.3);
+  border-top-color: #000;
+  animation: spin-light 1s ease-in-out infinite;
+}
+
+body.light #camera-loader .loader-text {
+  color: #000;
+}
+
+/* Стили для темной темы */
+body.dark {
+  --bg-color: var(--dark-bg-color);
+  --bg-image: var(--dark-bg-image);
+  --bg-opacity: var(--dark-bg-opacity);
+  --text-color: #E6E6FA;
+}
+
+body.dark .button {
+  background: rgba(0, 0, 0, 0.2);
+  color: #E6E6FA;
+}
+
+body.dark .back-button {
+  background: rgba(0, 0, 0, 0.2);
+  color: #E6E6FA;
+}
+
+body.dark .invert-image {
+  filter: invert(0);
+}
+
+body.dark #camera-loader .loader-spinner {
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  animation: spin-dark 1s ease-in-out infinite;
+}
+
+body.dark #camera-loader .loader-text {
+  color: #E6E6FA;
+}
+
+
+@keyframes spin-dark {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Стили для загрузчика камеры в темной теме */
+body.dark #camera-loader .loader-spinner {
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  animation: spin-dark 1s ease-in-out infinite;
+}
+
+body.dark #camera-loader .loader-text {
+  color: #E6E6FA;
 }
 
 /* Стили для заставки */
@@ -857,28 +970,11 @@ body.light #camera-loader .loader-text {
   color: #000;
 }
 
-@keyframes spin-light {
-  to {
-    transform: rotate(360deg);
-  }
-}
 
-/* Стили для загрузчика камеры в темной теме */
-body.dark #camera-loader .loader-spinner {
-  border-color: rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
-  animation: spin-dark 1s ease-in-out infinite;
-}
 
-body.dark #camera-loader .loader-text {
-  color: #fff;
-}
 
-@keyframes spin-dark {
-  to {
-    transform: rotate(360deg);
-  }
-}
+
+
 
 /* Добавляем стиль для скрытия видео во время загрузки */
 .video-container.loading #video {
