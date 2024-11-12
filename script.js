@@ -233,7 +233,12 @@ async function findBestResolution() {
 
 // Используем найденное разрешение при запуске камеры
 async function startCamera() {
+    const videoContainer = document.querySelector('.video-container');
+    
     try {
+        // Показываем загрузчик
+        videoContainer.classList.add('loading');
+        
         const bestResolution = await findBestResolution();
         const stream = await navigator.mediaDevices.getUserMedia({
             video: {
@@ -241,15 +246,29 @@ async function startCamera() {
                 height: bestResolution.height
             }
         });
+        
         videoStream = stream;
         video.srcObject = stream;
-        cameraInitialized = true;
+        
+        // Ждем, пока видео действительно загрузится
+        await new Promise((resolve) => {
+            video.onloadedmetadata = () => {
+                cameraInitialized = true;
+                resolve();
+            };
+        });
+        
+        // Скрываем загрузчик
+        videoContainer.classList.remove('loading');
         console.log(`Camera initialized with resolution ${bestResolution.width}x${bestResolution.height}`);
+        
     } catch (error) {
         console.error("Failed to start camera:", error);
+        // Скрываем загрузчик в случае ошибки
+        videoContainer.classList.remove('loading');
+        throw error;
     }
 }
-
 
 // Остановка камеры
 function stopCamera() {

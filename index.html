@@ -94,6 +94,11 @@
       <h1></h1>
       <!-- Заголовок будет установлен из config.json -->
       <div class="video-container">
+        <!-- Добавляем загрузчик -->
+        <div id="camera-loader">
+          <div class="loader-spinner"></div>
+          <div class="loader-text">Инициализация камеры...</div>
+        </div>
         <video id="video" autoplay muted playsinline></video>
         <div id="countdown"></div>
       </div>
