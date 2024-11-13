@@ -10,13 +10,8 @@ const { loadConfig } = require("./utils/configLoader")
 // Загружаем конфигурацию после импорта необходимых модулей
 const config = loadConfig()
 
-// const resolutions = [
-//     { width: 1920, height: 1280 }, // Full HD
-//     { width: 1080, height: 720 },  // HD
-//     { width: 640, height: 480 }    // SD
-//  ];
 function createWindow() {
-  console.log('Creating main window...');
+  console.log("Creating main window...")
   try {
     const win = new BrowserWindow({
       width: 1920,
@@ -26,22 +21,22 @@ function createWindow() {
         contextIsolation: false,
       },
       autoHideMenuBar: true,
-    });
+    })
 
-    win.setMenuBarVisibility(false);
-    win.loadFile("index.html");
+    win.setMenuBarVisibility(false)
+    win.loadFile("index.html")
 
-    win.webContents.on('did-finish-load', () => {
-      console.log('Window loaded successfully');
-      win.webContents.setZoomFactor(1);
-    });
+    win.webContents.on("did-finish-load", () => {
+      console.log("Window loaded successfully")
+      win.webContents.setZoomFactor(1)
+    })
 
-    win.on('error', (error) => {
-      console.error('Window error:', error);
-    });
+    win.on("error", (error) => {
+      console.error("Window error:", error)
+    })
   } catch (error) {
-    console.error('Failed to create window:', error);
-    app.quit();
+    console.error("Failed to create window:", error)
+    app.quit()
   }
 }
 
@@ -67,8 +62,6 @@ ipcMain.handle("get-styles", async () => {
     for (const folder of styleFolders) {
       const folderPath = path.join(stylesDir, folder)
       const files = fs.readdirSync(folderPath, { encoding: "utf8" })
-      // todo
-      // Исключаем авы, начинающиеся на 1
       const imageFiles = files.filter(
         (file) => /\.(jpg|jpeg|png)$/i.test(file) && !file.startsWith("1")
       )
@@ -144,33 +137,108 @@ ipcMain.on("print-photo", async (event, data) => {
   }
 })
 
-async function addLogoToPdf(tempImagePath, tempPdfPath) {
-  console.log('Adding logo to PDF...');
+async function addLogoToPdf(tempImagePath, tempPdfPath, logoPath, logoPosition, offset) {
+  console.log("Adding logo to PDF...")
   try {
-    const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage();
+    const pdfDoc = await PDFDocument.create()
+    const page = pdfDoc.addPage()
 
-    console.log('Reading image file...');
-    const imageBytes = fs.readFileSync(tempImagePath);
-    const jpgImage = await pdfDoc.embedJpg(imageBytes);
-    
-    const { width, height } = jpgImage.scale(1);
-    console.log(`Image dimensions: ${width}x${height}`);
-    
-    page.setSize(width, height);
-    page.drawImage(jpgImage, {
+    console.log("Reading image file...")
+    const imageBytes = fs.readFileSync(tempImagePath)
+    const extension = path.extname(tempImagePath).toLowerCase()
+
+    let embeddedImage
+    if (extension === '.jpg' || extension === '.jpeg') {
+      embeddedImage = await pdfDoc.embedJpg(imageBytes)
+    } else if (extension === '.png') {
+      embeddedImage = await pdfDoc.embedPng(imageBytes)
+    } else {
+      throw new Error(`Unsupported image format: ${extension}`)
+    }
+
+    const { width, height } = embeddedImage.scale(1)
+    console.log(`Image dimensions: ${width}x${height}`)
+
+    page.setSize(width, height)
+    page.drawImage(embeddedImage, {
       x: 0,
       y: 0,
       width: width,
       height: height,
-    });
+    })
 
-    const pdfBytes = await pdfDoc.save();
-    fs.writeFileSync(tempPdfPath, pdfBytes);
-    console.log(`PDF created successfully: ${tempPdfPath}`);
+    // Добавление логотипа
+    if (fs.existsSync(logoPath)) {
+      const logoBytes = fs.readFileSync(logoPath)
+      const logoExtension = path.extname(logoPath).toLowerCase()
+      let embeddedLogo
+      if (logoExtension === '.jpg' || logoExtension === '.jpeg') {
+        embeddedLogo = await pdfDoc.embedJpg(logoBytes)
+      } else if (logoExtension === '.png') {
+        embeddedLogo = await pdfDoc.embedPng(logoBytes)
+      } else {
+        console.warn(`Unsupported logo format: ${logoExtension}. Skipping logo.`)
+      }
+
+      if (embeddedLogo) {
+        const { width: logoWidth, height: logoHeight } = embeddedLogo.scale(1)
+        let x = 0
+        let y = 0
+
+        // Определение позиции логотипа в зависимости от logoPosition
+        switch (logoPosition) {
+          case "top-left":
+            x = offset
+            y = height - logoHeight - offset
+            break
+          case "top-right":
+            x = width - logoWidth - offset
+            y = height - logoHeight - offset
+            break
+          case "bottom-left":
+            x = offset
+            y = offset
+            break
+          case "bottom-right":
+            x = width - logoWidth - offset
+            y = offset
+            break
+          case "center":
+            x = (width - logoWidth) / 2
+            y = (height - logoHeight) / 2
+            break
+          case "center-top":
+            x = (width - logoWidth) / 2
+            y = height - logoHeight - offset
+            break
+          case "center-bottom":
+            x = (width - logoWidth) / 2
+            y = offset
+            break
+          default:
+            console.warn(`Invalid logo position: ${logoPosition}. Defaulting to bottom-right.`)
+            x = width - logoWidth - offset
+            y = offset
+            break
+        }
+
+        page.drawImage(embeddedLogo, {
+          x: x,
+          y: y,
+          width: logoWidth,
+          height: logoHeight,
+        })
+      }
+    } else {
+      console.warn("Logo file not found. Skipping logo overlay.")
+    }
+
+    const pdfBytes = await pdfDoc.save()
+    fs.writeFileSync(tempPdfPath, pdfBytes)
+    console.log(`PDF created successfully: ${tempPdfPath}`)
   } catch (error) {
-    console.error('Failed to create PDF:', error);
-    throw error;
+    console.error("Failed to create PDF:", error)
+    throw error
   }
 }
 
@@ -180,14 +248,15 @@ app.on("window-all-closed", () => {
   app.quit()
 })
 
-app.on('error', (error) => {
-  console.error('Application error:', error);
-});
+// Обработчик ошибок приложения
+app.on("error", (error) => {
+  console.error("Application error:", error)
+})
 
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught exception:', error);
-});
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught exception:", error)
+})
 
-process.on('unhandledRejection', (error) => {
-  console.error('Unhandled rejection:', error);
-});
+process.on("unhandledRejection", (error) => {
+  console.error("Unhandled rejection:", error)
+})

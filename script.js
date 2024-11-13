@@ -38,19 +38,23 @@ const config = loadConfig()
 
 // Применяем вращение для элементов на основе конфигурации
 function applyRotationStyles() {
-  const videoElement = document.getElementById("video")
-  const resultImage = document.getElementById("result-image")
+  try {
+    const videoElement = document.getElementById("video")
+    const resultImage = document.getElementById("result-image")
 
-  if (videoElement) {
-    videoElement.style.transform = `rotate(${config.camera_rotation}deg)`
-    console.log(`Camera rotation set to ${config.camera_rotation} degrees.`)
-  }
+    if (videoElement) {
+      videoElement.style.transform = `rotate(${config.camera_rotation}deg)`
+      console.log(`Camera rotation set to ${config.camera_rotation} degrees.`)
+    }
 
-  if (resultImage) {
-    resultImage.style.transform = `rotate(${config.final_image_rotation}deg)`
-    console.log(
-      `Final image rotation set to ${config.final_image_rotation} degrees.`
-    )
+    if (resultImage) {
+      resultImage.style.transform = `rotate(${config.final_image_rotation}deg)`
+      console.log(
+        `Final image rotation set to ${config.final_image_rotation} degrees.`
+      )
+    }
+  } catch (error) {
+    console.error("Error in applyRotationStyles:", error);
   }
 }
 
@@ -59,29 +63,39 @@ applyRotationStyles()
 
 // Функция для создания папок с датой и input/output, если их еще нет
 function createDateFolders() {
-  const dateFolder = path.join(
-    baseDir,
-    new Date().toISOString().slice(0, 10).replace(/-/g, "_")
-  )
-  const inputDir = path.join(dateFolder, "input")
-  const outputDir = path.join(dateFolder, "output")
+  try {
+    const dateFolder = path.join(
+      baseDir,
+      new Date().toISOString().slice(0, 10).replace(/-/g, "_")
+    )
+    const inputDir = path.join(dateFolder, "input")
+    const outputDir = path.join(dateFolder, "output")
 
-  // Создаем все необходимые папки рекурсивно
-  ;[baseDir, dateFolder, inputDir, outputDir].forEach((dir) => {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true })
-    }
-  })
+    // Создаем все необходимые папки рекурсивно
+    ;[baseDir, dateFolder, inputDir, outputDir].forEach((dir) => {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true })
+      }
+    })
 
-  return { inputDir, outputDir }
+    return { inputDir, outputDir }
+  } catch (error) {
+    console.error("Error in createDateFolders:", error);
+    throw error;
+  }
 }
 
 // Генерация имени файла
 function generateFileName() {
-  const date = new Date()
-  const timeString = `${date.getHours()}_${date.getMinutes()}_${date.getSeconds()}`
-  const randomString = Math.random().toString(36).substring(2, 6) // Случайные символы
-  return `${timeString}_${randomString}.jpg`
+  try {
+    const date = new Date()
+    const timeString = `${date.getHours()}_${date.getMinutes()}_${date.getSeconds()}`
+    const randomString = Math.random().toString(36).substring(2, 6) // Случайные символы
+    return `${timeString}_${randomString}.jpg`
+  } catch (error) {
+    console.error("Error in generateFileName:", error);
+    throw error;
+  }
 }
 
 // Функция сохранения изображения в формате JPG
@@ -97,71 +111,80 @@ function saveImage(folderType, base64Image) {
     fs.writeFileSync(filePath, imageData, "base64");
     console.log(`Image saved successfully to ${filePath}`);
   } catch (error) {
-    console.error(`Failed to save ${folderType} image:`, error);
+    console.error(`Error in saveImage (${folderType}):`, error);
     throw error;
   }
 }
 
 // Функция для получения доступных стилей
 function fetchStyles() {
-  ipcRenderer
-    .invoke("get-styles")
-    .then((styles) => {
-      console.log("Received styles:", styles)
-      initStyleButtons(styles)
-    })
-    .catch((error) => {
-      console.error("Error fetching styles:", error)
-      alert("Failed to load styles. Please try again later.")
-    })
+  try {
+    ipcRenderer
+      .invoke("get-styles")
+      .then((styles) => {
+        console.log("Received styles:", styles)
+        initStyleButtons(styles)
+      })
+      .catch((error) => {
+        console.error("Error fetching styles:", error)
+        alert("Failed to load styles. Please try again later.")
+      })
+  } catch (error) {
+    console.error("Error in fetchStyles:", error);
+  }
 }
 
 // Инициализация кнопок стилей
 function initStyleButtons(parsedStyles) {
-  if (!styleButtonsContainer) {
-    console.error("Element style-buttons not found.")
-    return
-  }
-  styleButtonsContainer.innerHTML = "" // Очистка предыдущих кнопок
+  try {
+    if (!styleButtonsContainer) {
+      console.error("Element style-buttons not found.")
+      return
+    }
+    styleButtonsContainer.innerHTML = "" // Очистка предыдущих кнопок
 
-  parsedStyles.forEach((style) => {
-    console.log("Adding style to UI:", style)
-    const button = document.createElement("div")
-    button.classList.add("button")
-    button.setAttribute("data-style", style.originalName)
+    parsedStyles.forEach((style) => {
+      console.log("Adding style to UI:", style)
+      const button = document.createElement("div")
+      button.classList.add("button")
+      button.setAttribute("data-style", style.originalName)
 
-    const img = document.createElement("img")
-    // Updated image path to include style folder
-    img.src = `${config.stylesDir}\\${style.originalName}\\1${
-      style.originalName
-    }${
-      style.displayName !== style.originalName ? ` (${style.displayName})` : ""
-    }.jpg`
-    console.log(img.src)
-    img.alt = style.displayName
+      const img = document.createElement("img")
+      // Формирование пути к изображению на основе displayName
+      const sanitizedDisplayName = style.displayName.replace(/\s*\(.*?\)/g, "").replace(/\s+/g, "_").replace(/[^\w\-]+/g, "")
+      img.src = `${config.stylesDir}\\${style.originalName}\\1${sanitizedDisplayName}.jpg`
+      console.log(img.src)
+      img.alt = style.displayName
 
-    const label = document.createElement("div")
-    label.textContent = style.displayName
+      const label = document.createElement("div")
+      // Если есть текст в скобках, использовать его
+      const match = style.displayName.match(/\(([^)]+)\)/)
+      label.textContent = match ? match[1] : style.displayName
 
-    button.appendChild(img)
-    button.appendChild(label)
+      button.appendChild(img)
+      button.appendChild(label)
+      console.log(`Style button created: ${style}`)
 
-    button.addEventListener("click", () => {
-      selectedStyle = style.originalName
-      console.log(`Style selected: ${selectedStyle}`)
-      showScreen("camera-screen") // Изменено с gender-screen на camera-screen
-      startCamera()
-        .then(() => {
-          startCountdown()
-        })
-        .catch((err) => {
-          alert("Unable to access the webcam.")
-          showScreen("style-screen")
-        })
+      button.addEventListener("click", () => {
+        // Изменение отображаемого названия
+        selectedStyle = style.originalName.replace(/\s*\(.*?\)/g, "")
+        console.log(`Style selected: ${selectedStyle}`)
+        showScreen("camera-screen") // Изменено с gender-screen на camera-screen
+        startCamera()
+          .then(() => {
+            startCountdown()
+          })
+          .catch((err) => {
+            alert("Unable to access the webcam.")
+            showScreen("style-screen")
+          })
+      })
+
+      styleButtonsContainer.appendChild(button)
     })
-
-    styleButtonsContainer.appendChild(button)
-  })
+  } catch (error) {
+    console.error("Error in initStyleButtons:", error);
+  }
 }
 
 fetchStyles()
@@ -179,48 +202,52 @@ genderItems.forEach((item) => {
 
 // Показать конкретный экран
 function showScreen(screenId) {
-  console.log(`Switching to screen: ${screenId}`)
-  document.querySelectorAll(".screen").forEach((screen) => {
-    screen.classList.remove("active")
-  })
+  try {
+    console.log(`Switching to screen: ${screenId}`)
+    document.querySelectorAll(".screen").forEach((screen) => {
+      screen.classList.remove("active")
+    })
 
-  const activeScreen = document.getElementById(screenId)
-  if (activeScreen) {
-    activeScreen.classList.add("active")
-    const backButton = activeScreen.querySelector(".back-button")
-    if (backButton) {
-      if (screenId === "splash-screen" || screenId === "processing-screen") {
-        // Убрали camera-screen из этого условия
-        backButton.disabled = true
-        backButton.style.display = "block"
-      } else if (screenId === "result-screen") {
-        backButton.style.display = "none"
-      } else {
-        backButton.disabled = false
-        backButton.style.display = "block"
+    const activeScreen = document.getElementById(screenId)
+    if (activeScreen) {
+      activeScreen.classList.add("active")
+      const backButton = activeScreen.querySelector(".back-button")
+      if (backButton) {
+        if (screenId === "splash-screen" || screenId === "processing-screen") {
+          // Убрали camera-screen из этого условия
+          backButton.disabled = true
+          backButton.style.display = "block"
+        } else if (screenId === "result-screen") {
+          backButton.style.display = "none"
+        } else {
+          backButton.disabled = false
+          backButton.style.display = "block"
+        }
       }
-    }
 
-    // Управляем видимостью кнопки переключения темы
-    if (screenId === "splash-screen" || screenId === "gender-screen") {
-      themeSwitcher.style.display = "block"
+      // Управляем видимостью кнопки переключения темы
+      if (screenId === "splash-screen" || screenId === "gender-screen") {
+        themeSwitcher.style.display = "block"
+      } else {
+        themeSwitcher.style.display = "none"
+      }
+
+      if (screenId === "result-screen") {
+        resultTitle.style.display = "block"
+      } else {
+        resultTitle.style.display = "none"
+      }
     } else {
-      themeSwitcher.style.display = "none"
+      console.error(`Screen with ID "${screenId}" not found.`)
     }
 
-    if (screenId === "result-screen") {
-      resultTitle.style.display = "block"
-    } else {
-      resultTitle.style.display = "none"
+    if (screenId !== "camera-screen" && countdownInterval) {
+      clearInterval(countdownInterval)
+      countdownInterval = null
+      countdownElement.textContent = ""
     }
-  } else {
-    console.error(`Screen with ID "${screenId}" not found.`)
-  }
-
-  if (screenId !== "camera-screen" && countdownInterval) {
-    clearInterval(countdownInterval)
-    countdownInterval = null
-    countdownElement.textContent = ""
+  } catch (error) {
+    console.error(`Error in showScreen (${screenId}):`, error);
   }
 }
 
@@ -231,89 +258,107 @@ const resolutions = [
 ]
 
 async function findBestResolution() {
-  for (let resolution of resolutions) {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { exact: resolution.width },
-          height: { exact: resolution.height },
-        },
-      })
-      // Если камера поддерживает разрешение, останавливаем поток и возвращаем разрешение
-      stream.getTracks().forEach((track) => track.stop())
-      console.log(
-        `Supported resolution found: ${resolution.width}x${resolution.height}`
-      )
-      return resolution
-    } catch (error) {
-      console.log(
-        `Resolution ${resolution.width}x${resolution.height} not supported.`
-      )
-      // Продолжаем к следующему разрешению
+  try {
+    for (let resolution of resolutions) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { exact: resolution.width },
+            height: { exact: resolution.height },
+          },
+        })
+        // Если камера поддерживает разрешение, останавливаем поток и возвращаем разрешение
+        stream.getTracks().forEach((track) => track.stop())
+        console.log(
+          `Supported resolution found: ${resolution.width}x${resolution.height}`
+        )
+        return resolution
+      } catch (error) {
+        console.log(
+          `Resolution ${resolution.width}x${resolution.height} not supported.`
+        )
+        // Продолжаем к следующему разрешению
+      }
     }
+    throw new Error("No supported resolutions found.")
+  } catch (error) {
+    console.error("Error in findBestResolution:", error);
+    throw error;
   }
-  throw new Error("No supported resolutions found.")
 }
 
 // Используем найденное разрешение при запуске камеры
 async function startCamera() {
-  console.log('Attempting to start camera...');
-  const videoContainer = document.querySelector(".video-container");
-
   try {
-    videoContainer.classList.add("loading");
-    const bestResolution = await findBestResolution();
-    console.log(`Using resolution: ${bestResolution.width}x${bestResolution.height}`);
+    console.log('Attempting to start camera...');
+    const videoContainer = document.querySelector(".video-container");
 
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        width: bestResolution.width,
-        height: bestResolution.height,
-      },
-    });
+    try {
+      videoContainer.classList.add("loading");
+      const bestResolution = await findBestResolution();
+      console.log(`Using resolution: ${bestResolution.width}x${bestResolution.height}`);
 
-    videoStream = stream;
-    video.srcObject = stream;
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: bestResolution.width,
+          height: bestResolution.height,
+        },
+      });
 
-    await new Promise((resolve) => {
-      video.onloadedmetadata = () => {
-        cameraInitialized = true;
-        console.log('Camera metadata loaded successfully');
-        resolve();
-      };
-    });
+      videoStream = stream;
+      video.srcObject = stream;
 
-    videoContainer.classList.remove("loading");
-    console.log('Camera started successfully');
+      await new Promise((resolve) => {
+        video.onloadedmetadata = () => {
+          cameraInitialized = true;
+          console.log('Camera metadata loaded successfully');
+          resolve();
+        };
+      });
+
+      videoContainer.classList.remove("loading");
+      console.log('Camera started successfully');
+    } catch (error) {
+      console.error('Camera initialization failed:', error);
+      videoContainer.classList.remove("loading");
+      throw error;
+    }
   } catch (error) {
-    console.error('Camera initialization failed:', error);
-    videoContainer.classList.remove("loading");
+    console.error("Error in startCamera:", error);
     throw error;
   }
 }
 
 // Остановка камеры
 function stopCamera() {
-  if (videoStream) {
-    videoStream.getTracks().forEach((track) => track.stop())
-    video.srcObject = null
-    videoStream = null
-    cameraInitialized = false
-    console.log("Camera stopped")
+  try {
+    if (videoStream) {
+      videoStream.getTracks().forEach((track) => track.stop())
+      video.srcObject = null
+      videoStream = null
+      cameraInitialized = false
+      console.log("Camera stopped")
+    }
+  } catch (error) {
+    console.error("Error in stopCamera:", error);
   }
 }
 
 // Запуск обратного отсчета
 function startCountdown() {
-  if (!cameraInitialized) {
-    alert("Camera is not ready. Please try again.")
-    showScreen("style-screen")
-    return
-  }
-  if (video.readyState >= 1) {
-    beginCountdown()
-  } else {
-    video.onloadedmetadata = beginCountdown
+  try {
+    if (!cameraInitialized) {
+      alert("Camera is not ready. Please try again.")
+      showScreen("style-screen")
+      return
+    }
+    if (video.readyState >= 1) {
+      beginCountdown()
+    } else {
+      video.onloadedmetadata = beginCountdown
+    }
+  } catch (error) {
+    console.error("Error in startCountdown:", error);
   }
 }
 
@@ -322,90 +367,100 @@ let countdownInterval // Добавляем глобальную перемен�
 
 // Изменим функцию beginCountdown
 function beginCountdown() {
-  let countdown = config.prePhotoTimer || 5 // Значение по умолчанию - 5, если нет в конфиге
-  const backButton = document.querySelector("#camera-screen .back-button")
-  countdownElement.textContent = countdown
-  // Сохраняем интервал в переменную
-  countdownInterval = setInterval(() => {
-    countdown--
-    if (countdown > 0) {
-      countdownElement.textContent = countdown
-      backButton.style.opacity = "1"
-      // Бл��кируем кнопку "Назад" за 2 секунды до конца
-      if (countdown <= 2 && backButton) {
-        backButton.disabled = true
-        backButton.style.opacity = "0.5"
+  try {
+    let countdown = config.prePhotoTimer || 5 // Значение по умолчанию - 5, если нет в конфиге
+    const backButton = document.querySelector("#camera-screen .back-button")
+    countdownElement.textContent = countdown
+    // Сохраняем интервал в переменную
+    countdownInterval = setInterval(() => {
+      countdown--
+      if (countdown > 0) {
+        countdownElement.textContent = countdown
+        backButton.style.opacity = "1"
+        // Блокируем кнопку "Назад" за 2 секунды до конца
+        if (countdown <= 2 && backButton) {
+          backButton.disabled = true
+          backButton.style.opacity = "0.5"
+        }
+      } else {
+        clearInterval(countdownInterval)
+        countdownElement.textContent = ""
+        takePicture()
       }
-    } else {
-      clearInterval(countdownInterval)
-      countdownElement.textContent = ""
-      takePicture()
-    }
-  }, 1000)
+    }, 1000)
+  } catch (error) {
+    console.error("Error in beginCountdown:", error);
+  }
 }
 
 // Функция для создания снимка
 function takePicture() {
-  console.log('Taking picture...');
   try {
-    const context = canvas.getContext("2d");
-    const rotationAngle = config.send_image_rotation || 0;
-    console.log(`Applying rotation: ${rotationAngle} degrees`);
-
-    // Определяем размеры для canvas в зависимости от угла поворота
-    if (rotationAngle === 90 || rotationAngle === 270) {
-      canvas.width = video.videoHeight
-      canvas.height = video.videoWidth
-    } else {
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-    }
-
-    // Очищаем canvas перед рисованием
-    context.clearRect(0, 0, canvas.width, canvas.height)
-
-    // Поворачиваем и рисуем изображение
-    context.save()
-    context.translate(canvas.width / 2, canvas.height / 2)
-    context.rotate((rotationAngle * Math.PI) / 180)
-
-    // Рисуем изображение в зависимости от поворота
-    if (rotationAngle === 90 || rotationAngle === 270) {
-      context.drawImage(
-        video,
-        -video.videoWidth / 2,
-        -video.videoHeight / 2,
-        video.videoWidth,
-        video.videoHeight
-      )
-    } else {
-      context.drawImage(
-        video,
-        -canvas.width / 2,
-        -canvas.height / 2,
-        canvas.width,
-        canvas.height
-      )
-    }
-
-    //? Восстанавливаем контекст
-    context.restore()
-    stopCamera()
-
-    // Получаем данные изображения и сохраняем их
-    const imageData = canvas.toDataURL("image/jpeg", 1.0)
-    console.log('Picture captured successfully');
-    
+    console.log('Taking picture...');
     try {
-      saveImage("input", imageData);
-      console.log('Input image saved successfully');
-    } catch (error) {
-      console.error('Failed to save input image:', error);
-    }
+      const context = canvas.getContext("2d");
+      const rotationAngle = config.send_image_rotation || 0;
+      console.log(`Applying rotation: ${rotationAngle} degrees`);
 
-    sendImageToServer(imageData);
+      // Определяем размеры для canvas в зависимости от угла поворота
+      if (rotationAngle === 90 || rotationAngle === 270) {
+        canvas.width = video.videoHeight
+        canvas.height = video.videoWidth
+      } else {
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
+      }
+
+      // Очищаем canvas перед рисованием
+      context.clearRect(0, 0, canvas.width, canvas.height)
+
+      // Поворачиваем и рисуем изображение
+      context.save()
+      context.translate(canvas.width / 2, canvas.height / 2)
+      context.rotate((rotationAngle * Math.PI) / 180)
+
+      // Рисуем изображение в зависимости от поворота
+      if (rotationAngle === 90 || rotationAngle === 270) {
+        context.drawImage(
+          video,
+          -video.videoWidth / 2,
+          -video.videoHeight / 2,
+          video.videoWidth,
+          video.videoHeight
+        )
+      } else {
+        context.drawImage(
+          video,
+          -canvas.width / 2,
+          -canvas.height / 2,
+          canvas.width,
+          canvas.height
+        )
+      }
+
+      //? Восстанавливаем контекст
+      context.restore()
+      stopCamera()
+
+      // Получаем данные изображения и сохраняем их
+      const imageData = canvas.toDataURL("image/jpeg", 1.0)
+      console.log('Picture captured successfully');
+      
+      try {
+        saveImage("input", imageData);
+        console.log('Input image saved successfully');
+      } catch (error) {
+        console.error('Failed to save input image:', error);
+      }
+
+      sendImageToServer(imageData);
+    } catch (error) {
+      console.error('Failed to take picture:', error);
+      alert('Failed to take picture. Please try again.');
+      showScreen("style-screen");
+    }
   } catch (error) {
-    console.error('Failed to take picture:', error);
+    console.error("Error in takePicture:", error);
     alert('Failed to take picture. Please try again.');
     showScreen("style-screen");
   }
@@ -413,216 +468,229 @@ function takePicture() {
 
 // Отправка изображения на сервер
 function sendImageToServer(imageData) {
-  console.log("sendImageToServer() function called")
-  showScreen("processing-screen")
-  const base64Image = imageData.split(",")[1]
+  try {
+    console.log("sendImageToServer() function called")
+    showScreen("processing-screen")
+    const base64Image = imageData.split(",")[1]
 
-  // Получаем случайное изображение для `Fon` из папки стиля
-  const fonImage = getRandomImageFromStyleFolder(selectedStyle)
-  const base64FonImage = fonImage ? fonImage.split(",")[1] : base64Image // Используем изображение с камеры, если `Fon` не найдено
+    // Получаем случайное изображение для `Fon` из папки стиля
+    const fonImage = getRandomImageFromStyleFolder(selectedStyle)
+    const base64FonImage = fonImage ? fonImage.split(",")[1] : base64Image // Используем изображение с камеры, если `Fon` не найдено
 
-  const data = {
-    mode: "style_sdxl",
-    style: selectedStyle,
-    params: {
-      Sex: selectedGender,
-      Face: base64Image,
-      Fon: base64FonImage,
-    },
-  }
-
-  const headers = {
-    Accept: "application/json",
-    Authorization: `Bearer fc612550-06e8-4be3-9191-0f97336d9966`,
-    "Content-Type": "application/json",
-  }
-
-  const fetchOptions = {
-    method: "POST",
-    headers: headers,
-    body: JSON.stringify(data),
-  }
-
-  // Сохраняем запрос в текстовый файл
-  const logFilePath = path.join("C:", "MosPhotoBooth", "request_log.txt")
-  const logContent = `Headers: ${JSON.stringify(
-    headers,
-    null,
-    2
-  )}\nData: ${JSON.stringify(data, null, 2)}`
-  fs.writeFileSync(logFilePath, logContent, "utf-8")
-  console.log(`Request saved to ${logFilePath}`)
-
-  function updateProgressBar(percent) {
-    progressBarFill.style.width = percent + "%"
-    progressPercentage.textContent = percent + "%"
-  }
-
-  progressBar.style.display = "block"
-  progressBarFill.style.width = "0%"
-  progressPercentage.textContent = "0%"
-
-  let progress = 0
-  const progressInterval = setInterval(() => {
-    if (progress >= 100) {
-      clearInterval(progressInterval)
-    } else {
-      progress += 10
-      updateProgressBar(progress)
+    const data = {
+      mode: "style_sdxl",
+      style: selectedStyle,
+      params: {
+        Sex: selectedGender,
+        Face: base64Image,
+        Fon: base64FonImage,
+      },
     }
-  }, 900) // Обновление каждые полсекунды
 
-  fetch("http://85.95.186.114/api/handler/", fetchOptions)
-    .then((response) => {
-      console.log("HTTP response status:", response.status)
-      if (!response.ok) {
-        throw new Error("Network error, status: " + response.status)
+    const headers = {
+      Accept: "application/json",
+      Authorization: `Bearer fc612550-06e8-4be3-9191-0f97336d9966`,
+      "Content-Type": "application/json",
+    }
+
+    const fetchOptions = {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify(data),
+    }
+
+    // Сохраняем запрос в текстовый файл
+    const logFilePath = path.join("C:", "MosPhotoBooth2", "request_log.txt")
+    const logContent = `Headers: ${JSON.stringify(
+      headers,
+      null,
+      2
+    )}\nData: ${JSON.stringify(data, null, 2)}`
+    fs.writeFileSync(logFilePath, logContent, "utf-8")
+    console.log(`Request saved to ${logFilePath}`)
+
+    function updateProgressBar(percent) {
+      progressBarFill.style.width = percent + "%"
+      progressPercentage.textContent = percent + "%"
+    }
+
+    progressBar.style.display = "block"
+    progressBarFill.style.width = "0%"
+    progressPercentage.textContent = "0%"
+
+    let progress = 0
+    const progressInterval = setInterval(() => {
+      if (progress >= 100) {
+        clearInterval(progressInterval)
+      } else {
+        progress += 10
+        updateProgressBar(progress)
       }
-      return response.json()
-    })
-    .then((responseData) => {
-      console.log("Data received from server:", responseData)
-      clearInterval(progressInterval)
-      handleServerResponse(responseData)
-    })
-    .catch((error) => {
-      console.error("Error sending data to server:", error)
-      clearInterval(progressInterval)
-      alert(
-        "An error occurred while sending the image to the server. Check the console for details."
-      )
-      showScreen("style-screen")
-    })
+    }, 900) // Обновление каждые полсекунды
+
+    fetch("http://85.95.186.114/api/handler/", fetchOptions)
+      .then((response) => {
+        console.log("HTTP response status:", response.status)
+        if (!response.ok) {
+          throw new Error("Network error, status: " + response.status)
+        }
+        return response.json()
+      })
+      .then((responseData) => {
+        console.log("Data received from server:", responseData)
+        clearInterval(progressInterval)
+        handleServerResponse(responseData)
+      })
+      .catch((error) => {
+        console.error("Error sending data to server:", error)
+        clearInterval(progressInterval)
+        alert(
+          "An error occurred while sending the image to the server. Check the console for details."
+        )
+        showScreen("style-screen")
+      })
+  } catch (error) {
+    console.error("Error in sendImageToServer:", error);
+  }
 }
 
 // Обработка ответа от сервера
 // Обработка ответа от сервера
 async function handleServerResponse(responseData) {
-  console.log("handleServerResponse() function called")
-  //! Удалены эти строки для плавного перехода
-  // progressBar.style.display = 'none';
-  // progressBarFill.style.width = '0%';
-  progressBarFill.textContent = ""
+  try {
+    console.log("handleServerResponse() function called")
+    //! Удалены эти строки для плавного перехода
+    // progressBar.style.display = 'none';
+    // progressBarFill.style.width = '0%';
+    progressBarFill.textContent = ""
 
-  const imagesArray = Object.values(responseData)[0]
+    const imagesArray = Object.values(responseData)[0]
 
-  if (imagesArray && imagesArray.length > 0) {
-    const base64Image = imagesArray[0]
-    const cleanedBase64Image = base64Image.replace(/[\n\r"']/g, "").trim()
+    if (imagesArray && imagesArray.length > 0) {
+      const base64Image = imagesArray[0]
+      const cleanedBase64Image = base64Image.replace(/[\n\r"']/g, "").trim()
 
-    // Создаем изображение и накладываем логотип
-    const finalImageWithLogo = await overlayLogoOnImage(cleanedBase64Image)
-    resultImage.src = finalImageWithLogo
+      // Создаем изображение и накладываем логотип
+      const finalImageWithLogo = await overlayLogoOnImage(cleanedBase64Image)
+      resultImage.src = finalImageWithLogo
 
-    // Отображаем выбранные параметры
-    const selectedParamsText = document.getElementById("selected-params-text")
-    const texts = translations[currentLanguage]
-    console.log(selectedGender)
-    if (selectedParamsText && texts) {
-      const genderText = texts.genders[selectedGender] || selectedGender
-      const styleText =
-        document
-          .querySelector(`[data-style="${selectedStyle}"]`)
-          ?.querySelector("div")?.textContent || selectedStyle
-      selectedParamsText.innerHTML = `&emsp;${texts.genderScreenTitleEnd}:&emsp;<strong>${genderText}</strong><br/>${texts.styleScreenTitleEnd}:&emsp;<strong>${styleText}</strong>`
+      // Отображаем выбранные параметры
+      const selectedParamsText = document.getElementById("selected-params-text")
+      const texts = translations[currentLanguage]
+      console.log(selectedGender)
+      if (selectedParamsText && texts) {
+        const genderText = texts.genders[selectedGender] || selectedGender
+        const styleText =
+          document
+            .querySelector(`[data-style="${selectedStyle}"]`)
+            ?.querySelector("div")?.textContent || selectedStyle
+        selectedParamsText.innerHTML = `&emsp;${texts.genderScreenTitleEnd}:&emsp;<strong>${genderText}</strong><br/>${texts.styleScreenTitleEnd}:&emsp;<strong>${styleText}</strong>`
+      }
+
+      // Сохранение готового изображения с логотипом в папку "output"
+      saveImage("output", finalImageWithLogo)
+
+      resultImage.onload = () => {
+        console.log("Image loaded successfully")
+        console.log(
+          `Image dimensions: ${resultImage.clientWidth}x${resultImage.clientHeight}`
+        )
+        showScreen("result-screen")
+      }
+    } else {
+      alert("Failed to retrieve processed image.")
+      showScreen("style-screen")
     }
-
-    // Сохранение готового изображения с логотипом в папку "output"
-    saveImage("output", finalImageWithLogo)
-
-    resultImage.onload = () => {
-      console.log("Image loaded successfully")
-      console.log(
-        `Image dimensions: ${resultImage.clientWidth}x${resultImage.clientHeight}`
-      )
-      showScreen("result-screen")
-    }
-  } else {
-    alert("Failed to retrieve processed image.")
-    showScreen("style-screen")
+  } catch (error) {
+    console.error("Error in handleServerResponse:", error);
   }
 }
 
 // Функция наложения логотипа
 async function overlayLogoOnImage(base64Image) {
-  return new Promise((resolve) => {
-    const canvas = document.createElement("canvas")
-    const context = canvas.getContext("2d")
-    const mainImage = new Image()
-    const logoImage = new Image()
+  try {
+    return new Promise((resolve) => {
+      const canvas = document.createElement("canvas")
+      const context = canvas.getContext("2d")
+      const mainImage = new Image()
+      const logoImage = new Image()
 
-    mainImage.src = `data:image/jpeg;base64,${base64Image}`
-    logoImage.src = config.logoPath // Путь к логотипу из конфигурации
+      mainImage.src = `data:image/jpeg;base64,${base64Image}`
+      logoImage.src = config.logoPath // Путь к логотипу из конфигурации
 
-    mainImage.onload = () => {
-      canvas.width = mainImage.width
-      canvas.height = mainImage.height
-      context.drawImage(mainImage, 0, 0, canvas.width, canvas.height)
+      mainImage.onload = () => {
+        canvas.width = mainImage.width
+        canvas.height = mainImage.height
+        context.drawImage(mainImage, 0, 0, canvas.width, canvas.height)
 
-      // Загружаем логотип и позиционируем его
-      logoImage.onload = () => {
-        console.log("Logo loaded successfully")
+        // Загружаем логотип и позиционируем его
+        logoImage.onload = () => {
+          console.log("Logo loaded successfully")
 
-        const offsetX = config.logoOffsetX || 0
-        const offsetY = config.logoOffsetY || 0
-        let x = 0
-        let y = 0
+          const offsetX = config.logoOffsetX || 0
+          const offsetY = config.logoOffsetY || 0
+          let x = 0
+          let y = 0
 
-        // Определение позиции логотипа в зависимости от logoPosition
-        switch (config.logoPosition) {
-          case "top-left":
-            x = offsetX
-            y = offsetY
-            break
-          case "top-right":
-            x = canvas.width - logoImage.width - offsetX
-            y = offsetY
-            break
-          case "bottom-left":
-            x = offsetX
-            y = canvas.height - logoImage.height - offsetY
-            break
-          case "bottom-right":
-            x = canvas.width - logoImage.width - offsetX
-            y = canvas.height - logoImage.height - offsetY
-            break
-          case "center":
-            x = (canvas.width - logoImage.width) / 2
-            y = (canvas.height - logoImage.height) / 2
-            break
-          case "center-top":
-            x = (canvas.width - logoImage.width) / 2
-            y = offsetY
-            break
-          case "center-bottom":
-            x = (canvas.width - logoImage.width) / 2
-            y = canvas.height - logoImage.height - offsetY
-            break
-          default:
-            console.warn(
-              `Invalid logo position: ${config.logoPosition}. Defaulting to bottom-right.`
-            )
-            x = canvas.width - logoImage.width - offsetX
-            y = canvas.height - logoImage.height - offsetY
-            break
+          // Определение позиции логотипа в зависимости от logoPosition
+          switch (config.logoPosition) {
+            case "top-left":
+              x = offsetX
+              y = offsetY
+              break
+            case "top-right":
+              x = canvas.width - logoImage.width - offsetX
+              y = offsetY
+              break
+            case "bottom-left":
+              x = offsetX
+              y = canvas.height - logoImage.height - offsetY
+              break
+            case "bottom-right":
+              x = canvas.width - logoImage.width - offsetX
+              y = canvas.height - logoImage.height - offsetY
+              break
+            case "center":
+              x = (canvas.width - logoImage.width) / 2
+              y = (canvas.height - logoImage.height) / 2
+              break
+            case "center-top":
+              x = (canvas.width - logoImage.width) / 2
+              y = offsetY
+              break
+            case "center-bottom":
+              x = (canvas.width - logoImage.width) / 2
+              y = canvas.height - logoImage.height - offsetY
+              break
+            default:
+              console.warn(
+                `Invalid logo position: ${config.logoPosition}. Defaulting to bottom-right.`
+              )
+              x = canvas.width - logoImage.width - offsetX
+              y = canvas.height - logoImage.height - offsetY
+              break
+          }
+
+          // Накладываем логотип
+          context.drawImage(logoImage, x, y)
+          resolve(canvas.toDataURL("image/jpeg"))
         }
 
-        // Накладываем логотип
-        context.drawImage(logoImage, x, y)
-        resolve(canvas.toDataURL("image/jpeg"))
+        logoImage.onerror = () => {
+          console.error("Failed to load logo image. Check logoPath in config.")
+          resolve(canvas.toDataURL("image/jpeg")) // Возвращаем изображение без логотипа
+        }
       }
 
-      logoImage.onerror = () => {
-        console.error("Failed to load logo image. Check logoPath in config.")
-        resolve(canvas.toDataURL("image/jpeg")) // Возвращаем изображение без логотипа
+      mainImage.onerror = () => {
+        console.error("Failed to load main image.")
+        resolve(null) // Возвращаем null при ошибке
       }
-    }
-
-    mainImage.onerror = () => {
-      console.error("Failed to load main image.")
-      resolve(null) // Возвращаем null при ошибке
-    }
-  })
+    })
+  } catch (error) {
+    console.error("Error in overlayLogoOnImage:", error);
+    return null;
+  }
 }
 
 // Вспомогательная функция для получения случайного изображения из папки стиля
@@ -747,12 +815,16 @@ window.addEventListener("resize", handleOrientationChange)
 
 // Функция для обработки изменения ориентации
 function handleOrientationChange() {
-  if (window.innerHeight > window.innerWidth) {
-    console.log("Портретная ориентация")
-    // Дополнительная логика для портретной ориентации, если необходимо
-  } else {
-    console.log("Ландшафтная ориентация")
-    // Дополнительная логика для ландшафтной ориентации, если необходимо
+  try {
+    if (window.innerHeight > window.innerWidth) {
+      console.log("Портретная ориентация")
+      // Дополнительная логика для портретной ориентации, если необходимо
+    } else {
+      console.log("Ландшафтная ориентация")
+      // Дополнительная логика для ландшафтной ориентации, если необходимо
+    }
+  } catch (error) {
+    console.error("Error in handleOrientationChange:", error);
   }
 }
 
@@ -766,14 +838,18 @@ let inactivityTimer
 
 // Функция для сброса таймера неактивности
 function resetInactivityTimer() {
-  clearTimeout(inactivityTimer)
-  inactivityTimer = setTimeout(() => {
-    showScreen("splash-screen") // Возвращаемся на заставку при бездействии
-    selectedStyle = ""
-    selectedGender = ""
-    resultImage.src = ""
-    stopCamera()
-  }, inactivityTimeout)
+  try {
+    clearTimeout(inactivityTimer)
+    inactivityTimer = setTimeout(() => {
+      showScreen("splash-screen") // Возвращаемся на заставку при бездействии
+      selectedStyle = ""
+      selectedGender = ""
+      resultImage.src = ""
+      stopCamera()
+    }, inactivityTimeout)
+  } catch (error) {
+    console.error("Error in resetInactivityTimer:", error);
+  }
 }
 
 // События для сброса таймера при взаимодействии
@@ -786,61 +862,65 @@ resetInactivityTimer()
 
 // Обновляем тексты на основе конфигурации
 function updateTexts() {
-  const texts = translations[currentLanguage]
-  if (!texts) return
+  try {
+    const texts = translations[currentLanguage]
+    if (!texts) return
 
-  // Обновляем заголовки экранов
-  const screenTitles = {
-    "splash-screen": texts.welcomeMessage,
-    "style-screen": texts.styleScreenTitle,
-    "gender-screen": texts.genderScreenTitle,
-    "camera-screen": texts.cameraScreenTitle,
-    "processing-screen": texts.processingScreenTitle,
-    "result-screen": texts.resultScreenTitle,
-  }
+    // Обновляем заголовки экранов
+    const screenTitles = {
+      "splash-screen": texts.welcomeMessage,
+      "style-screen": texts.styleScreenTitle,
+      "gender-screen": texts.genderScreenTitle,
+      "camera-screen": texts.cameraScreenTitle,
+      "processing-screen": texts.processingScreenTitle,
+      "result-screen": texts.resultScreenTitle,
+    }
 
-  for (const [screenId, titleText] of Object.entries(screenTitles)) {
-    const screen = document.getElementById(screenId)
-    if (screen) {
-      const titleElement = screen.querySelector("h1")
-      if (titleElement) {
-        titleElement.textContent = titleText
+    for (const [screenId, titleText] of Object.entries(screenTitles)) {
+      const screen = document.getElementById(screenId)
+      if (screen) {
+        const titleElement = screen.querySelector("h1")
+        if (titleElement) {
+          titleElement.textContent = titleText
+        }
       }
     }
-  }
 
-  // Обновляем тексты кнопок
-  const startButton = document.getElementById("start-button")
-  if (startButton) {
-    startButton.textContent = texts.startButtonText
-  }
+    // Обновляем тексты кнопок
+    const startButton = document.getElementById("start-button")
+    if (startButton) {
+      startButton.textContent = texts.startButtonText
+    }
 
-  const backButtons = document.querySelectorAll(".back-button")
-  backButtons.forEach((button) => {
-    button.textContent = texts.backButtonText
-  })
+    const backButtons = document.querySelectorAll(".back-button")
+    backButtons.forEach((button) => {
+      button.textContent = texts.backButtonText
+    })
 
-  const printPhotoButton = document.getElementById("print-photo")
-  if (printPhotoButton) {
-    printPhotoButton.textContent = texts.printButtonText
-  }
+    const printPhotoButton = document.getElementById("print-photo")
+    if (printPhotoButton) {
+      printPhotoButton.textContent = texts.printButtonText
+    }
 
-  const startOverButton = document.getElementById("start-over")
-  if (startOverButton) {
-    startOverButton.textContent = texts.startOverButtonText
-  }
+    const startOverButton = document.getElementById("start-over")
+    if (startOverButton) {
+      startOverButton.textContent = texts.startOverButtonText
+    }
 
-  // Обновляем тексты гендерных кнопок
-  const genderButtons = document.querySelectorAll("#gender-buttons .button")
-  genderButtons.forEach((button) => {
-    const genderKey = button.getAttribute("data-gender")
-    button.textContent = texts.genders[genderKey]
-  })
+    // Обновляем тексты гендерных кнопок
+    const genderButtons = document.querySelectorAll("#gender-buttons .button")
+    genderButtons.forEach((button) => {
+      const genderKey = button.getAttribute("data-gender")
+      button.textContent = texts.genders[genderKey]
+    })
 
-  // Обновляем текст на кнопке переключения языка
-  // const languageSwitcher = document.getElementById('language-switcher');
-  if (languageSwitcher) {
-    languageSwitcher.textContent = currentLanguage === "ru" ? "KK" : "RU"
+    // Обновляем текст на кнопке переключения языка
+    // const languageSwitcher = document.getElementById('language-switcher');
+    if (languageSwitcher) {
+      languageSwitcher.textContent = currentLanguage === "ru" ? "KK" : "RU"
+    }
+  } catch (error) {
+    console.error("Error in updateTexts:", error);
   }
 }
 
@@ -855,61 +935,65 @@ document.addEventListener("DOMContentLoaded", () => {
 const translations = require("./translations.json")
 // Функция для обновления текстов на основе выбранного языка
 function updateTexts() {
-  const texts = translations[currentLanguage]
-  if (!texts) return
+  try {
+    const texts = translations[currentLanguage]
+    if (!texts) return
 
-  // Обновляем заголовки экранов
-  const screenTitles = {
-    "splash-screen": texts.welcomeMessage,
-    "style-screen": texts.styleScreenTitle,
-    "gender-screen": texts.genderScreenTitle,
-    "camera-screen": texts.cameraScreenTitle,
-    "processing-screen": texts.processingScreenTitle,
-    "result-screen": texts.resultScreenTitle,
-  }
+    // Обновляем заголовки экранов
+    const screenTitles = {
+      "splash-screen": texts.welcomeMessage,
+      "style-screen": texts.styleScreenTitle,
+      "gender-screen": texts.genderScreenTitle,
+      "camera-screen": texts.cameraScreenTitle,
+      "processing-screen": texts.processingScreenTitle,
+      "result-screen": texts.resultScreenTitle,
+    }
 
-  for (const [screenId, titleText] of Object.entries(screenTitles)) {
-    const screen = document.getElementById(screenId)
-    if (screen) {
-      const titleElement = screen.querySelector("h1")
-      if (titleElement) {
-        titleElement.textContent = titleText
+    for (const [screenId, titleText] of Object.entries(screenTitles)) {
+      const screen = document.getElementById(screenId)
+      if (screen) {
+        const titleElement = screen.querySelector("h1")
+        if (titleElement) {
+          titleElement.textContent = titleText
+        }
       }
     }
-  }
 
-  // Обновляем тексты кнопок
-  const startButton = document.getElementById("start-button")
-  if (startButton) {
-    startButton.textContent = texts.startButtonText
-  }
+    // Обновляем тексты кнопок
+    const startButton = document.getElementById("start-button")
+    if (startButton) {
+      startButton.textContent = texts.startButtonText
+    }
 
-  const backButtons = document.querySelectorAll(".back-button")
-  backButtons.forEach((button) => {
-    button.textContent = texts.backButtonText
-  })
+    const backButtons = document.querySelectorAll(".back-button")
+    backButtons.forEach((button) => {
+      button.textContent = texts.backButtonText
+    })
 
-  const printPhotoButton = document.getElementById("print-photo")
-  if (printPhotoButton) {
-    printPhotoButton.textContent = texts.printButtonText
-  }
+    const printPhotoButton = document.getElementById("print-photo")
+    if (printPhotoButton) {
+      printPhotoButton.textContent = texts.printButtonText
+    }
 
-  const startOverButton = document.getElementById("start-over")
-  if (startOverButton) {
-    startOverButton.textContent = texts.startOverButtonText
-  }
+    const startOverButton = document.getElementById("start-over")
+    if (startOverButton) {
+      startOverButton.textContent = texts.startOverButtonText
+    }
 
-  // Обновляем тексты гендерных кнопок
-  const genderButtons = document.querySelectorAll("#gender-buttons .button")
-  genderButtons.forEach((button) => {
-    const genderKey = button.getAttribute("data-gender")
-    button.textContent = texts.genders[genderKey]
-  })
+    // Обновляем тексты гендерных кнопок
+    const genderButtons = document.querySelectorAll("#gender-buttons .button")
+    genderButtons.forEach((button) => {
+      const genderKey = button.getAttribute("data-gender")
+      button.textContent = texts.genders[genderKey]
+    })
 
-  // Обновляем текст на кнопке переключения языка
-  const languageSwitcher = document.getElementById("language-switcher")
-  if (languageSwitcher) {
-    languageSwitcher.textContent = currentLanguage === "ru" ? "KK" : "RU"
+    // Обновляем текст на кнопке переключения языка
+    const languageSwitcher = document.getElementById("language-switcher")
+    if (languageSwitcher) {
+      languageSwitcher.textContent = currentLanguage === "ru" ? "KK" : "RU"
+    }
+  } catch (error) {
+    console.error("Error in updateTexts:", error);
   }
 }
 
@@ -923,48 +1007,52 @@ const themeSwitcher = document.getElementById("theme-switcher")
 
 // Функция для применения темы
 function applyTheme(theme) {
-  const themeConfig = config[`${theme}Theme`]
-  document.body.classList.remove("light", "dark")
-  document.body.classList.add(theme)
-  themeSwitcher.checked = theme === "dark"
+  try {
+    const themeConfig = config[`${theme}Theme`]
+    document.body.classList.remove("light", "dark")
+    document.body.classList.add(theme)
+    themeSwitcher.checked = theme === "dark"
 
-  if (themeConfig) {
-    document.documentElement.style.setProperty(
-      "--light-bg-color",
-      themeConfig.backgroundColor || ""
-    )
-    document.documentElement.style.setProperty(
-      "--light-bg-image",
-      themeConfig.backgroundImage
-        ? `url(${themeConfig.backgroundImage})`
-        : "none"
-    )
-    document.documentElement.style.setProperty(
-      "--light-bg-opacity",
-      themeConfig.backgroundOpacity || 0.8
-    )
-    document.documentElement.style.setProperty(
-      "--dark-bg-color",
-      themeConfig.backgroundColor || ""
-    )
-    document.documentElement.style.setProperty(
-      "--dark-bg-image",
-      themeConfig.backgroundImage
-        ? `url(${themeConfig.backgroundImage})`
-        : "none"
-    )
-    document.documentElement.style.setProperty(
-      "--dark-bg-opacity",
-      themeConfig.backgroundOpacity || 0.8
-    )
+    if (themeConfig) {
+      document.documentElement.style.setProperty(
+        "--light-bg-color",
+        themeConfig.backgroundColor || ""
+      )
+      document.documentElement.style.setProperty(
+        "--light-bg-image",
+        themeConfig.backgroundImage
+          ? `url(${themeConfig.backgroundImage})`
+          : "none"
+      )
+      document.documentElement.style.setProperty(
+        "--light-bg-opacity",
+        themeConfig.backgroundOpacity || 0.8
+      )
+      document.documentElement.style.setProperty(
+        "--dark-bg-color",
+        themeConfig.backgroundColor || ""
+      )
+      document.documentElement.style.setProperty(
+        "--dark-bg-image",
+        themeConfig.backgroundImage
+          ? `url(${themeConfig.backgroundImage})`
+          : "none"
+      )
+      document.documentElement.style.setProperty(
+        "--dark-bg-opacity",
+        themeConfig.backgroundOpacity || 0.8
+      )
 
-    // Добавляем установку цвета текста
-    document.documentElement.style.setProperty(
-      "--text-color",
-      theme === "light"
-        ? config.lightTheme.lightTextColor
-        : config.darkTheme.darkTextColor
-    )
+      // Добавляем установку цвета текста
+      document.documentElement.style.setProperty(
+        "--text-color",
+        theme === "light"
+          ? config.lightTheme.lightTextColor
+          : config.darkTheme.darkTextColor
+      )
+    }
+  } catch (error) {
+    console.error("Error in applyTheme:", error);
   }
 }
 
