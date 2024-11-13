@@ -10,6 +10,30 @@ const { loadConfig } = require("./utils/configLoader")
 // Загружаем конфигурацию после импорта необходимых модулей
 const config = loadConfig()
 
+const si = require('systeminformation');
+const { exec } = require('child_process');
+// Функция для мониторинга ЦП и GPU
+function monitorSystemLoad() {
+    // Мониторинг загрузки CPU
+    setInterval(async () => {
+        try {
+            const cpuLoad = await si.currentLoad();
+            console.log(`CPU Load: ${cpuLoad.currentLoad.toFixed(2)}%`);
+        } catch (error) {
+            console.error('Error getting CPU load:', error);
+        }
+
+        // Мониторинг GPU через nvidia-smi
+        exec('nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits', (error, stdout, stderr) => {
+            if (error) {
+                console.error('Error getting GPU load:', error);
+                return;
+            }
+            console.log(`GPU Load: ${stdout.trim()}%`);
+        });
+    }, 5000); // Обновление каждые 5 секунд
+}
+
 function createWindow() {
   console.log("Creating main window...")
   try {
@@ -25,6 +49,7 @@ function createWindow() {
 
     win.setMenuBarVisibility(false)
     win.loadFile("index.html")
+    monitorSystemLoad(); // Запуск мониторинга при старте приложения
 
     win.webContents.on("did-finish-load", () => {
       console.log("Window loaded successfully")

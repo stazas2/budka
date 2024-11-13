@@ -29,23 +29,10 @@ body::before {
   height: 100%;
   background: linear-gradient(
     to bottom right,
-    rgba(255, 255, 255, var(--bg-opacity, 0.8)),
-    rgba(0, 0, 0, 0.05)
+    rgba(255, 255, 255, 0.2),
+    rgba(0, 0, 0, 0.1)
   );
-  backdrop-filter: blur(25px);
-  animation: smoothGradientShift 20s ease-in-out infinite alternate;
   z-index: -1;
-}
-@keyframes smoothGradientShift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
 }
 
 body::after {
@@ -53,31 +40,47 @@ body::after {
   position: absolute;
   top: 0;
   left: 0;
-  width: 300%;
-  height: 300%;
-  background: radial-gradient(circle, rgba(255, 100, 100, 0.3), transparent 50%),
-    radial-gradient(circle, rgba(100, 200, 255, 0.3), transparent 50%),
-    radial-gradient(circle, rgba(150, 255, 100, 0.3), transparent 50%);
-  background-size: 25% 25%;
-  background-position: 0 0, 50% 50%, 100% 100%;
-  animation: rotateAndPulse 20s infinite ease-in-out;
-  z-index: -2;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 255, 255, 0.1) 0%,
+    rgba(255, 0, 255, 0.1) 50%,
+    rgba(0, 255, 255, 0.1) 100%
+  );
+  background-size: 200% 100%;
+  animation: subtleMove 10s linear infinite;
+  z-index: -1;
 }
 
-@keyframes rotateAndPulse {
+@keyframes subtleMove {
   0% {
-    background-position: 0 0, 50% 50%, 100% 100%;
-    transform: scale(1) rotate(0deg);
-  }
-  50% {
-    background-position: 100% 0, 0 100%, 50% 50%;
-    transform: scale(1.1) rotate(180deg);
+    background-position: 0% 0;
   }
   100% {
-    background-position: 0 100%, 100% 0, 50% 50%;
-    transform: scale(1) rotate(360deg);
+    background-position: 100% 0;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 .screen {
   display: none;

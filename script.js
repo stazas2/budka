@@ -153,7 +153,7 @@ function initStyleButtons(parsedStyles) {
       // Формирование пути к изображению на основе displayName
       const sanitizedDisplayName = style.displayName.replace(/\s*\(.*?\)/g, "").replace(/\s+/g, "_").replace(/[^\w\-]+/g, "")
       img.src = `${config.stylesDir}\\${style.originalName}\\1${sanitizedDisplayName}.jpg`
-      console.log(img.src)
+      // console.log(img.src)
       img.alt = style.displayName
 
       const label = document.createElement("div")
