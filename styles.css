@@ -27,11 +27,7 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    to bottom right,
-    rgba(255, 255, 255, 0.2),
-    rgba(0, 0, 0, 0.1)
-  );
+  background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.2), rgba(0, 0, 0, 0.1));
   z-index: -1;
 }
 
@@ -119,7 +115,9 @@ body::after {
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px) saturate(180%);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-  transition: transform 0.5s, box-shadow 0.5s;
+  transition:
+    transform 0.5s,
+    box-shadow 0.5s;
   transition: all 0.3s ease;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   transform: translateY(0);
@@ -152,7 +150,10 @@ button {
   backdrop-filter: blur(10px) saturate(180%);
   color: #000;
   font-weight: 500;
-  transition: background-color 0.3s, transform 0.5s, box-shadow 0.5s;
+  transition:
+    background-color 0.3s,
+    transform 0.5s,
+    box-shadow 0.5s;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -208,11 +209,7 @@ body.dark #progress-bar-fill {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.2),
-    transparent 20%
-  );
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 20%);
   background-size: 20px 20px;
   animation: floatParticles 2s linear infinite;
 }
@@ -269,11 +266,7 @@ body.dark #progress-bar-fill {
   transform: rotate(0deg);
 
   padding: 20px;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(196, 213, 217, 0.7511379551820728) 100%
-  );
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(196, 213, 217, 0.7511379551820728) 100%);
   box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
   border-radius: 40px;
   backdrop-filter: blur(100px);
@@ -380,7 +373,9 @@ body.dark #progress-bar-fill {
   display: inline-flex;
   padding: 10px;
   cursor: pointer;
-  transition: transform 0.5s, box-shadow 0.5s;
+  transition:
+    transform 0.5s,
+    box-shadow 0.5s;
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -546,7 +541,10 @@ input:checked + .slider:before {
   backdrop-filter: blur(10px);
   color: var(--text-color);
   font-weight: 600;
-  transition: background-color 0.3s, transform 0.5s, box-shadow 0.5s;
+  transition:
+    background-color 0.3s,
+    transform 0.5s,
+    box-shadow 0.5s;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -730,13 +728,7 @@ input:checked + .slider:before {
   margin-top: 10px;
 }
 
-.selected-params span {
-  color: var(--text-color);
-}
-
-.selected-params-text {
-  display: flex;
-  justify-content: space-between;
+#selected-params-text {
 }
 
 #print-photo,
@@ -837,6 +829,10 @@ body.light .invert-image {
   filter: invert(1);
 }
 
+body.light #selected-params-text {
+  color: var(--text-color);
+}
+
 body.light #camera-loader .loader-text {
   color: var(--text-color);
 }
@@ -858,6 +854,10 @@ body.dark {
 
 body.dark .button {
   background: rgba(0, 0, 0, 0.2);
+  color: var(--text-color);
+}
+
+body.dark #selected-params-text {
   color: var(--text-color);
 }
 
@@ -908,3 +908,42 @@ body.dark #camera-loader .loader-text {
 }
 
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+
+#style-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.loader-spinner {
+  border: 8px solid #f3f3f3;
+  border-top: 8px solid #3498db;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 2s linear infinite;
+  margin-bottom: 10px;
+}
+
+.loader-text {
+  font-size: 1.2em;
+  color: #333;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

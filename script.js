@@ -557,7 +557,6 @@ function sendImageToServer(imageData) {
 }
 
 // Обработка ответа от сервера
-// Обработка ответа от сервера
 async function handleServerResponse(responseData) {
   try {
     console.log("handleServerResponse() function called")
@@ -598,6 +597,9 @@ async function handleServerResponse(responseData) {
           `Image dimensions: ${resultImage.clientWidth}x${resultImage.clientHeight}`
         )
         showScreen("result-screen")
+
+        // Управление видимостью кнопки печати на экране результата
+        updatePrintButtonVisibility()
       }
     } else {
       alert("Failed to retrieve processed image.")
@@ -605,6 +607,14 @@ async function handleServerResponse(responseData) {
     }
   } catch (error) {
     console.error("Error in handleServerResponse:", error);
+  }
+}
+
+function updatePrintButtonVisibility() {
+  if (config.printButtonVisible) {
+    printPhotoButton.style.display = "block"
+  } else {
+    printPhotoButton.style.display = "none"
   }
 }
 
@@ -921,6 +931,9 @@ function updateTexts() {
     if (languageSwitcher) {
       languageSwitcher.textContent = currentLanguage === "ru" ? "KK" : "RU"
     }
+
+    // Управление видимостью кнопки печати
+    updatePrintButtonVisibility()
   } catch (error) {
     console.error("Error in updateTexts:", error);
   }
