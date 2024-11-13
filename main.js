@@ -6,33 +6,14 @@ const { PDFDocument } = require("pdf-lib")
 const { print } = require("pdf-to-printer")
 const iconv = require("iconv-lite") // Импортируем iconv-lite для обработки кодировки
 const { loadConfig } = require("./utils/configLoader")
+const si = require('systeminformation');
+const { exec } = require('child_process');
 
 // Загружаем конфигурацию после импорта необходимых модулей
 const config = loadConfig()
 
-const si = require('systeminformation');
-const { exec } = require('child_process');
-// Функция для мониторинга ЦП и GPU
-function monitorSystemLoad() {
-    // Мониторинг загрузки CPU
-    setInterval(async () => {
-        try {
-            const cpuLoad = await si.currentLoad();
-            console.log(`CPU Load: ${cpuLoad.currentLoad.toFixed(2)}%`);
-        } catch (error) {
-            console.error('Error getting CPU load:', error);
-        }
-
-        // Мониторинг GPU через nvidia-smi
-        exec('nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits', (error, stdout, stderr) => {
-            if (error) {
-                console.error('Error getting GPU load:', error);
-                return;
-            }
-            console.log(`GPU Load: ${stdout.trim()}%`);
-        });
-    }, 5000); // Обновление каждые 5 секунд
-}
+// Начало измерения времени запуска main процесса
+const mainStartupTimeStart = Date.now()
 
 function createWindow() {
   console.log("Creating main window...")
@@ -49,11 +30,16 @@ function createWindow() {
 
     win.setMenuBarVisibility(false)
     win.loadFile("index.html")
-    monitorSystemLoad(); // Запуск мониторинга при старте приложения
+    // monitorSystemLoad(); // Запуск мониторинга при старте приложения
 
     win.webContents.on("did-finish-load", () => {
       console.log("Window loaded successfully")
       win.webContents.setZoomFactor(1)
+      
+      // Логирование времени запуска
+      const mainStartupTimeEnd = Date.now()
+      const startupDuration = mainStartupTimeEnd - mainStartupTimeStart
+      console.log(`Время запуска main процесса: ${startupDuration} мс`)
     })
 
     win.on("error", (error) => {
@@ -65,27 +51,34 @@ function createWindow() {
   }
 }
 
-// Обработчик для получения списка стилей из папки styles
-ipcMain.handle("get-styles", async () => {
+// Изменение обработчика 'get-styles' для оптимизации загрузки стилей
+ipcMain.handle("get-styles", async (event, gender) => {
   const stylesDir = config?.stylesDir || "C:\\MosPhotoBooth2\\styles"
-  console.log(`Loading styles from directory: ${stylesDir}`)
+  console.log(`Loading styles for gender "${gender}" from directory: ${stylesDir}`)
 
   try {
-    if (!fs.existsSync(stylesDir)) {
-      console.warn(`Creating styles directory: ${stylesDir}`)
-      fs.mkdirSync(stylesDir, { recursive: true })
+    if (!gender) {
+      console.warn("Gender not provided. Returning empty styles list.")
+      return []
+    }
+
+    const genderDir = path.join(stylesDir, gender)
+    console.log(`Gender directory path: ${genderDir}`)
+    if (!fs.existsSync(genderDir)) {
+      console.warn(`Gender directory does not exist: ${genderDir}`)
       return []
     }
 
     const styleFolders = fs
-      .readdirSync(stylesDir, { encoding: "utf8" })
+      .readdirSync(genderDir, { encoding: "utf8" })
       .filter((folder) =>
-        fs.statSync(path.join(stylesDir, folder)).isDirectory()
+        fs.statSync(path.join(genderDir, folder)).isDirectory()
       )
     const styles = []
 
     for (const folder of styleFolders) {
-      const folderPath = path.join(stylesDir, folder)
+      const folderPath = path.join(genderDir, folder)
+      console.log(`Checking style folder: ${folderPath}`)
       const files = fs.readdirSync(folderPath, { encoding: "utf8" })
       const imageFiles = files.filter(
         (file) => /\.(jpg|jpeg|png)$/i.test(file) && !file.startsWith("1")
@@ -100,10 +93,11 @@ ipcMain.handle("get-styles", async () => {
     }
 
     if (styles.length === 0) {
-      console.warn("No style images found in directory")
+      console.warn("No style images found in gender directory")
       return []
     }
 
+    console.log(`Styles found: ${styles.length}`)
     return styles
   } catch (error) {
     console.error("Error reading styles directory:", error)
@@ -265,6 +259,29 @@ async function addLogoToPdf(tempImagePath, tempPdfPath, logoPath, logoPosition, 
     console.error("Failed to create PDF:", error)
     throw error
   }
+}
+
+// TEST
+// Функция для мониторинга ЦП и GPU
+function monitorSystemLoad() {
+  // Мониторинг загрузки CPU
+  setInterval(async () => {
+      try {
+          const cpuLoad = await si.currentLoad();
+          console.log(`CPU Load: ${cpuLoad.currentLoad.toFixed(2)}%`);
+      } catch (error) {
+          console.error('Error getting CPU load:', error);
+      }
+
+      // Мониторинг GPU через nvidia-smi
+      exec('nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits', (error, stdout, stderr) => {
+          if (error) {
+              console.error('Error getting GPU load:', error);
+              return;
+          }
+          console.log(`GPU Load: ${stdout.trim()}%`);
+      });
+  }, 5000); // Обновление каждые 5 секунд
 }
 
 app.whenReady().then(createWindow)

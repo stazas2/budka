@@ -120,17 +120,17 @@ function saveImage(folderType, base64Image) {
 function fetchStyles() {
   try {
     ipcRenderer
-      .invoke("get-styles")
+      .invoke("get-styles", selectedGender) // Передаём выбранный пол
       .then((styles) => {
-        console.log("Received styles:", styles)
+        console.log("Получены стили:", styles)
         initStyleButtons(styles)
       })
       .catch((error) => {
-        console.error("Error fetching styles:", error)
-        alert("Failed to load styles. Please try again later.")
+        console.error("Ошибка при загрузке стилей:", error)
+        alert("Не удалось загрузить стили. Пожалуйста, попробуйте позже.")
       })
   } catch (error) {
-    console.error("Error in fetchStyles:", error);
+    console.error("Ошибка в fetchStyles:", error);
   }
 }
 
@@ -150,9 +150,9 @@ function initStyleButtons(parsedStyles) {
       button.setAttribute("data-style", style.originalName)
 
       const img = document.createElement("img")
-      // Формирование пути к изображению на основе displayName
+      // Включаем selectedGender в путь к изображению стиля
       const sanitizedDisplayName = style.displayName.replace(/\s*\(.*?\)/g, "").replace(/\s+/g, "_").replace(/[^\w\-]+/g, "")
-      img.src = `${config.stylesDir}\\${style.originalName}\\1${sanitizedDisplayName}.jpg`
+      img.src = `${config.stylesDir}\\${selectedGender}\\${style.originalName}\\1${sanitizedDisplayName}.jpg`
       // console.log(img.src)
       img.alt = style.displayName
 
@@ -187,7 +187,8 @@ function initStyleButtons(parsedStyles) {
   }
 }
 
-fetchStyles()
+// Удаление первоначального вызова fetchStyles
+// fetchStyles()
 
 // Заменить обработчики кнопок на обработчики button-row_item
 const genderItems = document.querySelectorAll(".button-row_item")
@@ -197,6 +198,7 @@ genderItems.forEach((item) => {
     selectedGender = button.getAttribute("data-gender") // Сохраняем выбранный пол
     console.log(`Gender selected: ${selectedGender}`)
     showScreen("style-screen")
+    fetchStyles() // Загружаем стили после выбора гендера
   })
 })
 
@@ -1111,4 +1113,20 @@ fullscreenToggleButton.addEventListener("click", function () {
       clickCount = 0
     }, 500)
   }
+})
+
+// Начало измерения времени запуска
+const startupTimeStart = performance.now()
+
+// Функция для логирования времени запуска
+function logStartupTime() {
+  const startupTimeEnd = performance.now()
+  const startupDuration = startupTimeEnd - startupTimeStart
+  console.log(`Время запуска приложения: ${startupDuration.toFixed(2)} мс`)
+}
+
+// Вызов logStartupTime после полной загрузки DOM
+document.addEventListener("DOMContentLoaded", () => {
+  updateTexts()
+  logStartupTime()
 })
