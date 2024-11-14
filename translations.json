@@ -12,6 +12,7 @@
     "backButtonText": "Назад",
     "printButtonText": "Печать фото",
     "startOverButtonText": "Начать заново",
+    "loaderText": "Инициализация камеры...",
     "genders": {
       "man": "Мужчина",
       "woman": "Женщина",
@@ -33,6 +34,7 @@
     "backButtonText": "Артқа",
     "printButtonText": "Фотосуретті басып шығару",
     "startOverButtonText": "Қайта бастау",
+    "loaderText": "Камераны іске қосу...",
     "genders": {
       "man": "Ер адам",
       "woman": "Әйел адам",

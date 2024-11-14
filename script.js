@@ -294,6 +294,8 @@ async function startCamera() {
   try {
     console.log('Attempting to start camera...');
     const videoContainer = document.querySelector(".video-container");
+    const cameraBackButton = document.querySelector("#camera-screen .back-button"); // Select backButton for camera-screen
+    cameraBackButton.disabled = true; // Disable backButton during initialization
 
     try {
       videoContainer.classList.add("loading");
@@ -324,6 +326,8 @@ async function startCamera() {
       console.error('Camera initialization failed:', error);
       videoContainer.classList.remove("loading");
       throw error;
+    } finally {
+      cameraBackButton.disabled = false; // Re-enable backButton after initialization
     }
   } catch (error) {
     console.error("Error in startCamera:", error);
@@ -708,11 +712,11 @@ async function overlayLogoOnImage(base64Image) {
 // Вспомогательная функция для получения случайного изображения из папки стиля
 function getRandomImageFromStyleFolder(style) {
   try {
-    // Загружаем путь из конфигурации
-    const styleFolderPath = path.join(config.stylesDir, style)
+    // Updated path to include selectedGender
+    const styleFolderPath = path.join(config.stylesDir, selectedGender, style)
 
     if (!fs.existsSync(styleFolderPath)) {
-      console.warn(`Folder for style "${style}" does not exist.`)
+      console.warn(`Folder for style "${style}" and gender "${selectedGender}" does not exist.`)
       return null
     }
 
@@ -738,7 +742,7 @@ function getRandomImageFromStyleFolder(style) {
     return `data:${mimeType};base64,${imageData}`
   } catch (error) {
     console.error(
-      `Error retrieving background image for style: ${style}`,
+      `Error retrieving background image for style: ${style} and gender: ${selectedGender}`,
       error
     )
     return null
@@ -872,6 +876,10 @@ function resetInactivityTimer() {
 // Вызываем resetInactivityTimer при загрузке страницы
 resetInactivityTimer()
 
+
+// let currentLanguage = 'ru'; // Язык по умолчанию
+// Загрузка переводов
+const translations = require("./translations.json")
 // Обновляем тексты на основе конфигурации
 function updateTexts() {
   try {
@@ -919,6 +927,19 @@ function updateTexts() {
       startOverButton.textContent = texts.startOverButtonText
     }
 
+    const loaderText = document.getElementsByClassName("loader-text")
+    if (loaderText) {
+      loaderText.textContent = texts.loaderText
+    }
+
+    // Обновляем тексты loader-text
+    const loaderTexts = document.getElementsByClassName("loader-text")
+    if (loaderTexts.length > 0) {
+      Array.from(loaderTexts).forEach((loader) => {
+        loader.textContent = texts.loaderText
+      })
+    }
+
     // Обновляем тексты гендерных кнопок
     const genderButtons = document.querySelectorAll("#gender-buttons .button")
     genderButtons.forEach((button) => {
@@ -944,73 +965,7 @@ document.addEventListener("DOMContentLoaded", () => {
   updateTexts()
 })
 
-//! Theme Switcher
-// let currentLanguage = 'ru'; // Язык по умолчанию
-// Загрузка переводов
-const translations = require("./translations.json")
-// Функция для обновления текстов на основе выбранного языка
-function updateTexts() {
-  try {
-    const texts = translations[currentLanguage]
-    if (!texts) return
 
-    // Обновляем заголовки экранов
-    const screenTitles = {
-      "splash-screen": texts.welcomeMessage,
-      "style-screen": texts.styleScreenTitle,
-      "gender-screen": texts.genderScreenTitle,
-      "camera-screen": texts.cameraScreenTitle,
-      "processing-screen": texts.processingScreenTitle,
-      "result-screen": texts.resultScreenTitle,
-    }
-
-    for (const [screenId, titleText] of Object.entries(screenTitles)) {
-      const screen = document.getElementById(screenId)
-      if (screen) {
-        const titleElement = screen.querySelector("h1")
-        if (titleElement) {
-          titleElement.textContent = titleText
-        }
-      }
-    }
-
-    // Обновляем тексты кнопок
-    const startButton = document.getElementById("start-button")
-    if (startButton) {
-      startButton.textContent = texts.startButtonText
-    }
-
-    const backButtons = document.querySelectorAll(".back-button")
-    backButtons.forEach((button) => {
-      button.textContent = texts.backButtonText
-    })
-
-    const printPhotoButton = document.getElementById("print-photo")
-    if (printPhotoButton) {
-      printPhotoButton.textContent = texts.printButtonText
-    }
-
-    const startOverButton = document.getElementById("start-over")
-    if (startOverButton) {
-      startOverButton.textContent = texts.startOverButtonText
-    }
-
-    // Обновляем тексты гендерных кнопок
-    const genderButtons = document.querySelectorAll("#gender-buttons .button")
-    genderButtons.forEach((button) => {
-      const genderKey = button.getAttribute("data-gender")
-      button.textContent = texts.genders[genderKey]
-    })
-
-    // Обновляем текст на кнопке переключения языка
-    const languageSwitcher = document.getElementById("language-switcher")
-    if (languageSwitcher) {
-      languageSwitcher.textContent = currentLanguage === "ru" ? "KK" : "RU"
-    }
-  } catch (error) {
-    console.error("Error in updateTexts:", error);
-  }
-}
 
 // Вызываем функцию обновления текстов после загрузки страницы
 document.addEventListener("DOMContentLoaded", () => {

@@ -78,7 +78,7 @@ ipcMain.handle("get-styles", async (event, gender) => {
 
     for (const folder of styleFolders) {
       const folderPath = path.join(genderDir, folder)
-      console.log(`Checking style folder: ${folderPath}`)
+      // console.log(`Checking style folder: ${folderPath}`)
       const files = fs.readdirSync(folderPath, { encoding: "utf8" })
       const imageFiles = files.filter(
         (file) => /\.(jpg|jpeg|png)$/i.test(file) && !file.startsWith("1")
@@ -97,7 +97,7 @@ ipcMain.handle("get-styles", async (event, gender) => {
       return []
     }
 
-    console.log(`Styles found: ${styles.length}`)
+    // console.log(`Styles found: ${styles.length}`)
     return styles
   } catch (error) {
     console.error("Error reading styles directory:", error)
