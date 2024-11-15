@@ -143,8 +143,8 @@ function initStyleButtons(parsedStyles) {
     }
     styleButtonsContainer.innerHTML = "" // Очистка предыдущих кнопок
 
-    parsedStyles.forEach((style) => {
-      console.log("Adding style to UI:", style)
+    parsedStyles.forEach((style, index) => {
+      // console.log("Adding style to UI:", style)
       const button = document.createElement("div")
       button.classList.add("button")
       button.setAttribute("data-style", style.originalName)
@@ -179,6 +179,9 @@ function initStyleButtons(parsedStyles) {
             showScreen("style-screen")
           })
       })
+
+      // Применение задержки анимации к каждой кнопке
+      button.style.animationDelay = `${index * 0.2}s`
 
       styleButtonsContainer.appendChild(button)
     })

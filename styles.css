@@ -35,11 +35,7 @@ body::after {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    to bottom right,
-    rgba(255, 255, 255, 0.4),
-    rgba(0, 0, 0, 0.2)
-  );
+  background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.4), rgba(0, 0, 0, 0.2));
   z-index: -1;
 }
 
@@ -85,10 +81,18 @@ body::after {
   max-width: 1200px;
   padding: 20px;
   align-items: center;
+  
 }
 
 #style-buttons .button {
   box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
+  opacity: 0;
+  animation: fadeIn 0.5s forwards;
+}
+
+.style-buttons .button:active {
+  transform: scale(0.9) translateY(4px); /* Усиленная трансформация при нажатии */
+  box-shadow: 0px 2px 12px rgba(0, 0, 0, 0.2); /* Более выраженная тень при нажатии */
 }
 
 /* Кнопки */
@@ -108,7 +112,9 @@ body::after {
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px) saturate(180%);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-  transition: transform 0.5s, box-shadow 0.5s;
+  transition:
+    transform 0.5s,
+    box-shadow 0.5s;
   transition: all 0.3s ease;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   transform: translateY(0);
@@ -139,7 +145,10 @@ button {
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px) saturate(180%);
   font-weight: 500;
-  transition: background-color 0.3s, transform 0.5s, box-shadow 0.5s;
+  transition:
+    background-color 0.3s,
+    transform 0.5s,
+    box-shadow 0.5s;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -176,7 +185,7 @@ button:active {
   transition: width 0.8s;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(90deg, #36d1dc, #9b5be5);
+  background: linear-gradient(90deg, #36d1dc, #b95be5);
 }
 
 /* Градиент для светлой темы */
@@ -196,11 +205,7 @@ button:active {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.2),
-    transparent 20%
-  );
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 20%);
   background-size: 20px 20px;
   animation: floatParticles 2s linear infinite;
 }
@@ -257,11 +262,7 @@ button:active {
   transform: rotate(0deg);
 
   padding: 20px;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(196, 213, 217, 0.7511379551820728) 100%
-  );
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(196, 213, 217, 0.7511379551820728) 100%);
   box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
   border-radius: 40px;
   backdrop-filter: blur(100px);
@@ -368,7 +369,9 @@ button:active {
   display: inline-flex;
   padding: 10px;
   cursor: pointer;
-  transition: transform 0.5s, box-shadow 0.5s;
+  transition:
+    transform 0.5s,
+    box-shadow 0.5s;
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -534,7 +537,10 @@ input:checked + .slider:before {
   backdrop-filter: blur(10px);
   color: var(--text-color);
   font-weight: 600;
-  transition: background-color 0.3s, transform 0.5s, box-shadow 0.5s;
+  transition:
+    background-color 0.3s,
+    transform 0.5s,
+    box-shadow 0.5s;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -779,9 +785,9 @@ input:checked + .slider:before {
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 /* Стили для светлой темы */
 body.light {
-  --bg-color: var(--light-bg-color);
+  /* --bg-color: var(--light-bg-color);
   --bg-image: var(--light-bg-image);
-  --bg-opacity: var(--light-bg-opacity);
+  --bg-opacity: var(--light-bg-opacity); */
 }
 
 body.light .button {
@@ -790,11 +796,6 @@ body.light .button {
 }
 
 body.light #style-buttons div {
-  color: var(--text-color);
-}
-
-body.light .button {
-  background: rgba(255, 255, 255, 0.2);
   color: var(--text-color);
 }
 
@@ -819,15 +820,6 @@ body.light #camera-loader .loader-text {
   color: var(--text-color);
 }
 
-body.light .button {
-  background: rgba(255, 255, 255, 0.2);
-  color: var(--text-color);
-}
-
-body.light .button-row_item .button {
-  color: var(--text-color);
-}
-
 /* Стили для загрузчика камеры в светлой теме */
 body.light #camera-loader .loader-spinner {
   border-color: rgba(0, 0, 0, 0.3);
@@ -839,12 +831,11 @@ body.light::before {
   background: rgba(255, 255, 255, 0.4);
 }
 
-/* Стили для темной темы */
+/*! Стили для темной темы */
 body.dark {
-  --bg-color: var(--dark-bg-color);
-  --bg-image: var(--dark-bg-image);
-  --bg-opacity: var(--dark-bg-opacity);
-  --text-color: var(--dark-text-color, #ffffff);
+  /* --bg-color: var(--light-bg-color);
+  --bg-image: var(--light-bg-image);
+  --bg-opacity: var(--light-bg-opacity); */
 }
 
 body.dark .button {
@@ -873,7 +864,7 @@ body.dark #camera-loader .loader-text {
 /* Стили для темной темы */
 
 body.dark .back-button {
-  background: rgba(0, 0, 0, 0.2);
+    background: linear-gradient( 178deg, rgba(36.65, 49.36, 81.12, 0.03) 0%, rgba(98.2, 109.7, 138.45, 0.11) 39%, rgba(0, 7.04, 28.15, 0) 100% );
   color: var(--text-color);
 }
 
@@ -940,5 +931,17 @@ body.dark::before {
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+
+/* Добавление ключевых кадров для анимации плавного появления */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

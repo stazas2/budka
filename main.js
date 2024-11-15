@@ -4,7 +4,6 @@ const fs = require("fs")
 const os = require("os")
 const { PDFDocument } = require("pdf-lib")
 const { print } = require("pdf-to-printer")
-const iconv = require("iconv-lite") // Импортируем iconv-lite для обработки кодировки
 const { loadConfig } = require("./utils/configLoader")
 const si = require('systeminformation');
 const { exec } = require('child_process');
@@ -39,7 +38,7 @@ function createWindow() {
       // Логирование времени запуска
       const mainStartupTimeEnd = Date.now()
       const startupDuration = mainStartupTimeEnd - mainStartupTimeStart
-      console.log(`Время запуска main процесса: ${startupDuration} мс`)
+      // console.log(`Время запуска main процесса: ${startupDuration} мс`)
     })
 
     win.on("error", (error) => {
