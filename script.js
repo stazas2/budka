@@ -951,7 +951,6 @@ function updateTexts() {
     })
 
     // Обновляем текст на кнопке переключения языка
-    // const languageSwitcher = document.getElementById('language-switcher');
     if (languageSwitcher) {
       languageSwitcher.textContent = currentLanguage === "ru" ? "KK" : "RU"
     }
@@ -1047,6 +1046,20 @@ if (startButton) {
 let currentLanguage = config.language?.current || "ru"
 const languageSwitcher = document.getElementById("language-switcher")
 
+// Управление видимостью переключателя языка
+if (languageSwitcher) {
+  languageSwitcher.style.display = config.language?.showSwitcher ? 'block' : 'none';
+  
+  languageSwitcher.addEventListener('click', () => {
+      currentLanguage = currentLanguage === 'ru' ? 'kk' : 'ru';
+      // Обновляем конфигурацию
+      config.language.current = currentLanguage;
+      fs.writeFileSync(path.join(__dirname, 'config.json'), 
+          JSON.stringify(config, null, 2));
+      updateTexts();
+  });
+}
+
 // Получаем кнопку и добавляем слушатель событий для переключения
 const fullscreenToggleButton = document.getElementById("fullscreen-toggle")
 
@@ -1101,3 +1114,14 @@ document.addEventListener("DOMContentLoaded", () => {
   updateTexts()
   logStartupTime()
 })
+
+// Включение/выключение анимации
+function applySettings() {
+  if (config.animationEnabled) {
+    document.body.classList.add("animated-background");
+  } else {
+    document.body.classList.remove("animated-background");
+  }
+}
+applySettings();
+

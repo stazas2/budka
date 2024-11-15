@@ -1,0 +1,34 @@
+{
+  "authToken": "fc612550-06e8-4be3-9191-0f97336d9966",
+  "prePhotoTimer": 5,
+  "stylesDir": "C:\\MosPhotoBooth2\\styles",
+  "camera_rotation": 0,
+  "final_image_rotation": 0,
+  "send_image_rotation": 0,
+  "logoPath": "C:\\MosPhotoBooth2\\logo.png",
+  "logoPosition": "bottom-right",
+  "logoOffsetX": 30,
+  "logoOffsetY": 30,
+  "inactivityTimeout": 60000,
+  "theme": "light",
+  "printButtonVisible": false,
+  "language": {
+    "current": "ru",
+    "showSwitcher": true
+  },
+  "showSwitcher": true,
+  "animationEnabled": false,
+  "lightTheme": {
+    "backgroundColor": "#f0f8ff",
+    "backgroundImage": "",
+    "backgroundOpacity": 0.8,
+    "lightTextColor": "#000000"
+  },
+  "darkTheme": {
+    "backgroundColor": "#000000",
+    "backgroundImage": "",
+    "backgroundOpacity": 0.8,
+    "darkTextColor": "#ffffff"
+  },
+  "basePath": "C:\\MosPhotoBooth2"
+}
