@@ -577,7 +577,7 @@ async function handleServerResponse(responseData) {
     if (imagesArray && imagesArray.length > 0) {
       const base64Image = imagesArray[0]
       const cleanedBase64Image = base64Image.replace(/[\n\r"']/g, "").trim()
-      console.log('Я работаююююююю 0   ' + cleanedBase64Image)
+
       // Создаем изображение и накладываем логотип
       const finalImageWithLogo = await overlayLogoOnImage(cleanedBase64Image)
       resultImage.src = finalImageWithLogo
@@ -628,7 +628,6 @@ function updatePrintButtonVisibility() {
 // Функция наложения логотипа
 async function overlayLogoOnImage(base64Image) {
   try {
-    console.log('Я работаююююююююююююююююююююююююююю')
     return new Promise((resolve) => {
       const canvas = document.createElement("canvas")
       const context = canvas.getContext("2d")
@@ -638,70 +637,75 @@ async function overlayLogoOnImage(base64Image) {
       mainImage.src = `data:image/jpeg;base64,${base64Image}`
       logoImage.src = config.logoPath // Путь к логотипу из конфигурации
 
-      console.log('я работаюююююююююю 2  ' + logoImage.src)
-
       mainImage.onload = () => {
-        canvas.width = mainImage.width
-        canvas.height = mainImage.height
-        context.drawImage(mainImage, 0, 0, canvas.width, canvas.height)
-        console.log('я работаюююююююююю 3 ' + canvas.height)
-        // Загружаем логотип и позиционируем его
-        logoImage.onload = () => {
-          console.log("Logo loaded successfully")
-
-          const offsetX = config.logoOffsetX || 0
-          const offsetY = config.logoOffsetY || 0
-          let x = 0
-          let y = 0
-
-          // Определение позиции логотипа в зависимости от logoPosition
-          switch (config.logoPosition) {
-            case "top-left":
-              x = offsetX
-              y = offsetY
-              break
-            case "top-right":
-              x = canvas.width - logoImage.width - offsetX
-              y = offsetY
-              break
-            case "bottom-left":
-              x = offsetX
-              y = canvas.height - logoImage.height - offsetY
-              break
-            case "bottom-right":
-              x = canvas.width - logoImage.width - offsetX
-              y = canvas.height - logoImage.height - offsetY
-              break
-            case "center":
-              x = (canvas.width - logoImage.width) / 2
-              y = (canvas.height - logoImage.height) / 2
-              break
-            case "center-top":
-              x = (canvas.width - logoImage.width) / 2
-              y = offsetY
-              break
-            case "center-bottom":
-              x = (canvas.width - logoImage.width) / 2
-              y = canvas.height - logoImage.height - offsetY
-              break
-            default:
-              console.warn(
-                `Invalid logo position: ${config.logoPosition}. Defaulting to bottom-right.`
-              )
-              x = canvas.width - logoImage.width - offsetX
-              y = canvas.height - logoImage.height - offsetY
-              break
+        try {
+          canvas.width = mainImage.width
+          canvas.height = mainImage.height
+          context.drawImage(mainImage, 0, 0, canvas.width, canvas.height)
+  
+          // Загружаем логотип и позиционируем его
+          logoImage.onload = () => {
+            console.log("Logo loaded successfully")
+  
+            const offsetX = config.logoOffsetX || 0
+            const offsetY = config.logoOffsetY || 0
+            let x = 0
+            let y = 0
+  
+            // Определение позиции логотипа в зависимости от logoPosition
+            switch (config.logoPosition) {
+              case "top-left":
+                x = offsetX
+                y = offsetY
+                break
+              case "top-right":
+                x = canvas.width - logoImage.width - offsetX
+                y = offsetY
+                break
+              case "bottom-left":
+                x = offsetX
+                y = canvas.height - logoImage.height - offsetY
+                break
+              case "bottom-right":
+                x = canvas.width - logoImage.width - offsetX
+                y = canvas.height - logoImage.height - offsetY
+                break
+              case "center":
+                x = (canvas.width - logoImage.width) / 2
+                y = (canvas.height - logoImage.height) / 2
+                break
+              case "center-top":
+                x = (canvas.width - logoImage.width) / 2
+                y = offsetY
+                break
+              case "center-bottom":
+                x = (canvas.width - logoImage.width) / 2
+                y = canvas.height - logoImage.height - offsetY
+                break
+              default:
+                console.warn(
+                  `Invalid logo position: ${config.logoPosition}. Defaulting to bottom-right.`
+                )
+                x = canvas.width - logoImage.width - offsetX
+                y = canvas.height - logoImage.height - offsetY
+                break
+            }
+  
+            // Накладываем логотип
+            context.drawImage(logoImage, x, y)
+            resolve(canvas.toDataURL("image/jpeg"))
           }
-
-          // Накладываем логотип
-          context.drawImage(logoImage, x, y)
-          resolve(canvas.toDataURL("image/jpeg"))
+  
+          logoImage.onerror = () => {
+            console.error("Failed to load logo image. Check logoPath in config.")
+            resolve(canvas.toDataURL("image/jpeg")) // Возвращаем изображение без логотипа
+          }
+        } catch (error) {
+          console.error("Error in overlayLogoOnImage:", error);
+          return null;
+          
         }
 
-        logoImage.onerror = () => {
-          console.error("Failed to load logo image. Check logoPath in config.")
-          resolve(canvas.toDataURL("image/jpeg")) // Возвращаем изображение без логотипа
-        }
       }
 
       mainImage.onerror = () => {
