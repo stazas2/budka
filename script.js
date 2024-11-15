@@ -577,7 +577,7 @@ async function handleServerResponse(responseData) {
     if (imagesArray && imagesArray.length > 0) {
       const base64Image = imagesArray[0]
       const cleanedBase64Image = base64Image.replace(/[\n\r"']/g, "").trim()
-
+      console.log('Я работаююююююю 0   ' + cleanedBase64Image)
       // Создаем изображение и накладываем логотип
       const finalImageWithLogo = await overlayLogoOnImage(cleanedBase64Image)
       resultImage.src = finalImageWithLogo
@@ -628,6 +628,7 @@ function updatePrintButtonVisibility() {
 // Функция наложения логотипа
 async function overlayLogoOnImage(base64Image) {
   try {
+    console.log('Я работаююююююююююююююююююююююююююю')
     return new Promise((resolve) => {
       const canvas = document.createElement("canvas")
       const context = canvas.getContext("2d")
@@ -637,11 +638,13 @@ async function overlayLogoOnImage(base64Image) {
       mainImage.src = `data:image/jpeg;base64,${base64Image}`
       logoImage.src = config.logoPath // Путь к логотипу из конфигурации
 
+      console.log('я работаюююююююююю 2  ' + logoImage.src)
+
       mainImage.onload = () => {
         canvas.width = mainImage.width
         canvas.height = mainImage.height
         context.drawImage(mainImage, 0, 0, canvas.width, canvas.height)
-
+        console.log('я работаюююююююююю 3 ' + canvas.height)
         // Загружаем логотип и позиционируем его
         logoImage.onload = () => {
           console.log("Logo loaded successfully")

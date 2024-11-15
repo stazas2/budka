@@ -13,11 +13,11 @@
   "theme": "light",
   "printButtonVisible": false,
   "language": {
-    "current": "ru",
-    "showSwitcher": true
+    "current": "ru",    
+    "showSwitcher": false
   },
   "showSwitcher": true,
-  "animationEnabled": false,
+  "animationEnabled": true,
   "lightTheme": {
     "backgroundColor": "#f0f8ff",
     "backgroundImage": "",
@@ -29,6 +29,5 @@
     "backgroundImage": "",
     "backgroundOpacity": 0.8,
     "darkTextColor": "#ffffff"
-  },
-  "basePath": "C:\\MosPhotoBooth2"
+  }
 }
