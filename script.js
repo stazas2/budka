@@ -724,6 +724,7 @@ function getRandomImageFromStyleFolder(style) {
   try {
     // Updated path to include selectedGender
     const styleFolderPath = path.join(config.stylesDir, selectedGender, style)
+    console.log(`Путь изображений (getRandomImageFromStyleFolder): ${styleFolderPath}`)
 
     if (!fs.existsSync(styleFolderPath)) {
       console.warn(`Folder for style "${style}" and gender "${selectedGender}" does not exist.`)
