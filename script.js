@@ -231,11 +231,11 @@ function showScreen(screenId) {
       }
 
       // Управляем видимостью кнопки переключения темы
-      if (screenId === "splash-screen" || screenId === "gender-screen") {
-        themeSwitcher.style.display = "block"
-      } else {
-        themeSwitcher.style.display = "none"
-      }
+      // if (screenId === "splash-screen" || screenId === "gender-screen") {
+      //   themeSwitcher.style.display = "block"
+      // } else {
+      //   themeSwitcher.style.display = "none"
+      // }
 
       if (screenId === "result-screen") {
         resultTitle.style.display = "block"
@@ -983,7 +983,7 @@ document.addEventListener("DOMContentLoaded", () => {
 })
 
 //! Theme Switcher
-const themeSwitcher = document.getElementById("theme-switcher")
+// const themeSwitcher = document.getElementById("theme-switcher")
 
 // Функция для применения темы
 function applyTheme(theme) {
@@ -991,39 +991,23 @@ function applyTheme(theme) {
     const themeConfig = config[`${theme}Theme`]
     document.body.classList.remove("light", "dark")
     document.body.classList.add(theme)
-    themeSwitcher.checked = theme === "dark"
+    // themeSwitcher.checked = theme === "dark"
 
     if (themeConfig) {
       document.documentElement.style.setProperty(
-        "--light-bg-color",
-        themeConfig.backgroundColor || ""
+        "--background-color",
+        theme === "light"
+          ? config.lightTheme.backgroundColor
+          : config.darkTheme.backgroundColor
       )
+      // Используем путь из config.json без добавления 'file:///' 
+      document.documentElement.style.setProperty('--background-image', `url("${config.lightTheme.backgroundImage.replace(/\\\\/g, "/")}")`);
       document.documentElement.style.setProperty(
-        "--light-bg-image",
-        themeConfig.backgroundImage
-          ? `url(${themeConfig.backgroundImage})`
-          : "none"
+        "--background-image",
+        theme === "light"
+          ? `url("${config.lightTheme.backgroundImage.replace(/\\\\/g, "/")}")`
+          : `url("${config.darkTheme.backgroundImage.replace(/\\\\/g, "/")}")`
       )
-      document.documentElement.style.setProperty(
-        "--light-bg-opacity",
-        themeConfig.backgroundOpacity || 0.8
-      )
-      document.documentElement.style.setProperty(
-        "--dark-bg-color",
-        themeConfig.backgroundColor || ""
-      )
-      document.documentElement.style.setProperty(
-        "--dark-bg-image",
-        themeConfig.backgroundImage
-          ? `url(${themeConfig.backgroundImage})`
-          : "none"
-      )
-      document.documentElement.style.setProperty(
-        "--dark-bg-opacity",
-        themeConfig.backgroundOpacity || 0.8
-      )
-
-      // Добавляем установку цвета текста
       document.documentElement.style.setProperty(
         "--text-color",
         theme === "light"
