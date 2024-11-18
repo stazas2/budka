@@ -3,6 +3,7 @@ const path = require("path")
 
 function loadConfig() {
   const configPath = "C:\\MosPhotoBooth2\\config.json"
+ 
   try {
     const data = fs.readFileSync(configPath, "utf8")
     const config = JSON.parse(data)
@@ -11,7 +12,17 @@ function loadConfig() {
     return config
   } catch (error) {
     console.error("Error loading config file:", error)
-    return {}
+    // Attempt to load config from root folder
+    const fallbackConfigPath = path.join(__dirname, '..', 'config.json')
+    try {
+      const fallbackData = fs.readFileSync(fallbackConfigPath, "utf8")
+      const config = JSON.parse(fallbackData)
+      config.basePath = path.dirname(fallbackConfigPath)
+      return config
+    } catch (fallbackError) {
+      console.error("Error loading fallback config file:", fallbackError)
+      return {}
+    }
   }
 }
 

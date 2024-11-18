@@ -22,7 +22,6 @@ body {
   /* color: var(--text-color); */
 }
 
-
 body::before {
   content: "";
   position: absolute;
@@ -33,6 +32,7 @@ body::before {
   backdrop-filter: blur(10px);
   z-index: -1;
 }
+
 /* 
 body::after {
   content: "";
@@ -166,7 +166,7 @@ button {
   font-size: 1.5em;
   cursor: pointer;
   border: none;
-  border-radius: 12px;
+  border-radius: 170px;
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px) saturate(180%);
   font-weight: 500;
@@ -187,8 +187,8 @@ button:active {
   font-size: 3.9em;
   font-weight: 700;
   color: var(--text-color);
-  margin-top: 20px; /* !!!!!!!!!!!!20 - 200 Добавляем дополнительный отступ сверху, чтобы учесть поворот видео */
   position: relative;
+  top: 30%;
 }
 /* Стили для прогресс-бара */
 #progress-bar {
@@ -308,9 +308,8 @@ button:active {
 
 #video {
   width: 90%; /* Увеличиваем ширину видео */
-  height: 90%; /* Увеличиваем высоту видео */
+  /* height: 90%;  Увеличиваем высоту видео */
   object-fit: contain;
-
   /* ? */
   /* padding: 20px;
   background: linear-gradient(90deg, rgba(249,181,241,0.6615021008403361) 0%, rgba(0,212,255,0.35898109243697474) 100%);
@@ -410,6 +409,19 @@ button:active {
   pointer-events: none;
 }
 
+.button-row_item div {
+  font-weight: 600;
+}
+
+#style-buttons div {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+h1 {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
 /* Общие стили для заголовков */
 .screen h1 {
   font-weight: 700;
@@ -455,13 +467,17 @@ button:active {
 /* Стили для кнопки "Назад" */
 .back-button {
   position: absolute;
-  top: 20px;
-  left: 20px;
-  padding: 15px 30px;
+  bottom: 20px;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 20px 50px;
+  /* top: 20px;
+  left: 20px; */
+  /* padding: 15px 30px; */
   font-size: 1.2em;
   background: rgba(255, 255, 255, 0.2);
   border: none;
-  border-radius: 8px;
+  /* border-radius: 8px; */
   cursor: pointer;
   transition: all 0.3s ease;
   z-index: 1000;
@@ -557,7 +573,7 @@ input:checked + .slider:before {
   font-size: 1.8em;
   cursor: pointer;
   border: none;
-  border-radius: 12px;
+  /* border-radius: 12px; */
   background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(10px);
   color: var(--text-color);
@@ -613,7 +629,7 @@ input:checked + .slider:before {
   /* } */
   #video {
     width: 95%;
-    height: 60vh;
+    max-height: 50vh;
   }
 }
 
@@ -642,7 +658,7 @@ input:checked + .slider:before {
   } */
   #video {
     width: 85%;
-    height: 65vh;
+    height: 50vh;
   }
 }
 @media (max-width: 1175px) {
@@ -701,6 +717,10 @@ input:checked + .slider:before {
   .button-row_item-last {
     width: auto;
   }
+
+  #camera-screen h1 {
+    top: 10%;
+  }
 }
 
 @media (max-width: 480px) {
@@ -731,6 +751,9 @@ input:checked + .slider:before {
 @media (max-height: 950px) {
   .button-row {
     gap: 10px;
+  }
+  #camera-screen h1 {
+    top: 20px;
   }
   .button {
     margin: 0px;
@@ -809,11 +832,6 @@ input:checked + .slider:before {
 
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 /* Стили для светлой темы */
-body.light {
-  --bg-color: var(--light-bg-color);
-  --bg-image: var(--light-bg-image);
-  --bg-opacity: var(--light-bg-opacity);
-}
 
 body.light .button {
   background: rgba(255, 255, 255, 0.2);
@@ -853,16 +871,11 @@ body.light #camera-loader .loader-spinner {
 }
 
 body.light::before {
-  background: rgba(255, 255, 255, 0.4);
+  /* background: rgba(255, 255, 255, 0.4); */
+  background: linear-gradient(to top, transparent, white 200%);
 }
 
 /*! Стили для темной темы */
-body.dark {
-  --bg-color: var(--dark-bg-color);
-  --bg-image: var(--dark-bg-image);
-  --bg-opacity: var(--dark-bg-opacity);
-}
-
 body.dark .button {
   background: rgba(0, 0, 0, 0.2);
   color: var(--text-color);
@@ -920,7 +933,8 @@ body.dark #camera-loader .loader-text {
 }
 
 body.dark::before {
-  background: rgba(0, 0, 0, 0.4);
+  /* background: rgba(0, 0, 0, 0.4); */
+  background: linear-gradient(to top, transparent, black 200%);
 }
 
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */

@@ -1,11 +1,11 @@
 {
   "authToken": "fc612550-06e8-4be3-9191-0f97336d9966",
-  "prePhotoTimer": 5,
-  "stylesDir": "C:\\MosPhotoBooth2\\styles",
-  "camera_rotation": 90,
+  "prePhotoTimer": 30,
+  "stylesDir": "C:/MosPhotoBooth2/styles",
+  "camera_rotation": 0,
   "final_image_rotation": 0,
-  "send_image_rotation": 90,
-  "logoPath": "C:\\MosPhotoBooth2\\logo.png",
+  "send_image_rotation": 0,
+  "logoPath": "file:///C:/MosPhotoBooth2/logo.png",
   "logoPosition": "bottom-right",
   "logoOffsetX": 30,
   "logoOffsetY": 30,
@@ -13,19 +13,18 @@
   "theme": "light",
   "printButtonVisible": false,
   "language": {
-    "current": "ru",
-    "showSwitcher": true
+    "current": "ru",    
+    "showSwitcher": false
   },
   "animationEnabled": false,
   "lightTheme": {
-    "backgroundColor": "blue",
-    "backgroundImage": "",
+    "backgroundColor": "#FFEBCD",
+    "backgroundImage": "file:///C:/MosPhotoBooth2/fon.jpg",
     "lightTextColor": "#000000"
   },
   "darkTheme": {
-    "backgroundColor": "#000000",
-    "backgroundImage": "",
+    "backgroundColor": "#696969",
+    "backgroundImage": "file:///C:/MosPhotoBooth2/fon.jpg",
     "darkTextColor": "#ffffff"
-  },
-  "basePath": "C:\\MosPhotoBooth2"
+  }
 }
