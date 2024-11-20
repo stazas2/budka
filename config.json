@@ -1,7 +1,8 @@
 {
   "authToken": "fc612550-06e8-4be3-9191-0f97336d9966",
-  "prePhotoTimer": 30,
+  "prePhotoTimer": 3,
   "stylesDir": "C:/MosPhotoBooth2/styles",
+    "basePath": "C:\\MosPhotoBooth2",
   "camera_rotation": 0,
   "final_image_rotation": 0,
   "send_image_rotation": 0,
@@ -11,10 +12,10 @@
   "logoOffsetY": 30,
   "inactivityTimeout": 60000,
   "theme": "light",
-  "printButtonVisible": false,
+  "printButtonVisible": true,
   "language": {
-    "current": "ru",    
-    "showSwitcher": false
+    "current": "ru",
+    "showSwitcher": true
   },
   "animationEnabled": false,
   "lightTheme": {
@@ -27,4 +28,5 @@
     "backgroundImage": "file:///C:/MosPhotoBooth2/fon.jpg",
     "darkTextColor": "#ffffff"
   }
+
 }

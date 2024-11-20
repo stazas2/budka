@@ -7,7 +7,8 @@
 }
 
 body {
-  font-family: "Roboto", sans-serif;
+  /* font-family: "Chakra Petch", sans-serif; */
+  font-family: "Chakra Petch";
   background-color: var(--background-color);
   background-image: var(--background-image);
   background-repeat: no-repeat;
@@ -19,7 +20,19 @@ body {
   display: flex;
   flex-direction: column;
   position: relative;
-  /* color: var(--text-color); */
+  -webkit-touch-callout: none; /* Отключает меню при длительном нажатии */
+  -webkit-tap-highlight-color: transparent; /* Убирает подсветку нажатий */
+  /* animation: zoomBackground 5s infinite alternate;  */
+
+}
+
+@keyframes zoomBackground {
+  0% {
+    background-size: 100%;
+  }
+  100% {
+    background-size: 110%; /* Фон увеличивается на 20% */
+  }
 }
 
 body::before {
@@ -29,7 +42,7 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(var(--backdrop-blur));
   z-index: -1;
 }
 
@@ -106,7 +119,7 @@ body::after {
   max-width: 1200px;
   padding: 20px;
   align-items: center;
-  /* overflow-y: auto; */
+  overflow-y: auto;
 }
 
 #style-buttons .button {
@@ -115,9 +128,15 @@ body::after {
   animation: fadeIn 0.5s forwards;
 }
 
+/* transition: transform 0.1s ease, box-shadow 0.1s ease;
+.style-buttons .button.pressed {
+  transform: scale(0.9) translateY(4px);
+  box-shadow: 0px 2px 12px rgba(0, 0, 0, 0.2);
+} */
+
 .style-buttons .button:active {
-  transform: scale(0.9) translateY(4px); /* Усиленная трансформация при нажатии */
-  box-shadow: 0px 2px 12px rgba(0, 0, 0, 0.2); /* Более выраженная тень при нажатии */
+  transform: scale(0.9) translateY(4px); 
+  box-shadow: 0px 2px 12px rgba(0, 0, 0, 0.2); 
 }
 
 /* Кнопки */
@@ -134,9 +153,9 @@ body::after {
   width: 100%;
   max-width: 300px;
   min-width: 200px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px) saturate(180%);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  /* background: rgba(255, 255, 255, 0.2); */
+  /* backdrop-filter: blur(10px) saturate(180%); */
+  /* box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); */
   transition:
     transform 0.5s,
     box-shadow 0.5s;
@@ -162,6 +181,8 @@ body::after {
   pointer-events: none; /* Чтобы клики проходили к родителю */
 }
 button {
+  /* font-family: "Chakra Petch", sans-serif; */
+  font-family: "Chakra Petch";
   padding: 25.35px 50.7px;
   font-size: 1.5em;
   cursor: pointer;
@@ -169,26 +190,31 @@ button {
   border-radius: 170px;
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px) saturate(180%);
-  font-weight: 500;
-  transition:
-    background-color 0.3s,
-    transform 0.5s,
-    box-shadow 0.5s;
+  font-weight: 700;
+  /* transition: */
+  /* background-color 0.3s, */
+  /* transform 0.5s, */
+  /* box-shadow 0.5s; */
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-  transform: translateY(0);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* transform: translateY(0); */
+  /* transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); */
 }
 
 button:active {
   transform: scale(0.95) translateY(2px);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
+#print-photo,
+#start-over {
+  color: var(--text-color);
+}
 #countdown {
   font-size: 3.9em;
   font-weight: 700;
   color: var(--text-color);
-  position: relative;
-  top: 30%;
+  margin-top: 20px;
+  /* position: relative;
+  top: 30%; */
 }
 /* Стили для прогресс-бара */
 #progress-bar {
@@ -271,10 +297,11 @@ button:active {
   align-items: center;
   justify-content: center;
   height: 100vh;
+  transition: none;
 }
 .content-container {
   display: flex;
-  flex: 1;
+  /* flex: 1; */
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -290,7 +317,7 @@ button:active {
   background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(196, 213, 217, 0.7511379551820728) 100%);
   box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
   border-radius: 40px;
-  backdrop-filter: blur(100px);
+  /* backdrop-filter: blur(100px); */
 }
 /* Стили для видео-контейнера и видео */
 .video-container {
@@ -348,7 +375,7 @@ button:active {
 }
 
 #result-screen > div {
-  margin-top: 30px;
+  margin-top: 50px;
   display: flex;
   gap: 10px; /* Расстояние между кнопками */
   justify-content: center;
@@ -378,15 +405,17 @@ button:active {
 }
 
 .button-row_item {
-  background: linear-gradient(
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px) saturate(180%);
+  /* background: linear-gradient(
     178deg,
     rgba(36.65, 49.36, 81.12, 0.03) 0%,
     rgba(98.2, 109.7, 138.45, 0.11) 39%,
     rgba(0, 7.04, 28.15, 0) 100%
   );
+  backdrop-filter: blur(100px); */
   box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
   border-radius: 40px;
-  backdrop-filter: blur(100px);
   flex-direction: column;
   justify-content: center;
   align-items: center;
@@ -420,20 +449,21 @@ button:active {
 
 h1 {
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  font-size: 2.6em;
 }
 
 /* Общие стили для заголовков */
 .screen h1 {
-  font-weight: 700;
-  font-size: 2.6em;
   color: var(--text-color);
+  letter-spacing: 2px;
+  /* font-weight: 700;
   text-align: center;
-  margin: 0;
+  margin: 0; */
 }
 
 /* Заголовок для экрана стилей */
 #style-screen h1 {
-  margin-bottom: 20px; /* Отступ снизу, чтобы заголовок располагался над контентом */
+  margin-bottom: 40px; /* Отступ снизу, чтобы заголовок располагался над контентом */
 }
 
 /* Заголовок для экрана выбора пола */
@@ -443,10 +473,11 @@ h1 {
 
 /* Заголовок для экрана камеры */
 #camera-screen h1 {
-  position: absolute;
-  top: 50px; /* Отступ от верхней части экрана */
-  left: 50%;
-  transform: translateX(-50%);
+  /* position: absolute;
+  top: 50px; 
+  left: 50%; */
+  /* transform: translateX(-50%); */
+  position: relative;
   margin: 0;
   z-index: 1;
 }
@@ -467,9 +498,10 @@ h1 {
 /* Стили для кнопки "Назад" */
 .back-button {
   position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  bottom: 5%;
+  /* bottom: 20px; */
+  /* left: 50%;
+  transform: translate(-50%, -50%); */
   padding: 20px 50px;
   /* top: 20px;
   left: 20px; */
@@ -569,13 +601,13 @@ input:checked + .slider:before {
 }
 
 #start-button {
-  padding: 20px 40px;
+  padding: 30px 60px;
   font-size: 1.8em;
   cursor: pointer;
   border: none;
   /* border-radius: 12px; */
+  /* backdrop-filter: blur(10px); */
   background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(10px);
   color: var(--text-color);
   font-weight: 600;
   transition:
@@ -600,16 +632,25 @@ input:checked + .slider:before {
 
 /* Вертикальная ориентация */
 @media (orientation: portrait) {
+  .back-button {
+    font-size: 1.7em;
+    padding: 30px 70px;
+  }
+
+  #camera-screen h1 {
+    top: -5%
+  }
+
+  #style-buttons {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+
   #style-buttons,
   #gender-buttons {
     flex-direction: column;
     align-items: center;
   }
 
-  .button {
-    /* ! */
-    /* width: 60%; */
-  }
   .button-row {
     flex-direction: column;
     /* align-items: center; */
@@ -635,15 +676,27 @@ input:checked + .slider:before {
 
 /* Горизонтальная ориентация */
 @media (orientation: landscape) {
+  .button-row_item {
+    flex-direction: row;
+  }
+
+  .button {
+    margin: 0;
+  }
+
+  #camera-screen h1 {
+    top: -15%;
+  }
+
+  .button-row_item .button {
+    font-size: 2em;
+  }
+
   #style-buttons,
   #gender-buttons {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
-  }
-  .button {
-    /* ! */
-    /* width: 200px; */
   }
   .button-row {
     justify-content: center;
@@ -661,11 +714,11 @@ input:checked + .slider:before {
     height: 50vh;
   }
 }
-@media (max-width: 1175px) {
+/* @media (max-width: 1175px) {
   #camera-screen h1 {
     top: 2%;
   }
-}
+} */
 
 @media (max-width: 775px) {
   #style-buttons {
@@ -749,6 +802,14 @@ input:checked + .slider:before {
 }
 
 @media (max-height: 950px) {
+  /* .content-container {
+    flex: 0;
+  } */
+
+  #camera-screen h1 {
+    top: 5%
+  }
+
   .button-row {
     gap: 10px;
   }
@@ -772,10 +833,12 @@ input:checked + .slider:before {
   margin-top: 10px;
 }
 
-#print-photo,
+/* #print-photo,
 #start-over {
   color: var(--text-color);
-}
+  backdrop-filter: blur(10px) saturate(180%);
+  transition: none;
+} */
 
 #fullscreen-toggle {
   z-index: 2;

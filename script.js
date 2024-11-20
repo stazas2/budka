@@ -1115,11 +1115,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Включение/выключение анимации
 function applySettings() {
-  if (config.animationEnabled) {
-    document.body.classList.add("animated-background");
-  } else {
-    document.body.classList.remove("animated-background");
+  try {
+    if (config.animationEnabled) {
+      document.body.classList.add("animated-background");
+    } else {
+      document.body.classList.remove("animated-background");
+    }
+
+    // Добавляем динамическое применение backdropBlur
+    document.documentElement.style.setProperty('--backdrop-blur', config.backdropBlur);
+
+  } catch (error) {
+    console.error("Error in applySettings:", error);
   }
 }
 applySettings();
+
+//? Нажатие кнопок
+// const buttons = document.querySelectorAll('.style-buttons .button');
+
+// buttons.forEach(button => {
+//   button.addEventListener('click', () => {
+//     // Добавляем класс "pressed"
+//     button.classList.add('pressed');
+    
+//     // Убираем класс "pressed" через короткую задержку
+//     setTimeout(() => {
+//       button.classList.remove('pressed');
+//     }, 15000); // Задержка для визуального эффекта
+//   });
+// });
+
 
