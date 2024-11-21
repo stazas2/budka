@@ -15,8 +15,8 @@
   "theme": "light",
   "printButtonVisible": false,
   "language": {
-    "current": "kk",
-    "showSwitcher": true
+    "current": "ru",    
+    "showSwitcher": false
   },
   "animationEnabled": false,
   "lightTheme": {
