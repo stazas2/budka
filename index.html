@@ -21,6 +21,7 @@
     <script src="./script.js" defer></script>
   </head>
   <body>
+    <!-- Ensure only one instance of fullscreen-toggle and language-switcher -->
     <div id="fullscreen-toggle"></div>
 
     <!-- Э ЗАСТАВКИ -->
@@ -144,8 +145,8 @@
       </div>
     </div>
 
-    <button id="language-switcher">KK</button>
-
+    <!-- Ensure only one instance of fullscreen-toggle and language-switcher -->
+    <button id="language-switcher" style="display: none">KK</button>
     <!-- Скрытый canvas для захвата изображения -->
     <canvas
       id="canvas"

@@ -54,7 +54,7 @@ function applyRotationStyles() {
       )
     }
   } catch (error) {
-    console.error("Error in applyRotationStyles:", error);
+    console.error("Error in applyRotationStyles:", error)
   }
 }
 
@@ -80,8 +80,8 @@ function createDateFolders() {
 
     return { inputDir, outputDir }
   } catch (error) {
-    console.error("Error in createDateFolders:", error);
-    throw error;
+    console.error("Error in createDateFolders:", error)
+    throw error
   }
 }
 
@@ -93,26 +93,26 @@ function generateFileName() {
     const randomString = Math.random().toString(36).substring(2, 6) // Случайные символы
     return `${timeString}_${randomString}.jpg`
   } catch (error) {
-    console.error("Error in generateFileName:", error);
-    throw error;
+    console.error("Error in generateFileName:", error)
+    throw error
   }
 }
 
 // Функция сохранения изображения в формате JPG
 function saveImage(folderType, base64Image) {
-  console.log(`Saving ${folderType} image...`);
+  console.log(`Saving ${folderType} image...`)
   try {
-    const { inputDir, outputDir } = createDateFolders();
-    const folderPath = folderType === "input" ? inputDir : outputDir;
-    const fileName = generateFileName();
-    const filePath = path.join(folderPath, fileName);
-    
-    const imageData = base64Image.replace(/^data:image\/\w+;base64,/, "");
-    fs.writeFileSync(filePath, imageData, "base64");
-    console.log(`Image saved successfully to ${filePath}`);
+    const { inputDir, outputDir } = createDateFolders()
+    const folderPath = folderType === "input" ? inputDir : outputDir
+    const fileName = generateFileName()
+    const filePath = path.join(folderPath, fileName)
+
+    const imageData = base64Image.replace(/^data:image\/\w+;base64,/, "")
+    fs.writeFileSync(filePath, imageData, "base64")
+    console.log(`Image saved successfully to ${filePath}`)
   } catch (error) {
-    console.error(`Error in saveImage (${folderType}):`, error);
-    throw error;
+    console.error(`Error in saveImage (${folderType}):`, error)
+    throw error
   }
 }
 
@@ -130,9 +130,12 @@ function fetchStyles() {
         alert("Не удалось загрузить стили. Пожалуйста, попробуйте позже.")
       })
   } catch (error) {
-    console.error("Ошибка в fetchStyles:", error);
+    console.error("Ошибка в fetchStyles:", error)
   }
 }
+
+let resultShowStyle = ""
+let hasBrackets = false
 
 // Инициализация кнопок стилей
 function initStyleButtons(parsedStyles) {
@@ -151,7 +154,10 @@ function initStyleButtons(parsedStyles) {
 
       const img = document.createElement("img")
       // Включаем selectedGender в путь к изображению стиля
-      const sanitizedDisplayName = style.displayName.replace(/\s*\(.*?\)/g, "").replace(/\s+/g, "_").replace(/[^\w\-]+/g, "")
+      const sanitizedDisplayName = style.displayName
+        .replace(/\s*\(.*?\)/g, "")
+        .replace(/\s+/g, "_")
+        .replace(/[^\w\-]+/g, "")
       img.src = `${config.stylesDir}\\${selectedGender}\\${style.originalName}\\1${sanitizedDisplayName}.jpg`
       // console.log(img.src)
       img.alt = style.displayName
@@ -168,6 +174,12 @@ function initStyleButtons(parsedStyles) {
       button.addEventListener("click", () => {
         // Изменение отображаемого названия
         selectedStyle = style.originalName.replace(/\s*\(.*?\)/g, "")
+        
+        hasBrackets = /\(.*?\)/.test(style.originalName);
+        if (hasBrackets) {
+          resultShowStyle = style.originalName.match(/\((.*?)\)/)
+        }
+
         console.log(`Style selected: ${selectedStyle}`)
         showScreen("camera-screen") // Изменено с gender-screen на camera-screen
         startCamera()
@@ -186,7 +198,7 @@ function initStyleButtons(parsedStyles) {
       styleButtonsContainer.appendChild(button)
     })
   } catch (error) {
-    console.error("Error in initStyleButtons:", error);
+    console.error("Error in initStyleButtons:", error)
   }
 }
 
@@ -209,14 +221,22 @@ genderItems.forEach((item) => {
 function showScreen(screenId) {
   try {
     console.log(`Switching to screen: ${screenId}`)
-    document.querySelectorAll(".screen").forEach((screen) => {
-      screen.classList.remove("active")
-    })
+    // document.querySelectorAll(".screen").forEach((screen) => {
+    //   screen.classList.remove("active")
+    // })
 
-    const activeScreen = document.getElementById(screenId)
-    if (activeScreen) {
-      activeScreen.classList.add("active")
-      const backButton = activeScreen.querySelector(".back-button")
+    // const activeScreen = document.getElementById(screenId)
+    // if (activeScreen) {
+    //   activeScreen.classList.add("active")
+    const currentActive = document.querySelector(".screen.active")
+    if (currentActive) {
+      currentActive.classList.remove("active")
+    }
+
+    const targetScreen = document.getElementById(screenId)
+    if (targetScreen) {
+      targetScreen.classList.add("active")
+      const backButton = targetScreen.querySelector(".back-button")
       if (backButton) {
         if (screenId === "splash-screen" || screenId === "processing-screen") {
           // Убрали camera-screen из этого условия
@@ -252,7 +272,7 @@ function showScreen(screenId) {
       countdownElement.textContent = ""
     }
   } catch (error) {
-    console.error(`Error in showScreen (${screenId}):`, error);
+    console.error(`Error in showScreen (${screenId}):`, error)
   }
 }
 
@@ -287,54 +307,58 @@ async function findBestResolution() {
     }
     throw new Error("No supported resolutions found.")
   } catch (error) {
-    console.error("Error in findBestResolution:", error);
-    throw error;
+    console.error("Error in findBestResolution:", error)
+    throw error
   }
 }
 
 // Используем найденное разрешение при запуске камеры
 async function startCamera() {
   try {
-    console.log('Attempting to start camera...');
-    const videoContainer = document.querySelector(".video-container");
-    const cameraBackButton = document.querySelector("#camera-screen .back-button"); // Select backButton for camera-screen
-    cameraBackButton.disabled = true; // Disable backButton during initialization
+    console.log("Attempting to start camera...")
+    const videoContainer = document.querySelector(".video-container")
+    const cameraBackButton = document.querySelector(
+      "#camera-screen .back-button"
+    ) // Select backButton for camera-screen
+    cameraBackButton.disabled = true // Disable backButton during initialization
 
     try {
-      videoContainer.classList.add("loading");
-      const bestResolution = await findBestResolution();
-      console.log(`Using resolution: ${bestResolution.width}x${bestResolution.height}`);
+      videoContainer.classList.add("loading")
+      const bestResolution = await findBestResolution()
+      console.log(
+        `Using resolution: ${bestResolution.width}x${bestResolution.height}`
+      )
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: bestResolution.width,
           height: bestResolution.height,
         },
-      });
+      })
 
-      videoStream = stream;
-      video.srcObject = stream;
+      videoStream = stream
+      video.srcObject = stream
 
       await new Promise((resolve) => {
         video.onloadedmetadata = () => {
-          cameraInitialized = true;
-          console.log('Camera metadata loaded successfully');
-          resolve();
-        };
-      });
+          cameraInitialized = true
+          console.log("Camera metadata loaded successfully")
+          resolve()
+        }
+      })
 
-      videoContainer.classList.remove("loading");
-      console.log('Camera started successfully');
+      videoContainer.classList.remove("loading")
+      console.log("Camera started successfully")
     } catch (error) {
-      console.error('Camera initialization failed:', error);
-      videoContainer.classList.remove("loading");
-      throw error;
+      console.error("Camera initialization failed:", error)
+      videoContainer.classList.remove("loading")
+      throw error
     } finally {
-      cameraBackButton.disabled = false; // Re-enable backButton after initialization
+      cameraBackButton.disabled = false // Re-enable backButton after initialization
     }
   } catch (error) {
-    console.error("Error in startCamera:", error);
-    throw error;
+    console.error("Error in startCamera:", error)
+    throw error
   }
 }
 
@@ -349,7 +373,7 @@ function stopCamera() {
       console.log("Camera stopped")
     }
   } catch (error) {
-    console.error("Error in stopCamera:", error);
+    console.error("Error in stopCamera:", error)
   }
 }
 
@@ -367,7 +391,7 @@ function startCountdown() {
       video.onloadedmetadata = beginCountdown
     }
   } catch (error) {
-    console.error("Error in startCountdown:", error);
+    console.error("Error in startCountdown:", error)
   }
 }
 
@@ -398,18 +422,18 @@ function beginCountdown() {
       }
     }, 1000)
   } catch (error) {
-    console.error("Error in beginCountdown:", error);
+    console.error("Error in beginCountdown:", error)
   }
 }
 
 // Функция для создания снимка
 function takePicture() {
   try {
-    console.log('Taking picture...');
+    console.log("Taking picture...")
     try {
-      const context = canvas.getContext("2d");
-      const rotationAngle = config.send_image_rotation || 0;
-      console.log(`Applying rotation: ${rotationAngle} degrees`);
+      const context = canvas.getContext("2d")
+      const rotationAngle = config.send_image_rotation || 0
+      console.log(`Applying rotation: ${rotationAngle} degrees`)
 
       // Определяем размеры для canvas в зависимости от угла поворота
       if (rotationAngle === 90 || rotationAngle === 270) {
@@ -453,25 +477,25 @@ function takePicture() {
 
       // Получаем данные изображения и сохраняем их
       const imageData = canvas.toDataURL("image/jpeg", 1.0)
-      console.log('Picture captured successfully');
-      
+      console.log("Picture captured successfully")
+
       try {
-        saveImage("input", imageData);
-        console.log('Input image saved successfully');
+        saveImage("input", imageData)
+        console.log("Input image saved successfully")
       } catch (error) {
-        console.error('Failed to save input image:', error);
+        console.error("Failed to save input image:", error)
       }
 
-      sendImageToServer(imageData);
+      sendImageToServer(imageData)
     } catch (error) {
-      console.error('Failed to take picture:', error);
-      alert('Failed to take picture. Please try again.');
-      showScreen("style-screen");
+      console.error("Failed to take picture:", error)
+      alert("Failed to take picture. Please try again.")
+      showScreen("style-screen")
     }
   } catch (error) {
-    console.error("Error in takePicture:", error);
-    alert('Failed to take picture. Please try again.');
-    showScreen("style-screen");
+    console.error("Error in takePicture:", error)
+    alert("Failed to take picture. Please try again.")
+    showScreen("style-screen")
   }
 }
 
@@ -559,7 +583,7 @@ function sendImageToServer(imageData) {
         showScreen("style-screen")
       })
   } catch (error) {
-    console.error("Error in sendImageToServer:", error);
+    console.error("Error in sendImageToServer:", error)
   }
 }
 
@@ -585,14 +609,22 @@ async function handleServerResponse(responseData) {
       // Отображаем выбранные параметры
       const selectedParamsText = document.getElementById("selected-params-text")
       const texts = translations[currentLanguage]
+      
       console.log(selectedGender)
       if (selectedParamsText && texts) {
         const genderText = texts.genders[selectedGender] || selectedGender
-        const styleText =
-          document
-            .querySelector(`[data-style="${selectedStyle}"]`)
-            ?.querySelector("div")?.textContent || selectedStyle
-        selectedParamsText.innerHTML = `&emsp;${texts.genderScreenTitleEnd}:&emsp;<strong>${genderText}</strong><br/>${texts.styleScreenTitleEnd}:&emsp;<strong>${styleText}</strong>`
+        let styleText = ""
+
+        if (!hasBrackets) {
+          styleText =
+            document
+              .querySelector(`[data-style="${selectedStyle}"]`)
+              ?.querySelector("div")?.textContent || selectedStyle
+        } else {
+          styleText = resultShowStyle[1]
+        }
+
+        selectedParamsText.innerHTML = `${texts.genderScreenTitleEnd}:&emsp;&emsp;<strong>${genderText}</strong><br/>${texts.styleScreenTitleEnd}:&emsp;<strong>${styleText}</strong>`
       }
 
       // Сохранение готового изображения с логотипом в папку "output"
@@ -613,7 +645,7 @@ async function handleServerResponse(responseData) {
       showScreen("style-screen")
     }
   } catch (error) {
-    console.error("Error in handleServerResponse:", error);
+    console.error("Error in handleServerResponse:", error)
   }
 }
 
@@ -627,10 +659,10 @@ function updatePrintButtonVisibility() {
 
 // Функция наложения логотипа
 async function overlayLogoOnImage(base64Image) {
-  console.warn("overlayLogoOnImage is a stub and does not apply any logos.");
+  console.warn("overlayLogoOnImage is a stub and does not apply any logos.")
   return new Promise((resolve) => {
-    resolve(`data:image/jpeg;base64,${base64Image}`);
-  });
+    resolve(`data:image/jpeg;base64,${base64Image}`)
+  })
 }
 // async function overlayLogoOnImage(base64Image) {
 //   try {
@@ -648,16 +680,16 @@ async function overlayLogoOnImage(base64Image) {
 //           canvas.width = mainImage.width
 //           canvas.height = mainImage.height
 //           context.drawImage(mainImage, 0, 0, canvas.width, canvas.height)
-  
+
 //           // Загружаем логотип и позиционируем его
 //           logoImage.onload = () => {
 //             console.log("Logo loaded successfully")
-  
+
 //             const offsetX = config.logoOffsetX || 0
 //             const offsetY = config.logoOffsetY || 0
 //             let x = 0
 //             let y = 0
-  
+
 //             // Определение позиции логотипа в зависимости от logoPosition
 //             switch (config.logoPosition) {
 //               case "top-left":
@@ -696,12 +728,12 @@ async function overlayLogoOnImage(base64Image) {
 //                 y = canvas.height - logoImage.height - offsetY
 //                 break
 //             }
-  
+
 //             // Накладываем логотип
 //             context.drawImage(logoImage, x, y)
 //             resolve(canvas.toDataURL("image/jpeg"))
 //           }
-  
+
 //           logoImage.onerror = () => {
 //             console.error("Failed to load logo image. Check logoPath in config.")
 //             resolve(canvas.toDataURL("image/jpeg")) // Возвращаем изображение без логотипа
@@ -709,7 +741,7 @@ async function overlayLogoOnImage(base64Image) {
 //         } catch (error) {
 //           console.error("Error in overlayLogoOnImage:", error);
 //           return null;
-          
+
 //         }
 
 //       }
@@ -730,10 +762,14 @@ function getRandomImageFromStyleFolder(style) {
   try {
     // Updated path to include selectedGender
     const styleFolderPath = path.join(config.stylesDir, selectedGender, style)
-    console.log(`Путь изображений (getRandomImageFromStyleFolder): ${styleFolderPath}`)
+    console.log(
+      `Путь изображений (getRandomImageFromStyleFolder): ${styleFolderPath}`
+    )
 
     if (!fs.existsSync(styleFolderPath)) {
-      console.warn(`Folder for style "${style}" and gender "${selectedGender}" does not exist.`)
+      console.warn(
+        `Folder for style "${style}" and gender "${selectedGender}" does not exist.`
+      )
       return null
     }
 
@@ -857,7 +893,7 @@ function handleOrientationChange() {
       // Дополнительная логика для ландшафтной ориентации, если необходимо
     }
   } catch (error) {
-    console.error("Error in handleOrientationChange:", error);
+    console.error("Error in handleOrientationChange:", error)
   }
 }
 
@@ -881,7 +917,7 @@ function resetInactivityTimer() {
       stopCamera()
     }, inactivityTimeout)
   } catch (error) {
-    console.error("Error in resetInactivityTimer:", error);
+    console.error("Error in resetInactivityTimer:", error)
   }
 }
 
@@ -893,8 +929,7 @@ function resetInactivityTimer() {
 // Вызываем resetInactivityTimer при загрузке страницы
 resetInactivityTimer()
 
-
-// let currentLanguage = 'ru'; // Язык по умолчанию
+// currentLanguage = 'ru'; // Язык по умолчанию
 // Загрузка переводов
 const translations = require("./translations.json")
 // Обновляем тексты на основе конфигурации
@@ -903,7 +938,6 @@ function updateTexts() {
     const texts = translations[currentLanguage]
     if (!texts) return
 
-    // Обновляем заголовки экранов
     const screenTitles = {
       "splash-screen": texts.welcomeMessage,
       "style-screen": texts.styleScreenTitle,
@@ -967,12 +1001,30 @@ function updateTexts() {
     // Обновляем текст на кнопке переключения языка
     if (languageSwitcher) {
       languageSwitcher.textContent = currentLanguage === "ru" ? "KK" : "RU"
+      languageSwitcher.style.display = config.language?.showSwitcher ? "block" : "none"
     }
 
     // Управление видимостью кнопки печати
     updatePrintButtonVisibility()
+
+    // Обновление selectedParamsText на экране результата
+    const selectedParamsText = document.getElementById("selected-params-text")
+    if (selectedParamsText) {
+      const genderText = texts.genders[selectedGender] || selectedGender
+
+      if (!hasBrackets) {
+        styleText =
+          document
+            .querySelector(`[data-style="${selectedStyle}"]`)
+            ?.querySelector("div")?.textContent || selectedStyle
+      } else {
+        styleText = resultShowStyle[1]
+      }
+
+      selectedParamsText.innerHTML = `${texts.genderScreenTitleEnd}:&emsp;&emsp;<strong>${genderText}</strong><br/>${texts.styleScreenTitleEnd}:&emsp;<strong>${styleText}</strong>`
+    }
   } catch (error) {
-    console.error("Error in updateTexts:", error);
+    console.error("Error in updateTexts:", error)
   }
 }
 
@@ -980,8 +1032,6 @@ function updateTexts() {
 document.addEventListener("DOMContentLoaded", () => {
   updateTexts()
 })
-
-
 
 // Вызываем функцию обновления текстов после загрузки страницы
 document.addEventListener("DOMContentLoaded", () => {
@@ -1006,8 +1056,11 @@ function applyTheme(theme) {
           ? config.lightTheme.backgroundColor
           : config.darkTheme.backgroundColor
       )
-      // Используем путь из config.json без добавления 'file:///' 
-      document.documentElement.style.setProperty('--background-image', `url("${config.lightTheme.backgroundImage.replace(/\\\\/g, "/")}")`);
+      // Используем путь из config.json без добавления 'file:///'
+      document.documentElement.style.setProperty(
+        "--background-image",
+        `url("${config.lightTheme.backgroundImage.replace(/\\\\/g, "/")}")`
+      )
       document.documentElement.style.setProperty(
         "--background-image",
         theme === "light"
@@ -1022,7 +1075,7 @@ function applyTheme(theme) {
       )
     }
   } catch (error) {
-    console.error("Error in applyTheme:", error);
+    console.error("Error in applyTheme:", error)
   }
 }
 
@@ -1046,16 +1099,20 @@ const languageSwitcher = document.getElementById("language-switcher")
 
 // Управление видимостью переключателя языка
 if (languageSwitcher) {
-  languageSwitcher.style.display = config.language?.showSwitcher ? 'block' : 'none';
-  
-  languageSwitcher.addEventListener('click', () => {
-      currentLanguage = currentLanguage === 'ru' ? 'kk' : 'ru';
-      // Обновляем конфигурацию
-      config.language.current = currentLanguage;
-      fs.writeFileSync(path.join(__dirname, 'config.json'), 
-          JSON.stringify(config, null, 2));
-      updateTexts();
-  });
+  languageSwitcher.style.display = config.language?.showSwitcher
+    ? "block"
+    : "none"
+
+  languageSwitcher.addEventListener("click", () => {
+    currentLanguage = currentLanguage === "ru" ? "kk" : "ru"
+    // Обновляем конфигурацию
+    config.language.current = currentLanguage
+    fs.writeFileSync(
+      path.join(__dirname, "config.json"),
+      JSON.stringify(config, null, 2)
+    )
+    updateTexts()
+  })
 }
 
 // Получаем кнопку и добавляем слушатель событий для переключения
@@ -1117,19 +1174,21 @@ document.addEventListener("DOMContentLoaded", () => {
 function applySettings() {
   try {
     if (config.animationEnabled) {
-      document.body.classList.add("animated-background");
+      document.body.classList.add("animated-background")
     } else {
-      document.body.classList.remove("animated-background");
+      document.body.classList.remove("animated-background")
     }
 
     // Добавляем динамическое применение backdropBlur
-    document.documentElement.style.setProperty('--backdrop-blur', config.backdropBlur);
-
+    document.documentElement.style.setProperty(
+      "--backdrop-blur",
+      config.backdropBlur
+    )
   } catch (error) {
-    console.error("Error in applySettings:", error);
+    console.error("Error in applySettings:", error)
   }
 }
-applySettings();
+applySettings()
 
 //? Нажатие кнопок
 // const buttons = document.querySelectorAll('.style-buttons .button');
@@ -1138,12 +1197,11 @@ applySettings();
 //   button.addEventListener('click', () => {
 //     // Добавляем класс "pressed"
 //     button.classList.add('pressed');
-    
+
 //     // Убираем класс "pressed" через короткую задержку
 //     setTimeout(() => {
 //       button.classList.remove('pressed');
+// });
 //     }, 15000); // Задержка для визуального эффекта
 //   });
 // });
-
-

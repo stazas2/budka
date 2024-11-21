@@ -20,10 +20,8 @@ body {
   display: flex;
   flex-direction: column;
   position: relative;
-  -webkit-touch-callout: none; /* Отключает меню при длительном нажатии */
   -webkit-tap-highlight-color: transparent; /* Убирает подсветку нажатий */
   /* animation: zoomBackground 5s infinite alternate;  */
-
 }
 
 @keyframes zoomBackground {
@@ -85,6 +83,7 @@ body::after {
   overflow: hidden;
 }
 
+/* Добавляем переход для классов .screen */
 .screen {
   display: none;
   padding: 20px;
@@ -102,15 +101,36 @@ body::after {
   visibility: hidden; /* Скрываем экран полностью */
   pointer-events: none; /* Отключаем взаимодействие с неактивными экранами */
   opacity: 0; /* Добавляем полную прозрачность */
-  transition: opacity 0.3s ease;
 }
-.active {
+
+.screen.active {
   display: flex;
   visibility: visible; /* Показываем активный экран */
   pointer-events: all; /* Включаем взаимодействие для активного экрана */
   z-index: 1; /* Активный экран поверх остальных */
   opacity: 1; /* Показываем активный экран */
+  /* animation: fadeIn 0.5s ease; */
 }
+/* .active {
+  display: flex;
+  visibility: visible; 
+  pointer-events: all; 
+  z-index: 1; 
+  opacity: 1;
+} */
+
+/* Добавляем ключевые кадры для анимации появления */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 #style-buttons {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -119,13 +139,13 @@ body::after {
   max-width: 1200px;
   padding: 20px;
   align-items: center;
-  overflow-y: auto;
 }
 
 #style-buttons .button {
   box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
   opacity: 0;
-  animation: fadeIn 0.5s forwards;
+  animation: fadeIn 1s forwards; /* Анимация появления */
+  backdrop-filter: blur(10px) saturate(180%);
 }
 
 /* transition: transform 0.1s ease, box-shadow 0.1s ease;
@@ -135,8 +155,8 @@ body::after {
 } */
 
 .style-buttons .button:active {
-  transform: scale(0.9) translateY(4px); 
-  box-shadow: 0px 2px 12px rgba(0, 0, 0, 0.2); 
+  transform: scale(0.9) translateY(4px);
+  box-shadow: 0px 2px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* Кнопки */
@@ -207,6 +227,7 @@ button:active {
 #print-photo,
 #start-over {
   color: var(--text-color);
+  transition: all 0.3s ease;
 }
 #countdown {
   font-size: 3.9em;
@@ -450,6 +471,7 @@ button:active {
 h1 {
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
   font-size: 2.6em;
+  text-align: center;
 }
 
 /* Общие стили для заголовков */
@@ -480,6 +502,7 @@ h1 {
   position: relative;
   margin: 0;
   z-index: 1;
+  text-align: center;
 }
 
 /* Заголовок для экрана обработки */
@@ -502,7 +525,7 @@ h1 {
   /* bottom: 20px; */
   /* left: 50%;
   transform: translate(-50%, -50%); */
-  padding: 20px 50px;
+  padding: 20px 70px;
   /* top: 20px;
   left: 20px; */
   /* padding: 15px 30px; */
@@ -522,27 +545,6 @@ h1 {
   opacity: 0.5;
 }
 
-/* Стили для кнопки переключения языка */
-#language-switcher {
-  /* ! */
-  display: none;
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  padding: 15px 30px;
-  font-size: 1.2em;
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  z-index: 1000;
-}
-
-/* #language-switcher:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-} */
 
 /* Стили для переключателя темы */
 .theme-switcher {
@@ -638,11 +640,13 @@ input:checked + .slider:before {
   }
 
   #camera-screen h1 {
-    top: -5%
+    top: -5%;
   }
 
   #style-buttons {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    /*? Скролл */
+    /* overflow-y: auto; */
   }
 
   #style-buttons,
@@ -682,6 +686,10 @@ input:checked + .slider:before {
 
   .button {
     margin: 0;
+  }
+
+  .back-button {
+    bottom: 3%;
   }
 
   #camera-screen h1 {
@@ -748,7 +756,7 @@ input:checked + .slider:before {
     flex: 0;
   }
   .back-button {
-    padding: 10px;
+    padding: 20px 70px;
   }
   .button-row_item {
     box-shadow: 0px 2px 8px rgba(105.36, 97.05, 200.93, 0.25);
@@ -771,9 +779,9 @@ input:checked + .slider:before {
     width: auto;
   }
 
-  #camera-screen h1 {
+  /* #camera-screen h1 {
     top: 10%;
-  }
+  } */
 }
 
 @media (max-width: 480px) {
@@ -807,7 +815,7 @@ input:checked + .slider:before {
   } */
 
   #camera-screen h1 {
-    top: 5%
+    top: 5%;
   }
 
   .button-row {
@@ -1038,18 +1046,6 @@ body.dark::before {
   }
   100% {
     transform: rotate(360deg);
-  }
-}
-
-/* Добавление ключевых кадров для анимации плавного появления */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }
 
