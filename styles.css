@@ -485,7 +485,9 @@ h1 {
 
 /* Заголовок для экрана стилей */
 #style-screen h1 {
-  margin-bottom: 40px; /* Отступ снизу, чтобы заголовок располагался над контентом */
+  /* margin-bottom: 40px; */
+  position: absolute;
+  top: 7%;
 }
 
 /* Заголовок для экрана выбора пола */
@@ -529,7 +531,7 @@ h1 {
   /* top: 20px;
   left: 20px; */
   /* padding: 15px 30px; */
-  font-size: 1.2em;
+  /* font-size: 1.2em; */
   background: rgba(255, 255, 255, 0.2);
   border: none;
   /* border-radius: 8px; */
@@ -693,7 +695,7 @@ input:checked + .slider:before {
   }
 
   #camera-screen h1 {
-    top: -15%;
+    top: -10%;
   }
 
   .button-row_item .button {
@@ -743,7 +745,7 @@ input:checked + .slider:before {
 
 @media (max-width: 710px) {
   #style-screen h1 {
-    margin-top: 65px;
+    /* margin-top: 65px; */
     margin-bottom: 0;
   }
   #result-screen > div {
@@ -814,16 +816,16 @@ input:checked + .slider:before {
     flex: 0;
   } */
 
-  #camera-screen h1 {
+  /* #camera-screen h1 {
     top: 5%;
-  }
+  } */
 
   .button-row {
     gap: 10px;
   }
-  #camera-screen h1 {
+  /* #camera-screen h1 {
     top: 20px;
-  }
+  } */
   .button {
     margin: 0px;
   }

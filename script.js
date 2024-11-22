@@ -522,7 +522,7 @@ function sendImageToServer(imageData) {
 
     const headers = {
       Accept: "application/json",
-      Authorization: `Bearer fc612550-06e8-4be3-9191-0f97336d9966`,
+      Authorization: `Bearer ${config?.authToken}`,
       "Content-Type": "application/json",
     }
 
