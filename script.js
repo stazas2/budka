@@ -511,7 +511,7 @@ function sendImageToServer(imageData) {
     const base64FonImage = fonImage ? fonImage.split(",")[1] : base64Image // Используем изображение с камеры, если `Fon` не найдено
 
     const data = {
-      mode: "style_sdxl",
+      mode: "Avatar", // style_sdxl
       style: selectedStyle,
       params: {
         Sex: selectedGender,

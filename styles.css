@@ -8,7 +8,7 @@
 
 body {
   /* font-family: "Chakra Petch", sans-serif; */
-  font-family: "Chakra Petch";
+  font-family: "Open Sans";
   background-color: var(--background-color);
   background-image: var(--background-image);
   background-repeat: no-repeat;
@@ -21,7 +21,7 @@ body {
   flex-direction: column;
   position: relative;
   -webkit-tap-highlight-color: transparent; /* Убирает подсветку нажатий */
-  animation: zoomBackground 2s infinite alternate; 
+  /* animation: zoomBackground 2s infinite alternate;  */
 }
 
 @keyframes zoomBackground {
@@ -29,7 +29,7 @@ body {
     background-size: 100%;
   }
   100% {
-    background-size: 110%; /* Фон увеличивается на 20% */
+    background-size: 110%; 
   }
 }
 
@@ -202,7 +202,7 @@ body::after {
 }
 button {
   /* font-family: "Chakra Petch", sans-serif; */
-  font-family: "Chakra Petch";
+  font-family: "Open Sans";
   padding: 25.35px 50.7px;
   font-size: 1.5em;
   cursor: pointer;
@@ -639,6 +639,10 @@ input:checked + .slider:before {
   .back-button {
     font-size: 1.7em;
     padding: 30px 70px;
+  }
+
+  #style-screen h1 {
+    top: 18%;
   }
 
   #camera-screen h1 {
