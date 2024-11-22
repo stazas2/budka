@@ -21,7 +21,7 @@ body {
   flex-direction: column;
   position: relative;
   -webkit-tap-highlight-color: transparent; /* Убирает подсветку нажатий */
-  /* animation: zoomBackground 5s infinite alternate;  */
+  animation: zoomBackground 2s infinite alternate; 
 }
 
 @keyframes zoomBackground {
@@ -109,7 +109,7 @@ body::after {
   pointer-events: all; /* Включаем взаимодействие для активного экрана */
   z-index: 1; /* Активный экран поверх остальных */
   opacity: 1; /* Показываем активный экран */
-  /* animation: fadeIn 0.5s ease; */
+  animation: fadeIn 0.5s ease;
 }
 /* .active {
   display: flex;
