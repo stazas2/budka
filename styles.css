@@ -8,7 +8,7 @@
 
 body {
   /* font-family: "Chakra Petch", sans-serif; */
-  font-family: "Open Sans";
+  font-family: "Roboto", sans-serif;
   background-color: var(--background-color);
   background-image: var(--background-image);
   background-repeat: no-repeat;
@@ -202,7 +202,7 @@ body::after {
 }
 button {
   /* font-family: "Chakra Petch", sans-serif; */
-  font-family: "Open Sans";
+  font-family: "Roboto", sans-serif;
   padding: 25.35px 50.7px;
   font-size: 1.5em;
   cursor: pointer;
