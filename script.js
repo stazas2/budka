@@ -36,6 +36,10 @@ let cameraInitialized = false
 const baseDir = path.join("C:\\MosPhotoBooth2", "SavedPhotos")
 const config = loadConfig()
 
+// Загрузка лого-бренда
+document.getElementById("logo").src = config?.brandLogoPath
+document.body.classList.add(`rotation-${config.camera_rotation}`)
+
 // Применяем вращение для элементов на основе конфигурации
 function applyRotationStyles() {
   try {
@@ -174,8 +178,8 @@ function initStyleButtons(parsedStyles) {
       button.addEventListener("click", () => {
         // Изменение отображаемого названия
         selectedStyle = style.originalName.replace(/\s*\(.*?\)/g, "")
-        
-        hasBrackets = /\(.*?\)/.test(style.originalName);
+
+        hasBrackets = /\(.*?\)/.test(style.originalName)
         if (hasBrackets) {
           resultShowStyle = style.originalName.match(/\((.*?)\)/)
         }
@@ -220,13 +224,15 @@ genderItems.forEach((item) => {
 // Инициализация кнопок гендера с анимацией
 function initGenderButtons() {
   try {
-    const genderButtons = document.querySelectorAll("#gender-buttons .button-row_item");
+    const genderButtons = document.querySelectorAll(
+      "#gender-buttons .button-row_item"
+    )
     genderButtons.forEach((button, index) => {
-      button.style.animationDelay = `${index * 0.3}s`;
-      button.classList.add("animate");
-    });
+      button.style.animationDelay = `${index * 0.3}s`
+      button.classList.add("animate")
+    })
   } catch (error) {
-    console.error("Error in initGenderButtons:", error);
+    console.error("Error in initGenderButtons:", error)
   }
 }
 
@@ -532,7 +538,7 @@ function sendImageToServer(imageData) {
         Fon: base64FonImage,
       },
     }
-    console.log('MODEEEEEEEEEEEEEE  ' + data.mode)
+
     const headers = {
       Accept: "application/json",
       Authorization: `Bearer ${config?.authToken}`,
@@ -622,7 +628,7 @@ async function handleServerResponse(responseData) {
       // Отображаем выбранные параметры
       const selectedParamsText = document.getElementById("selected-params-text")
       const texts = translations[currentLanguage]
-      
+
       console.log(selectedGender)
       if (selectedParamsText && texts) {
         const genderText = texts.genders[selectedGender] || selectedGender
@@ -671,104 +677,76 @@ function updatePrintButtonVisibility() {
 }
 
 // Функция наложения логотипа
-async function overlayLogoOnImage(base64Image) {
-  console.warn("overlayLogoOnImage is a stub and does not apply any logos.")
-  return new Promise((resolve) => {
-    resolve(`data:image/jpeg;base64,${base64Image}`)
-  })
-}
 // async function overlayLogoOnImage(base64Image) {
-//   try {
-//     return new Promise((resolve) => {
-//       const canvas = document.createElement("canvas")
-//       const context = canvas.getContext("2d")
-//       const mainImage = new Image()
-//       const logoImage = new Image()
-
-//       mainImage.src = `data:image/jpeg;base64,${base64Image}`
-//       logoImage.src = config.logoPath // Путь к логотипу из конфигурации
-
-//       mainImage.onload = () => {
-//         try {
-//           canvas.width = mainImage.width
-//           canvas.height = mainImage.height
-//           context.drawImage(mainImage, 0, 0, canvas.width, canvas.height)
-
-//           // Загружаем логотип и позиционируем его
-//           logoImage.onload = () => {
-//             console.log("Logo loaded successfully")
-
-//             const offsetX = config.logoOffsetX || 0
-//             const offsetY = config.logoOffsetY || 0
-//             let x = 0
-//             let y = 0
-
-//             // Определение позиции логотипа в зависимости от logoPosition
-//             switch (config.logoPosition) {
-//               case "top-left":
-//                 x = offsetX
-//                 y = offsetY
-//                 break
-//               case "top-right":
-//                 x = canvas.width - logoImage.width - offsetX
-//                 y = offsetY
-//                 break
-//               case "bottom-left":
-//                 x = offsetX
-//                 y = canvas.height - logoImage.height - offsetY
-//                 break
-//               case "bottom-right":
-//                 x = canvas.width - logoImage.width - offsetX
-//                 y = canvas.height - logoImage.height - offsetY
-//                 break
-//               case "center":
-//                 x = (canvas.width - logoImage.width) / 2
-//                 y = (canvas.height - logoImage.height) / 2
-//                 break
-//               case "center-top":
-//                 x = (canvas.width - logoImage.width) / 2
-//                 y = offsetY
-//                 break
-//               case "center-bottom":
-//                 x = (canvas.width - logoImage.width) / 2
-//                 y = canvas.height - logoImage.height - offsetY
-//                 break
-//               default:
-//                 console.warn(
-//                   `Invalid logo position: ${config.logoPosition}. Defaulting to bottom-right.`
-//                 )
-//                 x = canvas.width - logoImage.width - offsetX
-//                 y = canvas.height - logoImage.height - offsetY
-//                 break
-//             }
-
-//             // Накладываем логотип
-//             context.drawImage(logoImage, x, y)
-//             resolve(canvas.toDataURL("image/jpeg"))
-//           }
-
-//           logoImage.onerror = () => {
-//             console.error("Failed to load logo image. Check logoPath in config.")
-//             resolve(canvas.toDataURL("image/jpeg")) // Возвращаем изображение без логотипа
-//           }
-//         } catch (error) {
-//           console.error("Error in overlayLogoOnImage:", error);
-//           return null;
-
-//         }
-
-//       }
-
-//       mainImage.onerror = () => {
-//         console.error("Failed to load main image.")
-//         resolve(null) // Возвращаем null при ошибке
-//       }
-//     })
-//   } catch (error) {
-//     console.error("Error in overlayLogoOnImage:", error);
-//     return null;
-//   }
+//   console.warn("overlayLogoOnImage is a stub and does not apply any logos.")
+//   return new Promise((resolve) => {
+//     resolve(`data:image/jpeg;base64,${base64Image}`)
+//   })
 // }
+async function overlayLogoOnImage(base64Image) {
+  try {
+    const canvas = document.createElement("canvas")
+    const context = canvas.getContext("2d")
+    const mainImage = new Image()
+    const logoImage = new Image()
+
+    mainImage.src = `data:image/jpeg;base64,${base64Image}`
+    logoImage.src = config.logoPath
+
+    await Promise.all([
+      new Promise((resolve, reject) => {
+        mainImage.onload = resolve
+        mainImage.onerror = reject
+      }),
+      new Promise((resolve, reject) => {
+        logoImage.onload = resolve
+        logoImage.onerror = reject
+      }),
+    ])
+
+    canvas.width = mainImage.width
+    canvas.height = mainImage.height
+    context.drawImage(mainImage, 0, 0)
+
+    // Определяем позицию логотипа
+    let x = 0
+    let y = 0
+    const offsetX = config.logoOffsetX || 30
+    const offsetY = config.logoOffsetY || 30
+
+    const logoWidth = 340 // Ширина логотипа
+    const logoHeight = 340 // Высота логотипа
+
+    switch (config.logoPosition) {
+      case "top-left":
+        x = offsetX
+        y = offsetY
+        break
+      case "top-right":
+        x = canvas.width - logoWidth - offsetX
+        y = offsetY
+        break
+      case "bottom-left":
+        x = offsetX
+        y = canvas.height - logoHeight - offsetY
+        break
+      case "bottom-right":
+      default:
+        x = canvas.width - logoWidth - offsetX
+        y = canvas.height - logoHeight - offsetY
+    }
+
+    // Уменьшаем и рисуем логотип
+    context.drawImage(logoImage, x, y, logoWidth, logoHeight)
+
+    const finalImage = canvas.toDataURL("image/jpeg", 1.0)
+
+    return finalImage
+  } catch (error) {
+    console.error("Error in overlayLogoOnImage:", error)
+    return null
+  }
+}
 
 // Вспомогательная функция для получения случайного изображения из папки стиля
 function getRandomImageFromStyleFolder(style) {
@@ -996,14 +974,6 @@ function updateTexts() {
       loaderText.textContent = texts.loaderText
     }
 
-    // Обновляем тексты loader-text
-    const loaderTexts = document.getElementsByClassName("loader-text")
-    if (loaderTexts.length > 0) {
-      Array.from(loaderTexts).forEach((loader) => {
-        loader.textContent = texts.loaderText
-      })
-    }
-
     // Обновляем тексты гендерных кнопок
     const genderButtons = document.querySelectorAll("#gender-buttons .button")
     genderButtons.forEach((button) => {
@@ -1014,7 +984,9 @@ function updateTexts() {
     // Обновляем текст на кнопке переключения языка
     if (languageSwitcher) {
       languageSwitcher.textContent = currentLanguage === "ru" ? "KK" : "RU"
-      languageSwitcher.style.display = config.language?.showSwitcher ? "block" : "none"
+      languageSwitcher.style.display = config.language?.showSwitcher
+        ? "block"
+        : "none"
     }
 
     // Управление видимостью кнопки печати
@@ -1036,6 +1008,10 @@ function updateTexts() {
 
       selectedParamsText.innerHTML = `${texts.genderScreenTitleEnd}:&emsp;&emsp;<strong>${genderText}</strong><br/>${texts.styleScreenTitleEnd}:&emsp;<strong>${styleText}</strong>`
     }
+
+    // Обновляем loaderMessages на основе текущего языка
+    loaderMessages = translations[currentLanguage].loaderMessages || []
+    currentMessageIndex = 0 // Сбрасываем индекс сообщений
   } catch (error) {
     console.error("Error in updateTexts:", error)
   }
@@ -1045,12 +1021,7 @@ function updateTexts() {
 document.addEventListener("DOMContentLoaded", () => {
   updateTexts()
   logStartupTime()
-  initGenderButtons(); // Инициализация анимации для гендерных кнопок
-})
-
-// Вызываем функцию обновления текстов после загрузки страницы
-document.addEventListener("DOMContentLoaded", () => {
-  updateTexts()
+  initGenderButtons() // Инициализация анимации для гендерных кнопок
 })
 
 //! Theme Switcher
@@ -1222,40 +1193,41 @@ applySettings()
 // });
 
 // Processing message' block
-const loaderMessages = translations[currentLanguage].loaderMessages || [];
-
+let loaderMessages = translations[currentLanguage].loaderMessages || []
 function createFloatingText(message) {
-  const textElement = document.createElement('div');
-  const progressBarRect = progressBar.getBoundingClientRect();
-  textElement.className = 'floating-text';
-  textElement.innerText = message;
+  const textElement = document.createElement("div")
+  const progressBarRect = progressBar.getBoundingClientRect()
+  textElement.className = "floating-text"
+  textElement.innerText = message
 
-  const randomX = Math.random() * 35 + 25; // От 25% до 60%
-  const xPosition = (progressBarRect.width * randomX) / 100; // В пиксели
-  const randomY = Math.random() * 40 - 20; 
+  const randomX = Math.random() * 35 + 25 // От 25% до 60%
+  const xPosition = (progressBarRect.width * randomX) / 100 // В пиксели
+  const randomY = Math.random() * 40 - 20
 
-  textElement.style.position = 'absolute';
-  textElement.style.left = `${progressBarRect.left/1.2 + xPosition}px`;
-  textElement.style.bottom = `${progressBarRect.bottom + randomY - window.innerHeight}px`;
+  textElement.style.position = "absolute"
+  textElement.style.left = `${progressBarRect.left / 1.2 + xPosition}px`
+  textElement.style.bottom = `${
+    progressBarRect.bottom + randomY - window.innerHeight
+  }px`
 
-  processingScreen.appendChild(textElement);
+  processingScreen.appendChild(textElement)
 
   // Удаляем текст после завершения анимации
   setTimeout(() => {
-    processingScreen.removeChild(textElement);
-  }, 2000);
+    processingScreen.removeChild(textElement)
+  }, 2000)
 }
 
-let currentMessageIndex = 0;
+let currentMessageIndex = 0
 function displayNextMessage() {
-  const processingScreen = document.getElementById("processing-screen");
+  const processingScreen = document.getElementById("processing-screen")
   if (processingScreen.classList.contains("active")) {
     if (loaderMessages.length > 0) {
-      createFloatingText(loaderMessages[currentMessageIndex]);
-      currentMessageIndex = (currentMessageIndex + 1) % loaderMessages.length;
+      createFloatingText(loaderMessages[currentMessageIndex])
+      currentMessageIndex = (currentMessageIndex + 1) % loaderMessages.length
     }
   }
 }
 
 // Каждые 2 секунды
-setInterval(displayNextMessage, 2000);
+setInterval(displayNextMessage, 2000)

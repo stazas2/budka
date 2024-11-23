@@ -176,9 +176,7 @@ body::after {
   /* background: rgba(255, 255, 255, 0.2); */
   /* backdrop-filter: blur(10px) saturate(180%); */
   /* box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); */
-  transition:
-    transform 0.5s,
-    box-shadow 0.5s;
+  transition: transform 0.5s, box-shadow 0.5s;
   transition: all 0.3s ease;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   transform: translateY(0);
@@ -233,7 +231,7 @@ button:active {
   font-size: 3.9em;
   font-weight: 700;
   color: var(--text-color);
-  margin-top: 20px;
+  /* margin-top: 20px; */
   /* position: relative;
   top: 30%; */
 }
@@ -277,7 +275,11 @@ button:active {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 20%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.2),
+    transparent 20%
+  );
   background-size: 20px 20px;
   animation: floatParticles 2s linear infinite;
 }
@@ -335,7 +337,11 @@ button:active {
   transform: rotate(0deg);
 
   padding: 20px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(196, 213, 217, 0.7511379551820728) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(196, 213, 217, 0.7511379551820728) 100%
+  );
   box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
   border-radius: 40px;
   /* backdrop-filter: blur(100px); */
@@ -351,7 +357,7 @@ button:active {
   gap: 10px;
   margin: 20px 0;
   /* Отступ видео-окна */
-  margin-top: 10vh;
+  /* margin-top: 10vh; */
 }
 
 #video {
@@ -370,7 +376,7 @@ button:active {
   display: flex;
   flex-direction: column;
   gap: 20px; /* Расстояние между строками */
-  align-items: center; /* Це��трирование строк по горизонтали */
+  align-items: center; /* Центрирование строк по горизонтали */
 }
 
 #gender-buttons .button img {
@@ -443,9 +449,7 @@ button:active {
   display: inline-flex;
   padding: 10px;
   cursor: pointer;
-  transition:
-    transform 0.5s,
-    box-shadow 0.5s;
+  transition: transform 0.5s, box-shadow 0.5s;
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
@@ -489,7 +493,7 @@ h1 {
 #style-screen h1 {
   /* margin-bottom: 40px; */
   position: absolute;
-  top: 7%;
+  top: 15%;
 }
 
 /* Заголовок для экрана выбора пола */
@@ -615,10 +619,7 @@ input:checked + .slider:before {
   background: rgba(255, 255, 255, 0.25);
   color: var(--text-color);
   font-weight: 600;
-  transition:
-    background-color 0.3s,
-    transform 0.5s,
-    box-shadow 0.5s;
+  transition: background-color 0.3s, transform 0.5s, box-shadow 0.5s;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -633,21 +634,45 @@ input:checked + .slider:before {
   display: none;
 }
 
-/* Адаптивность под разные экраны */
+/* Добавьте стили для логотипа */
+#logo-container {
+  position: fixed;
+  top: 2%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+}
 
+#logo {
+}
+
+body.rotation-90 #video {
+  height: 45vh;
+}
+
+body.rotation-90 #countdown {
+  position: relative;
+  bottom: -25%;
+}
+
+/* Адаптивность под разные экраны */
 /* Вертикальная ориентация */
 @media (orientation: portrait) {
+  body.rotation-90 #video {
+    height: 33vh;
+  }
+
   .back-button {
     font-size: 1.7em;
     padding: 30px 70px;
   }
 
   #style-screen h1 {
-    top: 15%;
+    top: 20%;
   }
 
   #camera-screen h1 {
-    top: -5%;
+    top: -10%;
   }
 
   #style-buttons {
@@ -683,10 +708,49 @@ input:checked + .slider:before {
     width: 95%;
     max-height: 50vh;
   }
+
+  #logo {
+    width: 300px;
+    height: auto;
+  }
+
+  body.rotation-90 #result-image {
+    max-height: 40vh;
+  }
+
+  body.rotation-90 #result-screen h1 {
+    margin-bottom: 70px;
+  }
+
+  body.rotation-90 #selected-params-text {
+    position: relative;
+    top: 200%
+  }
+
+  body.rotation-90 #start-over {
+    margin-top: 0px;
+    position: relative;
+    top: 95%;
+  }
+
 }
 
 /* Горизонтальная ориентация */
 @media (orientation: landscape) {
+  #countdown {
+    margin-top: 0;
+  }
+  #logo-container {
+    top: 1%;
+    left: 94%;
+    /* transform: translateX(-50%); */
+  }
+
+  #logo {
+    width: 180px;
+    height: auto;
+  }
+
   .button-row_item {
     flex-direction: row;
   }
@@ -700,7 +764,7 @@ input:checked + .slider:before {
   }
 
   #camera-screen h1 {
-    top: -10%;
+    top: -20%;
   }
 
   .button-row_item .button {
@@ -726,7 +790,25 @@ input:checked + .slider:before {
   } */
   #video {
     width: 85%;
-    height: 50vh;
+    height: 55vh;
+  }
+
+  body.rotation-90 #result-image {
+    max-height: 65vh;
+  }
+  
+  body.rotation-90 #result-screen h1 {
+    position: relative;
+    top: -5%
+  }
+
+  body.rotation-90 #selected-params-text {
+    position: relative;
+    top: 160%
+  }
+
+  body.rotation-90 #start-over {
+    margin-top: 50px;
   }
 }
 /* @media (max-width: 1175px) {
@@ -1096,8 +1178,8 @@ body.dark::before {
   position: absolute;
   top: 70%;
   color: var(--text-color);
-  font-size: 1.3em;
-  font-family: 'Roboto', sans-serif;
+  font-size: 1.5em;
+  font-family: "Roboto", sans-serif;
   animation: fade-up 2s ease-in-out forwards;
   opacity: 0;
 }

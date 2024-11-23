@@ -5,8 +5,8 @@ const os = require("os")
 const { PDFDocument } = require("pdf-lib")
 const { print } = require("pdf-to-printer")
 const { loadConfig } = require("./utils/configLoader")
-const si = require('systeminformation');
-const { exec } = require('child_process');
+const si = require("systeminformation")
+const { exec } = require("child_process")
 
 // Загружаем конфигурацию после импорта необходимых модулей
 const config = loadConfig()
@@ -34,7 +34,7 @@ function createWindow() {
     win.webContents.on("did-finish-load", () => {
       console.log("Window loaded successfully")
       win.webContents.setZoomFactor(1)
-      
+
       // Логирование времени запуска
       const mainStartupTimeEnd = Date.now()
       const startupDuration = mainStartupTimeEnd - mainStartupTimeStart
@@ -53,7 +53,9 @@ function createWindow() {
 // Изменение обработчика 'get-styles' для оптимизации загрузки стилей
 ipcMain.handle("get-styles", async (event, gender) => {
   const stylesDir = config?.stylesDir || "C:\\MosPhotoBooth2\\styles"
-  console.log(`Loading styles for gender "${gender}" from directory: ${stylesDir}`)
+  console.log(
+    `Loading styles for gender "${gender}" from directory: ${stylesDir}`
+  )
 
   try {
     if (!gender) {
@@ -155,7 +157,13 @@ ipcMain.on("print-photo", async (event, data) => {
   }
 })
 
-async function addLogoToPdf(tempImagePath, tempPdfPath, logoPath, logoPosition, offset) {
+async function addLogoToPdf(
+  tempImagePath,
+  tempPdfPath,
+  logoPath,
+  logoPosition,
+  offset
+) {
   console.log("Adding logo to PDF...")
   try {
     const pdfDoc = await PDFDocument.create()
@@ -166,9 +174,9 @@ async function addLogoToPdf(tempImagePath, tempPdfPath, logoPath, logoPosition, 
     const extension = path.extname(tempImagePath).toLowerCase()
 
     let embeddedImage
-    if (extension === '.jpg' || extension === '.jpeg') {
+    if (extension === ".jpg" || extension === ".jpeg") {
       embeddedImage = await pdfDoc.embedJpg(imageBytes)
-    } else if (extension === '.png') {
+    } else if (extension === ".png") {
       embeddedImage = await pdfDoc.embedPng(imageBytes)
     } else {
       throw new Error(`Unsupported image format: ${extension}`)
@@ -190,12 +198,14 @@ async function addLogoToPdf(tempImagePath, tempPdfPath, logoPath, logoPosition, 
       const logoBytes = fs.readFileSync(logoPath)
       const logoExtension = path.extname(logoPath).toLowerCase()
       let embeddedLogo
-      if (logoExtension === '.jpg' || logoExtension === '.jpeg') {
+      if (logoExtension === ".jpg" || logoExtension === ".jpeg") {
         embeddedLogo = await pdfDoc.embedJpg(logoBytes)
-      } else if (logoExtension === '.png') {
+      } else if (logoExtension === ".png") {
         embeddedLogo = await pdfDoc.embedPng(logoBytes)
       } else {
-        console.warn(`Unsupported logo format: ${logoExtension}. Skipping logo.`)
+        console.warn(
+          `Unsupported logo format: ${logoExtension}. Skipping logo.`
+        )
       }
 
       if (embeddedLogo) {
@@ -234,7 +244,9 @@ async function addLogoToPdf(tempImagePath, tempPdfPath, logoPath, logoPosition, 
             y = offset
             break
           default:
-            console.warn(`Invalid logo position: ${logoPosition}. Defaulting to bottom-right.`)
+            console.warn(
+              `Invalid logo position: ${logoPosition}. Defaulting to bottom-right.`
+            )
             x = width - logoWidth - offset
             y = offset
             break
@@ -265,22 +277,25 @@ async function addLogoToPdf(tempImagePath, tempPdfPath, logoPath, logoPosition, 
 function monitorSystemLoad() {
   // Мониторинг загрузки CPU
   setInterval(async () => {
-      try {
-          const cpuLoad = await si.currentLoad();
-          console.log(`CPU Load: ${cpuLoad.currentLoad.toFixed(2)}%`);
-      } catch (error) {
-          console.error('Error getting CPU load:', error);
-      }
+    try {
+      const cpuLoad = await si.currentLoad()
+      console.log(`CPU Load: ${cpuLoad.currentLoad.toFixed(2)}%`)
+    } catch (error) {
+      console.error("Error getting CPU load:", error)
+    }
 
-      // Мониторинг GPU через nvidia-smi
-      exec('nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits', (error, stdout, stderr) => {
-          if (error) {
-              console.error('Error getting GPU load:', error);
-              return;
-          }
-          console.log(`GPU Load: ${stdout.trim()}%`);
-      });
-  }, 5000); // Обновление каждые 5 секунд
+    // Мониторинг GPU через nvidia-smi
+    exec(
+      "nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits",
+      (error, stdout, stderr) => {
+        if (error) {
+          console.error("Error getting GPU load:", error)
+          return
+        }
+        console.log(`GPU Load: ${stdout.trim()}%`)
+      }
+    )
+  }, 5000) // Обновление каждые 5 секунд
 }
 
 app.whenReady().then(createWindow)
