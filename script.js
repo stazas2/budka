@@ -1220,3 +1220,35 @@ applySettings()
 //     }, 15000); // Задержка для визуального эффекта
 //   });
 // });
+
+// Processing message' block
+const loaderMessages = translations[currentLanguage].loaderMessages || [];
+
+function createFloatingText(message) {
+  const textElement = document.createElement('div');
+  textElement.className = 'floating-text';
+  textElement.innerText = message;
+
+  const randomX = Math.random() * 40 + 30;; 
+  const randomY = Math.random() * 40 - 20; // Вверх/вниз относительно прогресс-бара
+  textElement.style.left = `${randomX}%`;
+  textElement.style.bottom = `${randomY}px`;
+
+  processingScreen.appendChild(textElement);
+
+  // Удаляем текст после завершения анимации
+  setTimeout(() => {
+    processingScreen.removeChild(textElement);
+  }, 2000);
+}
+
+let currentMessageIndex = 0;
+function displayNextMessage() {
+  if (loaderMessages.length > 0) {
+    createFloatingText(loaderMessages[currentMessageIndex]);
+    currentMessageIndex = (currentMessageIndex + 1) % loaderMessages.length;
+  }
+}
+
+// Каждые 2 секунды
+setInterval(displayNextMessage, 2000);
