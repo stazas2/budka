@@ -8,8 +8,8 @@
   "animationEnabled": false,
   "stylesDir": "C:/MosPhotoBooth2/styles",
   "basePath": "C:\\MosPhotoBooth2",
-  "logoPath": "file:///C:/MosPhotoBooth2/logo1.png",
-  "brandLogoPath": "file:///C:/MosPhotoBooth2/logo1.png",
+  "logoPath": "file:///C:/MosPhotoBooth2/brand.png",
+  "brandLogoPath": "file:///C:/MosPhotoBooth2/brand.png",
   "logoPosition": "top-left",
   "logoOffsetX": 30,
   "logoOffsetY": 30,
@@ -17,7 +17,7 @@
   "final_image_rotation": 0,
   "send_image_rotation": 0,
   "language": {
-    "current": "ru",    
+    "current": "ru",
     "showSwitcher": false
   },
   "theme": "light",
