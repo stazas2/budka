@@ -524,7 +524,7 @@ function sendImageToServer(imageData) {
     const base64FonImage = fonImage ? fonImage.split(",")[1] : base64Image // Используем изображение с камеры, если `Fon` не найдено
 
     const data = {
-      mode: "Avatar", // style_sdxl
+      mode: `${config?.mode}` || "Avatar",
       style: selectedStyle,
       params: {
         Sex: selectedGender,
@@ -532,7 +532,7 @@ function sendImageToServer(imageData) {
         Fon: base64FonImage,
       },
     }
-
+    console.log('MODEEEEEEEEEEEEEE  ' + data.mode)
     const headers = {
       Accept: "application/json",
       Authorization: `Bearer ${config?.authToken}`,
@@ -1226,13 +1226,17 @@ const loaderMessages = translations[currentLanguage].loaderMessages || [];
 
 function createFloatingText(message) {
   const textElement = document.createElement('div');
+  const progressBarRect = progressBar.getBoundingClientRect();
   textElement.className = 'floating-text';
   textElement.innerText = message;
 
-  const randomX = Math.random() * 40 + 30;; 
-  const randomY = Math.random() * 40 - 20; // Вверх/вниз относительно прогресс-бара
-  textElement.style.left = `${randomX}%`;
-  textElement.style.bottom = `${randomY}px`;
+  const randomX = Math.random() * 35 + 25; // От 25% до 60%
+  const xPosition = (progressBarRect.width * randomX) / 100; // В пиксели
+  const randomY = Math.random() * 40 - 20; 
+
+  textElement.style.position = 'absolute';
+  textElement.style.left = `${progressBarRect.left/1.2 + xPosition}px`;
+  textElement.style.bottom = `${progressBarRect.bottom + randomY - window.innerHeight}px`;
 
   processingScreen.appendChild(textElement);
 
@@ -1244,9 +1248,12 @@ function createFloatingText(message) {
 
 let currentMessageIndex = 0;
 function displayNextMessage() {
-  if (loaderMessages.length > 0) {
-    createFloatingText(loaderMessages[currentMessageIndex]);
-    currentMessageIndex = (currentMessageIndex + 1) % loaderMessages.length;
+  const processingScreen = document.getElementById("processing-screen");
+  if (processingScreen.classList.contains("active")) {
+    if (loaderMessages.length > 0) {
+      createFloatingText(loaderMessages[currentMessageIndex]);
+      currentMessageIndex = (currentMessageIndex + 1) % loaderMessages.length;
+    }
   }
 }
 
