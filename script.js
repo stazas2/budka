@@ -193,7 +193,7 @@ function initStyleButtons(parsedStyles) {
       })
 
       // Применение задержки анимации к каждой кнопке
-      button.style.animationDelay = `${index * 0.2}s`
+      button.style.animationDelay = `${index * 0.3}s`
 
       styleButtonsContainer.appendChild(button)
     })
@@ -216,6 +216,19 @@ genderItems.forEach((item) => {
     fetchStyles() // Загружаем стили после выбора гендера
   })
 })
+
+// Инициализация кнопок гендера с анимацией
+function initGenderButtons() {
+  try {
+    const genderButtons = document.querySelectorAll("#gender-buttons .button-row_item");
+    genderButtons.forEach((button, index) => {
+      button.style.animationDelay = `${index * 0.3}s`;
+      button.classList.add("animate");
+    });
+  } catch (error) {
+    console.error("Error in initGenderButtons:", error);
+  }
+}
 
 // Показать конкретный экран
 function showScreen(screenId) {
@@ -1031,6 +1044,8 @@ function updateTexts() {
 // Вызываем функцию после загрузки страницы
 document.addEventListener("DOMContentLoaded", () => {
   updateTexts()
+  logStartupTime()
+  initGenderButtons(); // Инициализация анимации для гендерных кнопок
 })
 
 // Вызываем функцию обновления текстов после загрузки страницы

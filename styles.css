@@ -8,7 +8,7 @@
 
 body {
   /* font-family: "Chakra Petch", sans-serif; */
-  font-family: "Roboto", sans-serif;
+  font-family: "Open Sans", sans-serif;
   background-color: var(--background-color);
   background-image: var(--background-image);
   background-repeat: no-repeat;
@@ -29,7 +29,7 @@ body {
     background-size: 100%;
   }
   100% {
-    background-size: 110%; 
+    background-size: 110%;
   }
 }
 
@@ -123,11 +123,11 @@ body::after {
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(50px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0);
   }
 }
 
@@ -202,7 +202,7 @@ body::after {
 }
 button {
   /* font-family: "Chakra Petch", sans-serif; */
-  font-family: "Roboto", sans-serif;
+  font-family: "Open Sans", sans-serif;
   padding: 25.35px 50.7px;
   font-size: 1.5em;
   cursor: pointer;
@@ -370,7 +370,7 @@ button:active {
   display: flex;
   flex-direction: column;
   gap: 20px; /* Расстояние между строками */
-  align-items: center; /* Центрирование строк по горизонтали */
+  align-items: center; /* Це��трирование строк по горизонтали */
 }
 
 #gender-buttons .button img {
@@ -447,7 +447,9 @@ button:active {
     transform 0.5s,
     box-shadow 0.5s;
   transform: translateY(0);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  animation: fadeIn 0.5s forwards;
 }
 
 .button-row_item:active {
@@ -477,7 +479,7 @@ h1 {
 /* Общие стили для заголовков */
 .screen h1 {
   color: var(--text-color);
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   /* font-weight: 700;
   text-align: center;
   margin: 0; */
@@ -546,7 +548,6 @@ h1 {
   cursor: not-allowed;
   opacity: 0.5;
 }
-
 
 /* Стили для переключателя темы */
 .theme-switcher {
@@ -642,7 +643,7 @@ input:checked + .slider:before {
   }
 
   #style-screen h1 {
-    top: 18%;
+    top: 15%;
   }
 
   #camera-screen h1 {
