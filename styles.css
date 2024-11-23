@@ -8,7 +8,7 @@
 
 body {
   /* font-family: "Chakra Petch", sans-serif; */
-  font-family: "Open Sans", sans-serif;
+  font-family: "Roboto", sans-serif;
   background-color: var(--background-color);
   background-image: var(--background-image);
   background-repeat: no-repeat;
@@ -202,7 +202,7 @@ body::after {
 }
 button {
   /* font-family: "Chakra Petch", sans-serif; */
-  font-family: "Open Sans", sans-serif;
+  font-family: "Roboto", sans-serif;
   padding: 25.35px 50.7px;
   font-size: 1.5em;
   cursor: pointer;
@@ -447,7 +447,7 @@ button:active {
     transform 0.5s,
     box-shadow 0.5s;
   transform: translateY(0);
-  transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
   animation: fadeIn 0.5s forwards;
 }
