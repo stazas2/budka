@@ -684,7 +684,7 @@ body.rotation-90 #countdown {
     top: 40%;
   }
 
-  body.rotation-90 #start-over {
+  body.rotation-90 #start-over, #print-photo {
     margin-top: 0px;
     position: relative;
     top: 95%;
@@ -731,6 +731,11 @@ body.rotation-90 #countdown {
     font-size: 2em;
   }
 
+  #result-screen > div {
+    margin-top: 0px;
+    /*?  */
+  }
+
   #style-buttons,
   #gender-buttons {
     flex-direction: row;
@@ -754,20 +759,22 @@ body.rotation-90 #countdown {
   }
 
   body.rotation-90 #result-image {
-    max-height: 65vh;
+    max-height: 80vh;
   }
 
   body.rotation-90 #result-screen h1 {
     position: relative;
-    top: -5%;
+    top: -2%;
+    /*? 5 */
   }
 
   body.rotation-90 #selected-params-text {
     position: relative;
-    top: 160%;
+    top: 0%;
+    /*? 160 */
   }
 
-  body.rotation-90 #start-over {
+  body.rotation-90 #start-over, #print-photo {
     margin-top: 50px;
   }
 }
