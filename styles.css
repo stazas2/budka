@@ -676,12 +676,13 @@ body.rotation-90 #countdown {
   }
 
   body.rotation-90 #result-screen h1 {
-    margin-bottom: 70px;
+    margin-bottom: 0px;
   }
 
   body.rotation-90 #selected-params-text {
     position: relative;
-    top: 40%;
+    top: 10%;
+    /*? 40  */
   }
 
   body.rotation-90 #start-over, #print-photo {
