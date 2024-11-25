@@ -38,6 +38,7 @@ const config = loadConfig()
 
 // Загрузка лого-бренда
 document.getElementById("logo").src = config?.brandLogoPath
+document.getElementById("logo").style.transform = `scale(${config.mainLogoScale})`
 document.body.classList.add(`rotation-${config.camera_rotation}`)
 
 // Применяем вращение для элементов на основе конфигурации
@@ -289,6 +290,14 @@ function showScreen(screenId) {
       clearInterval(countdownInterval)
       countdownInterval = null
       countdownElement.textContent = ""
+    }
+
+    // Hide or show the logo based on active screen
+    const logoContainer = document.getElementById("logo-container")
+    if (screenId === "camera-screen") {
+      logoContainer.style.display = "none"
+    } else {
+      logoContainer.style.display = "block"
     }
   } catch (error) {
     console.error(`Error in showScreen (${screenId}):`, error)
@@ -714,8 +723,9 @@ async function overlayLogoOnImage(base64Image) {
     const offsetX = config.logoOffsetX || 30
     const offsetY = config.logoOffsetY || 30
 
-    const logoWidth = 340 // Ширина логотипа
-    const logoHeight = 340 // Высота логотипа
+    const scaleFactor =  config.logoScale || 0.1 // 
+    const logoWidth = mainImage.width * scaleFactor
+    const logoHeight = (logoImage.height / logoImage.width) * logoWidth
 
     switch (config.logoPosition) {
       case "top-left":

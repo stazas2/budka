@@ -587,13 +587,14 @@ input:checked + .slider:before {
 /* Добавьте стили для логотипа */
 #logo-container {
   position: fixed;
-  top: 2%;
+  top: 8%;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
 }
 
 #logo {
+  transition: transform 0.3s ease;
 }
 
 body.rotation-90 #video {
@@ -602,7 +603,7 @@ body.rotation-90 #video {
 
 body.rotation-90 #countdown {
   position: relative;
-  bottom: -25%;
+  bottom: -30%;
 }
 
 /* Адаптивность под разные экраны */
@@ -622,7 +623,7 @@ body.rotation-90 #countdown {
   }
 
   #camera-screen h1 {
-    top: -10%;
+    top: -14%;
   }
 
   #style-buttons {
@@ -657,12 +658,17 @@ body.rotation-90 #countdown {
   }
 
   #logo {
-    width: 300px;
+    /* width: 300px; */
     height: auto;
   }
 
   body.rotation-90 #result-image {
-    max-height: 40vh;
+    max-height: 55vh; 
+    /*? 40 */
+  }
+
+  body.rotation-90 #result-screen > div {
+    margin-top: 0px;
   }
 
   body.rotation-90 #result-screen h1 {
@@ -671,7 +677,7 @@ body.rotation-90 #countdown {
 
   body.rotation-90 #selected-params-text {
     position: relative;
-    top: 200%
+    top: 40%
   }
 
   body.rotation-90 #start-over {
@@ -688,13 +694,13 @@ body.rotation-90 #countdown {
     margin-top: 0;
   }
   #logo-container {
-    top: 1%;
-    left: 94%;
+    top: 3%;
+    left: 92%;
     /* transform: translateX(-50%); */
   }
 
   #logo {
-    width: 180px;
+    /* width: 180px; */
     height: auto;
   }
 
@@ -763,6 +769,12 @@ body.rotation-90 #countdown {
     top: 2%;
   }
 } */
+
+@media (min-width: 880px) and (min-height: 1800px) {
+  #style-screen h1 {
+    top: 28%;
+  }
+}
 
 @media (max-width: 775px) {
   #style-buttons {
