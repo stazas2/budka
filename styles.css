@@ -598,7 +598,7 @@ input:checked + .slider:before {
 }
 
 body.rotation-90 #video {
-  height: 40vh;
+  /* height: 40vh; */
 }
 
 body.rotation-90 #countdown {
@@ -610,7 +610,7 @@ body.rotation-90 #countdown {
 /* Вертикальная ориентация */
 @media (orientation: portrait) {
   body.rotation-90 #video {
-    height: 33vh;
+    /* height: 80vh; */
   }
 
   .back-button {
