@@ -598,7 +598,7 @@ input:checked + .slider:before {
 }
 
 body.rotation-90 #video {
-  /* height: 40vh; */
+  max-height: 40vh;
 }
 
 body.rotation-90 #countdown {
@@ -610,7 +610,11 @@ body.rotation-90 #countdown {
 /* Вертикальная ориентация */
 @media (orientation: portrait) {
   body.rotation-90 #video {
-    /* height: 80vh; */
+    /* height: 33vh; */
+  }
+
+  body.rotation-90 #countdown {
+    bottom: -30%;
   }
 
   .back-button {
@@ -623,7 +627,7 @@ body.rotation-90 #countdown {
   }
 
   #camera-screen h1 {
-    top: -14%;
+    top: -10%;
   }
 
   #style-buttons {
@@ -663,7 +667,7 @@ body.rotation-90 #countdown {
   }
 
   body.rotation-90 #result-image {
-    max-height: 55vh; 
+    max-height: 55vh;
     /*? 40 */
   }
 
@@ -677,7 +681,7 @@ body.rotation-90 #countdown {
 
   body.rotation-90 #selected-params-text {
     position: relative;
-    top: 40%
+    top: 40%;
   }
 
   body.rotation-90 #start-over {
@@ -685,11 +689,14 @@ body.rotation-90 #countdown {
     position: relative;
     top: 95%;
   }
-
 }
 
 /* Горизонтальная ориентация */
 @media (orientation: landscape) {
+  body.rotation-90 #video {
+    max-height: 45vh;
+  }
+
   #countdown {
     margin-top: 0;
   }
@@ -717,7 +724,7 @@ body.rotation-90 #countdown {
   }
 
   #camera-screen h1 {
-    top: -20%;
+    top: -25%;
   }
 
   .button-row_item .button {
@@ -743,21 +750,21 @@ body.rotation-90 #countdown {
   } */
   #video {
     width: 85%;
-    height: 55vh;
+    height: 67vh;
   }
 
   body.rotation-90 #result-image {
     max-height: 65vh;
   }
-  
+
   body.rotation-90 #result-screen h1 {
     position: relative;
-    top: -5%
+    top: -5%;
   }
 
   body.rotation-90 #selected-params-text {
     position: relative;
-    top: 160%
+    top: 160%;
   }
 
   body.rotation-90 #start-over {
@@ -888,7 +895,6 @@ body.rotation-90 #countdown {
   font-size: 1.4em;
   margin-top: 10px;
 }
-
 
 #fullscreen-toggle {
   z-index: 2;
