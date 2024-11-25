@@ -38,7 +38,9 @@ const config = loadConfig()
 
 // Загрузка лого-бренда
 document.getElementById("logo").src = config?.brandLogoPath
-document.getElementById("logo").style.transform = `scale(${config.mainLogoScale})`
+document.getElementById(
+  "logo"
+).style.transform = `scale(${config.mainLogoScale})`
 document.body.classList.add(`rotation-${config.camera_rotation}`)
 
 // Применяем вращение для элементов на основе конфигурации
@@ -723,7 +725,7 @@ async function overlayLogoOnImage(base64Image) {
     const offsetX = config.logoOffsetX || 30
     const offsetY = config.logoOffsetY || 30
 
-    const scaleFactor =  config.logoScale || 0.1 // 
+    const scaleFactor = config.logoScale || 0.1 //
     const logoWidth = mainImage.width * scaleFactor
     const logoHeight = (logoImage.height / logoImage.width) * logoWidth
 
@@ -739,6 +741,18 @@ async function overlayLogoOnImage(base64Image) {
       case "bottom-left":
         x = offsetX
         y = canvas.height - logoHeight - offsetY
+        break
+      case "center":
+        x = (canvas.width - logoImage.width) / 2
+        y = (canvas.height - logoImage.height) / 2
+        break
+      case "center-top":
+        x = (canvas.width - logoImage.width) / 2
+        y = offsetY
+        break
+      case "center-bottom":
+        x = (canvas.width - logoImage.width) / 2
+        y = canvas.height - logoImage.height - offsetY
         break
       case "bottom-right":
       default:

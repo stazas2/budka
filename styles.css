@@ -598,7 +598,7 @@ input:checked + .slider:before {
 }
 
 body.rotation-90 #video {
-  height: 45vh;
+  height: 40vh;
 }
 
 body.rotation-90 #countdown {
