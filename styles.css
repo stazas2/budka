@@ -369,7 +369,7 @@ button:active {
 #result-screen > div {
   margin-top: 50px;
   display: flex;
-  gap: 10px; /* Расстояние между кнопками */
+  gap: 20px; /* Расстояние между кнопками */
   justify-content: center;
 }
 
@@ -687,7 +687,7 @@ body.rotation-90 #countdown {
   body.rotation-90 #start-over, #print-photo {
     margin-top: 0px;
     position: relative;
-    top: 95%;
+    /* top: 95%; */
   }
 }
 
