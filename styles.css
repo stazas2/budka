@@ -699,7 +699,7 @@ body.rotation-90 #countdown {
   } */
 
   #result-screen h1 {
-    margin-bottom: 15px;
+    /* margin-bottom: 15px; */
   }
 
   body.rotation-90 #video {
@@ -707,7 +707,7 @@ body.rotation-90 #countdown {
   }
 
   #countdown {
-    margin-top: 0;
+    margin-top: 5px;
   }
   #logo-container {
     top: 3%;
@@ -773,7 +773,7 @@ body.rotation-90 #countdown {
 
   body.rotation-90 #result-screen h1 {
     position: relative;
-    top: -2%;
+    /* top: -2%; */
     /*? 5 */
   }
 

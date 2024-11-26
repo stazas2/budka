@@ -725,10 +725,9 @@ async function overlayLogoOnImage(base64Image) {
     const offsetX = config.logoOffsetX || 30
     const offsetY = config.logoOffsetY || 30
 
-    const scaleFactor = config.logoScale || 0.1 //
+    const scaleFactor = config.logoScale/6.7 || 1 
     const logoWidth = mainImage.width * scaleFactor
     const logoHeight = (logoImage.height / logoImage.width) * logoWidth
-    console.log('РАЗМЕРРРРРРРРРРРРР    ' + logoWidth + 'x' + logoHeight)
 
     switch (config.logoPosition) {
       case "top-left":
