@@ -685,7 +685,8 @@ body.rotation-90 #countdown {
     /*? 40  */
   }
 
-  body.rotation-90 #start-over, #print-photo {
+  body.rotation-90 #start-over,
+  #print-photo {
     margin-top: 0px;
     position: relative;
     /* top: 95%; */
@@ -786,7 +787,7 @@ body.rotation-90 #countdown {
   /* body.rotation-90 #print-photo, #start-over {
     margin-top: 50px;
   } */
-/* 
+  /* 
   body.rotation-90 #start-over {
     margin-top: 50px;
   } */

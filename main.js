@@ -28,7 +28,7 @@ function createWindow() {
     })
 
     win.setMenuBarVisibility(false)
-    win.loadFile("index.html")
+    win.loadFile("index1.html")
     // monitorSystemLoad(); // Запуск мониторинга при старте приложения
 
     win.webContents.on("did-finish-load", () => {
