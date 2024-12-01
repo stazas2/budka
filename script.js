@@ -69,11 +69,12 @@ function applyRotationStyles() {
 applyRotationStyles()
 
 // Лого на фотографии
-if (config.send_image_rotation === 90 || config.send_image_rotation === 270) {
-  config.logoScale = config.logoScale/7.6; 
-} else {
-  config.logoScale = config.logoScale/10.1; 
-}
+// After loading the configuration and applying rotation styles
+// if (config.send_image_rotation === 90 || config.send_image_rotation === 270) {
+//   config.logoScale = config.logoScale/7.6; 
+// } else {
+//   config.logoScale = config.logoScale/10.1; 
+// }
 
 // Функция для создания папок с датой и input/output, если их еще нет
 function createDateFolders() {
@@ -732,9 +733,12 @@ async function overlayLogoOnImage(base64Image) {
     const offsetX = config.logoOffsetX || 30
     const offsetY = config.logoOffsetY || 30
 
-    const scaleFactor = config.logoScale || 1 // Масштабирование логотипа
-    const logoWidth = mainImage.width * scaleFactor
-    const logoHeight = (logoImage.height / logoImage.width) * logoWidth
+    const scaleFactor = config.logoScale || 1; // Масштабирование логотипа
+
+    console.log(`1 Размеры ИСХОДНЫЕ - ${logoImage.width} x ${logoImage.height}`)
+
+    const logoWidth = logoImage.width * scaleFactor;
+    const logoHeight = logoImage.height * scaleFactor;
 
     switch (config.logoPosition) {
       case "top-left":
@@ -767,8 +771,7 @@ async function overlayLogoOnImage(base64Image) {
         y = canvas.height - logoHeight - offsetY
     }
 
-    console.log(`Координаты ЛОГО - ${logoWidth} x ${logoHeight} - ${x} x ${y}`)
-    console.log(`Координаты ЛОГО - ${logoWidth} x ${logoHeight} - ${x} x ${y}`)
+    console.log(`2 Размеры ПЕЧАТИ - ${logoWidth} x ${logoHeight}`)
 
     
     // Уменьшаем и рисуем логотип
