@@ -156,7 +156,9 @@ body::before {
   min-width: 200px;
   /* background: rgba(255, 255, 255, 0.2); */
   /* backdrop-filter: blur(10px) saturate(180%); */
-  transition: transform 0.5s, box-shadow 0.5s;
+  transition:
+    transform 0.5s,
+    box-shadow 0.5s;
   transition: all 0.3s ease;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   transform: translateY(0);
@@ -246,11 +248,7 @@ button:active {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.2),
-    transparent 20%
-  );
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 20%);
   background-size: 20px 20px;
   animation: floatParticles 2s linear infinite;
 }
@@ -308,11 +306,7 @@ button:active {
   transform: rotate(0deg);
 
   padding: 20px;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(196, 213, 217, 0.7511379551820728) 100%
-  );
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(196, 213, 217, 0.7511379551820728) 100%);
   box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
   border-radius: 40px;
 }
@@ -407,7 +401,9 @@ button:active {
   display: inline-flex;
   padding: 10px;
   cursor: pointer;
-  transition: transform 0.5s, box-shadow 0.5s;
+  transition:
+    transform 0.5s,
+    box-shadow 0.5s;
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
@@ -450,7 +446,7 @@ h1 {
 /* Заголовок для экрана стилей */
 #style-screen h1 {
   /* margin-bottom: 40px; */
-  position: absolute;
+  /* position: absolute; */
   top: 15%;
 }
 
@@ -569,7 +565,10 @@ input:checked + .slider:before {
   background: rgba(255, 255, 255, 0.25);
   color: var(--text-color);
   font-weight: 600;
-  transition: background-color 0.3s, transform 0.5s, box-shadow 0.5s;
+  transition:
+    background-color 0.3s,
+    transform 0.5s,
+    box-shadow 0.5s;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -587,7 +586,6 @@ input:checked + .slider:before {
 /* Добавьте стили для логотипа */
 #logo-container {
   position: fixed;
-  top: 3%;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
@@ -601,20 +599,16 @@ body.rotation-90 #video {
   max-height: 40vh;
 }
 
-body.rotation-90 #countdown {
+#countdown {
   position: relative;
-  bottom: -30%;
+  bottom: 0;
 }
 
 /* Адаптивность под разные экраны */
 /* Вертикальная ориентация */
 @media (orientation: portrait) {
-  body.rotation-90 #video {
-    /* height: 33vh; */
-  }
-
   body.rotation-90 #countdown {
-    bottom: -40%;
+    bottom: -37%;
   }
 
   .back-button {
@@ -626,13 +620,13 @@ body.rotation-90 #countdown {
     top: 20%;
   }
 
-  /* body.rotation-90 #style-screen h1 {
-    top: 20%;
-  } */
+  body.rotation-90 #camera-screen h1 {
+    top: -20%;
+    /* -16 */
+  }
 
   #camera-screen h1 {
-    top: -20%; 
-    /* -16 */
+    top: -10%;
   }
 
   #style-buttons {
@@ -696,29 +690,20 @@ body.rotation-90 #countdown {
     position: relative;
     /* top: 95%; */
   }
+
+  #logo-container {
+    top: 8%;
+  }
 }
 
 /* Горизонтальная ориентация */
 @media (orientation: landscape) {
-  /* .buttons-container{
-    margin-top: 50px;
-  } */
-
-  #result-screen h1 {
-    /* margin-bottom: 15px; */
-  }
-
   body.rotation-90 #video {
     max-height: 45vh;
   }
 
-  #countdown {
-    margin-top: 5px;
-  }
   #logo-container {
     top: 3%;
-    left: 92%;
-    /* transform: translateX(-50%); */
   }
 
   #logo {
