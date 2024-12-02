@@ -25,25 +25,22 @@ function loadConfig() {
         }
       })
 
+      //Логика для лого на печати
       if (config.logoPath) {
         let logoPath = path.join(config.basePath, config.logoPath)
         logoPath = logoPath.replace(/\\/g, "/")
-        console.log('logoPATH:', logoPath)
         // console.log(`Формированный путь (logo):`, logoPath)
         config.logoPath = logoPath
-        console.log('MAIN logoPATH: ' + config.logoPath)
       } else {
         console.error("Logo path is not defined in config.json")
       }
-      
-      //Логика для лого
+
+      //Логика для лого на экране
       if (config.brandLogoPath) {
         let logoPath = path.join(config.basePath, config.brandLogoPath)
         logoPath = logoPath.replace(/\\/g, "/")
-        console.log('logoPATH:', logoPath)
         // console.log(`Формированный путь (logo):`, logoPath)
         config.brandLogoPath = logoPath
-        console.log('MAIN logoPATH: ' + config.logoPath)
       } else {
         console.error("brandLogo path is not defined in config.json")
       }

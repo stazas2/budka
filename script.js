@@ -790,11 +790,9 @@ function getRandomImageFromStyleFolder(style) {
     // Updated path to include selectedGender
     const styleFolderPath = path.join(stylesDir, selectedGender, style)
 
-    console.log("qqqqqqqqqqqqqqq  " + stylesDir)
-
-    console.log(
-      `Путь изображений (getRandomImageFromStyleFolder): ${styleFolderPath}`
-    )
+    // console.log(
+    //   `Путь изображений (getRandomImageFromStyleFolder): ${styleFolderPath}`
+    // )
 
     if (!fs.existsSync(styleFolderPath)) {
       console.warn(
@@ -802,7 +800,7 @@ function getRandomImageFromStyleFolder(style) {
       )
       return null
     }
-    console.log("1131321312312  " + styleFolderPath)
+    
     // Получаем все файлы изображений из папки
     const files = fs
       .readdirSync(styleFolderPath)

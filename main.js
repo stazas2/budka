@@ -30,7 +30,7 @@ function createWindow() {
     })
 
     win.setMenuBarVisibility(false)
-    win.loadFile("index1.html")
+    win.loadFile("index.html")
     // monitorSystemLoad(); // Запуск мониторинга при старте приложения
 
     win.webContents.on("did-finish-load", () => {
@@ -38,8 +38,8 @@ function createWindow() {
       win.webContents.setZoomFactor(1)
 
       // Логирование времени запуска
-      const mainStartupTimeEnd = Date.now()
-      const startupDuration = mainStartupTimeEnd - mainStartupTimeStart
+      // const mainStartupTimeEnd = Date.now()
+      // const startupDuration = mainStartupTimeEnd - mainStartupTimeStart
       // console.log(`Время запуска main процесса: ${startupDuration} мс`)
     })
 

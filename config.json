@@ -1,0 +1,36 @@
+{
+  "authToken": "fc612550-06e8-4be3-9191-0f97336d9966",
+  "mode": "style_sdxl",
+  "prePhotoTimer": 2,
+  "inactivityTimeout": 60000,
+  "language": {
+    "current": "ru",
+    "showSwitcher": false
+  },
+  "printButtonVisible": false,
+  "stylesDir": "{{basePath}}\\styles",
+  "basePath": "",
+  "logoPath": "logo.png",
+  "logoPosition": "bottom-right",
+  "logoOffsetX": 30,
+  "logoOffsetY": 30,
+  "logoScale": 1,
+  "brandLogoPath": "logo.png",
+  "mainLogoScale": 1,
+  "theme": "dark",
+  "backdropBlur": "50px",
+  "animationEnabled": false,
+  "lightTheme": {
+    "backgroundColor": "#ffebcd",
+    "backgroundImage": "fon1.png",
+    "lightTextColor": "#000000"
+  },
+  "darkTheme": {
+    "backgroundColor": "#696969",
+    "backgroundImage": "fon1.png",
+    "darkTextColor": "#ffffff"
+  },
+  "camera_rotation": 0,
+  "final_image_rotation": 0,
+  "send_image_rotation": 0
+}
