@@ -25,13 +25,18 @@ function loadConfig() {
         }
       })
 
-      // Логика для лого
-      // if (config.brandLogoPath && config.logoPath) {
-      //   let logoPath = path.join(config.basePath, config.logo)
-      //   logoPath = logoPath.replace(/\\/g, "/")
-      //   // console.log(`Формированный путь (logo):`, logoPath)
-      //   config.logo = logoPath
-      // } 
+      if (config.logoPath) {
+        
+      }
+      //Логика для лого
+      if (config.brandLogoPath) {
+        let logoPath = path.join(config.basePath, config.brandLogoPath)
+        logoPath = logoPath.replace(/\\/g, "/")
+        console.log('logoPATH:', logoPath)
+        // console.log(`Формированный путь (logo):`, logoPath)
+        config.brandLogoPath = logoPath
+        console.log('MAIN logoPATH: ' + config.logoPath)
+      } 
 
 
     } else {
