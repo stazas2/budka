@@ -29,12 +29,15 @@ const backButtons = document.querySelectorAll(".back-button")
 
 let selectedStyle = ""
 let selectedGender = ""
+let nameDisplay = ""
 let videoStream = null
 let cameraInitialized = false
 
 // Основная папка для хранения изображений
-const baseDir = path.join("C:\\MosPhotoBooth2", "SavedPhotos")
 const config = loadConfig()
+const basePath = config.basePath
+const baseDir = path.join(basePath, "SavedPhotos")
+const stylesDir = config.stylesDir.replace("{{basePath}}", basePath)
 
 // Загрузка лого-бренда
 document.getElementById("logo").src = config?.brandLogoPath
@@ -71,9 +74,9 @@ applyRotationStyles()
 // Лого на фотографии
 // After loading the configuration and applying rotation styles
 // if (config.send_image_rotation === 90 || config.send_image_rotation === 270) {
-//   config.logoScale = config.logoScale/7.6; 
+//   config.logoScale = config.logoScale/7.6;
 // } else {
-//   config.logoScale = config.logoScale/10.1; 
+//   config.logoScale = config.logoScale/10.1;
 // }
 
 // Функция для создания папок с датой и input/output, если их еще нет
@@ -131,27 +134,6 @@ function saveImage(folderType, base64Image) {
   }
 }
 
-// Функция для получения доступных стилей
-function fetchStyles() {
-  try {
-    ipcRenderer
-      .invoke("get-styles", selectedGender) // Передаём выбранный пол
-      .then((styles) => {
-        console.log("Получены стили:", styles)
-        initStyleButtons(styles)
-      })
-      .catch((error) => {
-        console.error("Ошибка при загрузке стилей:", error)
-        alert("Не удалось загрузить стили. Пожалуйста, попробуйте позже.")
-      })
-  } catch (error) {
-    console.error("Ошибка в fetchStyles:", error)
-  }
-}
-
-let resultShowStyle = ""
-let hasBrackets = false
-
 // Инициализация кнопок стилей
 function initStyleButtons(parsedStyles) {
   try {
@@ -173,8 +155,7 @@ function initStyleButtons(parsedStyles) {
         .replace(/\s*\(.*?\)/g, "")
         .replace(/\s+/g, "_")
         .replace(/[^\w\-]+/g, "")
-      img.src = `${config.stylesDir}\\${selectedGender}\\${style.originalName}\\1${sanitizedDisplayName}.jpg`
-      // console.log(img.src)
+      img.src = `${stylesDir}\\${selectedGender}\\${style.originalName}\\1${sanitizedDisplayName}.jpg`
       img.alt = style.displayName
 
       const label = document.createElement("div")
@@ -189,6 +170,8 @@ function initStyleButtons(parsedStyles) {
       button.addEventListener("click", () => {
         // Изменение отображаемого названия
         selectedStyle = style.originalName.replace(/\s*\(.*?\)/g, "")
+
+        nameDisplay = style.originalName
 
         hasBrackets = /\(.*?\)/.test(style.originalName)
         if (hasBrackets) {
@@ -231,6 +214,27 @@ genderItems.forEach((item) => {
     fetchStyles() // Загружаем стили после выбора гендера
   })
 })
+
+// Функция для получения доступных стилей
+function fetchStyles() {
+  try {
+    ipcRenderer
+      .invoke("get-styles", selectedGender) // Передаём выбранный пол
+      .then((styles) => {
+        console.log("Получены стили:", styles)
+        initStyleButtons(styles)
+      })
+      .catch((error) => {
+        console.error("Ошибка при загрузке стилей:", error)
+        alert("Не удалось загрузить стили. Пожалуйста, попробуйте позже.")
+      })
+  } catch (error) {
+    console.error("Ошибка в fetchStyles:", error)
+  }
+}
+
+let resultShowStyle = ""
+let hasBrackets = false
 
 // Инициализация кнопок гендера с анимацией
 function initGenderButtons() {
@@ -545,7 +549,7 @@ function sendImageToServer(imageData) {
     const base64Image = imageData.split(",")[1]
 
     // Получаем случайное изображение для `Fon` из папки стиля
-    const fonImage = getRandomImageFromStyleFolder(selectedStyle)
+    const fonImage = getRandomImageFromStyleFolder(nameDisplay)
     const base64FonImage = fonImage ? fonImage.split(",")[1] : base64Image // Используем изображение с камеры, если `Fon` не найдено
 
     const data = {
@@ -571,7 +575,7 @@ function sendImageToServer(imageData) {
     }
 
     // Сохраняем запрос в текстовый файл
-    const logFilePath = path.join("C:", "MosPhotoBooth2", "request_log.txt")
+    const logFilePath = path.join(basePath, "request_log.txt")
     const logContent = `Headers: ${JSON.stringify(
       headers,
       null,
@@ -733,12 +737,9 @@ async function overlayLogoOnImage(base64Image) {
     const offsetX = config.logoOffsetX || 30
     const offsetY = config.logoOffsetY || 30
 
-    const scaleFactor = config.logoScale || 1; // Масштабирование логотипа
-
-    console.log(`1 Размеры ИСХОДНЫЕ - ${logoImage.width} x ${logoImage.height}`)
-
-    const logoWidth = logoImage.width * scaleFactor;
-    const logoHeight = logoImage.height * scaleFactor;
+    const scaleFactor = config.logoScale || 1 // Масштабирование логотипа
+    const logoWidth = logoImage.width * scaleFactor
+    const logoHeight = logoImage.height * scaleFactor
 
     switch (config.logoPosition) {
       case "top-left":
@@ -771,9 +772,6 @@ async function overlayLogoOnImage(base64Image) {
         y = canvas.height - logoHeight - offsetY
     }
 
-    console.log(`2 Размеры ПЕЧАТИ - ${logoWidth} x ${logoHeight}`)
-
-    
     // Уменьшаем и рисуем логотип
     context.drawImage(logoImage, x, y, logoWidth, logoHeight)
 
@@ -790,7 +788,10 @@ async function overlayLogoOnImage(base64Image) {
 function getRandomImageFromStyleFolder(style) {
   try {
     // Updated path to include selectedGender
-    const styleFolderPath = path.join(config.stylesDir, selectedGender, style)
+    const styleFolderPath = path.join(stylesDir, selectedGender, style)
+
+    console.log("qqqqqqqqqqqqqqq  " + stylesDir)
+
     console.log(
       `Путь изображений (getRandomImageFromStyleFolder): ${styleFolderPath}`
     )
@@ -801,7 +802,7 @@ function getRandomImageFromStyleFolder(style) {
       )
       return null
     }
-
+    console.log("1131321312312  " + styleFolderPath)
     // Получаем все файлы изображений из папки
     const files = fs
       .readdirSync(styleFolderPath)
@@ -1060,6 +1061,7 @@ document.addEventListener("DOMContentLoaded", () => {
   updateTexts()
   logStartupTime()
   initGenderButtons() // Инициализация анимации для гендерных кнопок
+  setGenderImages()
 })
 
 //! Theme Switcher
@@ -1269,3 +1271,16 @@ function displayNextMessage() {
 
 // Каждые 2 секунды
 setInterval(displayNextMessage, 2000)
+
+// Function to set gender images
+function setGenderImages() {
+  const genders = ["man", "woman", "boy", "girl", "group"]
+  genders.forEach((gender) => {
+    const imgElement = document.getElementById(`gender-${gender}`)
+    if (imgElement) {
+      imgElement.src = `${basePath}/gender/${gender}.png`
+    } else {
+      console.warn(`Image element for gender "${gender}" not found.`)
+    }
+  })
+}

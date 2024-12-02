@@ -10,8 +10,10 @@ const { exec } = require("child_process")
 
 // Загружаем конфигурацию после импорта необходимых модулей
 const config = loadConfig()
+const basePath = config.basePath
+const stylesDir = config.stylesDir.replace("{{basePath}}", basePath)
 
-// Начало измерения времени запуска main процесса
+/** Начало измерения времени запуска main процесса */
 const mainStartupTimeStart = Date.now()
 
 function createWindow() {
@@ -52,7 +54,7 @@ function createWindow() {
 
 // Изменение обработчика 'get-styles' для оптимизации загрузки стилей
 ipcMain.handle("get-styles", async (event, gender) => {
-  const stylesDir = config?.stylesDir || "C:\\MosPhotoBooth2\\styles"
+  // const stylesDir = config?.stylesDir || path.join(basePath, 'styles')
   console.log(
     `Loading styles for gender "${gender}" from directory: ${stylesDir}`
   )

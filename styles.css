@@ -626,6 +626,10 @@ body.rotation-90 #countdown {
     top: 20%;
   }
 
+  /* body.rotation-90 #style-screen h1 {
+    top: 20%;
+  } */
+
   #camera-screen h1 {
     top: -16%;
   }
