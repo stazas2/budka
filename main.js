@@ -20,8 +20,8 @@ function createWindow() {
   console.log("Creating main window...")
   try {
     const win = new BrowserWindow({
-      width: 1680,
-      height: 1080,
+      width: 1080,
+      height: 1620,
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: false,

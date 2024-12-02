@@ -308,7 +308,7 @@ function showScreen(screenId) {
 
     // Hide or show the logo based on active screen
     const logoContainer = document.getElementById("logo-container")
-    if (screenId === "camera-screen") {
+    if (screenId === "camera-screen" || screenId === "result-screen") {
       logoContainer.style.display = "none"
     } else {
       logoContainer.style.display = "block"

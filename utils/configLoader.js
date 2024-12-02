@@ -44,8 +44,6 @@ function loadConfig() {
       } else {
         console.error("brandLogo path is not defined in config.json")
       }
-
-
     } else {
       console.error("Config is undefined or null. Unable to process themes.")
     }

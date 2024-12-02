@@ -587,7 +587,7 @@ input:checked + .slider:before {
 /* Добавьте стили для логотипа */
 #logo-container {
   position: fixed;
-  top: 8%;
+  top: 3%;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
@@ -614,7 +614,7 @@ body.rotation-90 #countdown {
   }
 
   body.rotation-90 #countdown {
-    bottom: -30%;
+    bottom: -40%;
   }
 
   .back-button {
@@ -631,7 +631,8 @@ body.rotation-90 #countdown {
   } */
 
   #camera-screen h1 {
-    top: -16%;
+    top: -20%; 
+    /* -16 */
   }
 
   #style-buttons {
@@ -671,7 +672,7 @@ body.rotation-90 #countdown {
   }
 
   body.rotation-90 #result-image {
-    max-height: 55vh;
+    max-height: 75vh;
     /*? 40 */
   }
 
