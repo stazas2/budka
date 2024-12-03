@@ -32,6 +32,8 @@ let selectedGender = ""
 let nameDisplay = ""
 let videoStream = null
 let cameraInitialized = false
+let resultShowStyle = ""
+let hasBrackets = false
 
 // Основная папка для хранения изображений
 const config = loadConfig()
@@ -70,14 +72,6 @@ function applyRotationStyles() {
 
 // Вызываем функцию для применения стилей после загрузки конфигурации и элементов
 applyRotationStyles()
-
-// Лого на фотографии
-// After loading the configuration and applying rotation styles
-// if (config.send_image_rotation === 90 || config.send_image_rotation === 270) {
-//   config.logoScale = config.logoScale/7.6;
-// } else {
-//   config.logoScale = config.logoScale/10.1;
-// }
 
 // Функция для создания папок с датой и input/output, если их еще нет
 function createDateFolders() {
@@ -200,9 +194,6 @@ function initStyleButtons(parsedStyles) {
   }
 }
 
-// Удаление первоначального вызова fetchStyles
-// fetchStyles()
-
 // Заменить обработчики кнопок на обработчики button-row_item
 const genderItems = document.querySelectorAll(".button-row_item")
 genderItems.forEach((item) => {
@@ -232,9 +223,6 @@ function fetchStyles() {
     console.error("Ошибка в fetchStyles:", error)
   }
 }
-
-let resultShowStyle = ""
-let hasBrackets = false
 
 // Инициализация кнопок гендера с анимацией
 function initGenderButtons() {
@@ -284,7 +272,7 @@ function showScreen(screenId) {
         }
       }
 
-      // Управляем видимостью кнопки переключения темы
+      //? Управляем видимостью кнопки переключения темы
       // if (screenId === "splash-screen" || screenId === "gender-screen") {
       //   themeSwitcher.style.display = "block"
       // } else {
@@ -699,13 +687,6 @@ function updatePrintButtonVisibility() {
   }
 }
 
-// Функция наложения логотипа
-// async function overlayLogoOnImage(base64Image) {
-//   console.warn("overlayLogoOnImage is a stub and does not apply any logos.")
-//   return new Promise((resolve) => {
-//     resolve(`data:image/jpeg;base64,${base64Image}`)
-//   })
-// }
 async function overlayLogoOnImage(base64Image) {
   try {
     const canvas = document.createElement("canvas")
@@ -789,10 +770,6 @@ function getRandomImageFromStyleFolder(style) {
   try {
     // Updated path to include selectedGender
     const styleFolderPath = path.join(stylesDir, selectedGender, style)
-
-    // console.log(
-    //   `Путь изображений (getRandomImageFromStyleFolder): ${styleFolderPath}`
-    // )
 
     if (!fs.existsSync(styleFolderPath)) {
       console.warn(
@@ -1270,83 +1247,49 @@ function displayNextMessage() {
 // Каждые 2 секунды
 setInterval(displayNextMessage, 2000)
 
-// Функция для выбора полова из кфг
-// function setGenderImages() {
-//   const allowedGenders = config.allowedGenders || [
-//     "man",
-//     "woman",
-//     "boy",
-//     "girl",
-//     "group",
-//   ]
-
-//   let arrGenders = []
-
-//   allowedGenders.forEach((gender) => {
-//     if (Array.isArray(gender)) {
-//       gender.join(" ").split(" ").forEach((g) => {
-//        arrGenders.push(g)
-//     })} else {
-//        arrGenders.push(gender)
-//     }
- 
-//     arrGenders.forEach((gender) => {
-//       const imgElement = document.getElementById(`gender-${gender}`)
-//       if (imgElement) {
-//         imgElement.src = `./gender/${gender}.png`
-//       }
-//     })
-//   })
-
-//   // Hide gender buttons not in allowedGenders
-//   const allGenders = ["man", "woman", "boy", "girl", "group"]
-//   allGenders.forEach((gender) => {
-//     if (!arrGenders.includes(gender)) {
-//       const buttonElement = document.querySelector(
-//         `.button[data-gender="${gender}"]`
-//       ).parentElement
-//       if (buttonElement) {
-//         buttonElement.style.display = "none"
-//       }
-//     }
-//   })
-// }
-
 // Ф-я вывода гендера
 function setGenderImages() {
-  const allowedGenders = config.allowedGenders || ["man", "woman", "boy", "girl", "group"];
+  const allowedGenders = config.allowedGenders || [
+    "man",
+    "woman",
+    "boy",
+    "girl",
+    "group",
+  ]
 
-  const arrGenders = flattenGenders(allowedGenders);
+  const arrGenders = flattenGenders(allowedGenders)
 
   arrGenders.forEach((gender) => {
-    const imgElement = document.getElementById(`gender-${gender}`);
+    const imgElement = document.getElementById(`gender-${gender}`)
     if (imgElement) {
-      imgElement.src = `./gender/${gender}.png`;
+      imgElement.src = `./gender/${gender}.png`
     }
-  });
+  })
 
   // Скрыть кнопки гендеров, не входящих в allowedGenders
-  const allGenders = ["man", "woman", "boy", "girl", "group"];
+  const allGenders = ["man", "woman", "boy", "girl", "group"]
   allGenders.forEach((gender) => {
     if (!arrGenders.includes(gender)) {
-      const buttonElement = document.querySelector(`.button[data-gender="${gender}"]`);
+      const buttonElement = document.querySelector(
+        `.button[data-gender="${gender}"]`
+      )
       if (buttonElement && buttonElement.parentElement) {
-        buttonElement.parentElement.style.display = "none";
+        buttonElement.parentElement.style.display = "none"
       }
     }
-  });
+  })
 }
 
 // Функция обработки с конфига списока гендеров
 function flattenGenders(allowedGenders) {
-  const genders = [];
+  const genders = []
   const flatten = (item) => {
     if (Array.isArray(item)) {
-      item.forEach(flatten);
-    } else if (typeof item === 'string') {
-      item.split(' ').forEach((g) => genders.push(g));
+      item.forEach(flatten)
+    } else if (typeof item === "string") {
+      item.split(" ").forEach((g) => genders.push(g))
     }
-  };
-  allowedGenders.forEach(flatten);
-  return [...new Set(genders)];
+  }
+  allowedGenders.forEach(flatten)
+  return [...new Set(genders)]
 }

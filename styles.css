@@ -595,7 +595,8 @@ input:checked + .slider:before {
   transition: transform 0.3s ease;
 }
 
-body.rotation-90 #video {
+body.rotation-90 #video,
+body.rotation-270 #video {
   max-height: 40vh;
 }
 
@@ -604,10 +605,14 @@ body.rotation-90 #video {
   bottom: 0;
 }
 
+/* body.rotation-90 #countdown { */
+/* } */
+
 /* Адаптивность под разные экраны */
 /* Вертикальная ориентация */
 @media (orientation: portrait) {
-  body.rotation-90 #countdown {
+  body.rotation-90 #countdown,
+  body.rotation-270 #countdown {
     bottom: -37%;
   }
 
@@ -620,13 +625,14 @@ body.rotation-90 #video {
     top: 20%;
   }
 
-  body.rotation-90 #camera-screen h1 {
+  body.rotation-90 #camera-screen h1,
+  body.rotation-270 #camera-screen h1 {
     top: -20%;
     /* -16 */
   }
 
   #camera-screen h1 {
-    top: -10%;
+    top: -12%;
   }
 
   #style-buttons {
@@ -647,7 +653,8 @@ body.rotation-90 #video {
   }
 
   .button-row_item {
-    padding: 5px;
+    padding: 20px;
+    /* 5 */
   }
 
   #result-image {
@@ -665,16 +672,19 @@ body.rotation-90 #video {
     height: auto;
   }
 
-  body.rotation-90 #result-image {
+  body.rotation-90 #result-image,
+  body.rotation-270 #result-image {
     max-height: 75vh;
     /*? 40 */
   }
 
-  body.rotation-90 #result-screen > div {
+  body.rotation-90 #result-screen > div,
+  body.rotation-270 #result-screen > div {
     margin-top: 30px;
   }
 
-  body.rotation-90 #result-screen h1 {
+  body.rotation-90 #result-screen h1,
+  body.rotation-270 #result-screen h1 {
     margin-bottom: 0px;
   }
 
@@ -685,6 +695,8 @@ body.rotation-90 #video {
   }
 
   body.rotation-90 #start-over,
+  #print-photo,
+  body.rotation-270 #start-over,
   #print-photo {
     margin-top: 0px;
     position: relative;
@@ -698,7 +710,8 @@ body.rotation-90 #video {
 
 /* Горизонтальная ориентация */
 @media (orientation: landscape) {
-  body.rotation-90 #video {
+  body.rotation-90 #video,
+  body.rotation-270 #video {
     max-height: 45vh;
   }
 
@@ -758,35 +771,26 @@ body.rotation-90 #video {
     height: 67vh;
   }
 
-  body.rotation-90 #result-image {
+  body.rotation-90 #result-image,
+  body.rotation-270 #result-image {
     max-height: 80vh;
   }
 
-  body.rotation-90 #result-screen h1 {
+  body.rotation-90 #result-screen h1,
+  body.rotation-270 #result-screen h1 {
     position: relative;
     /* top: -2%; */
     /*? 5 */
   }
 
-  body.rotation-90 #selected-params-text {
+  body.rotation-90 #selected-params-text,
+  body.rotation-270 #selected-params-text {
     position: relative;
     top: 0%;
     /*? 160 */
   }
-
-  /* body.rotation-90 #print-photo, #start-over {
-    margin-top: 50px;
-  } */
-  /* 
-  body.rotation-90 #start-over {
-    margin-top: 50px;
-  } */
 }
-/* @media (max-width: 1175px) {
-  #camera-screen h1 {
-    top: 2%;
-  }
-} */
+
 
 @media (min-width: 880px) and (min-height: 1800px) {
   #style-screen h1 {
@@ -876,20 +880,10 @@ body.rotation-90 #video {
 }
 
 @media (max-height: 950px) {
-  /* .content-container {
-    flex: 0;
-  } */
-
-  /* #camera-screen h1 {
-    top: 5%;
-  } */
-
   .button-row {
     gap: 10px;
   }
-  /* #camera-screen h1 {
-    top: 20px;
-  } */
+
   .button {
     margin: 0px;
   }
@@ -1063,7 +1057,7 @@ body.dark::before {
   background: linear-gradient(to top, transparent, black 200%);
 }
 
-/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 #style-loader {
   display: flex;
