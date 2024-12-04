@@ -11,6 +11,7 @@
     "resultScreenTitle": "Ваше фото готово!",
     "backButtonText": "Назад",
     "printButtonText": "Печать фото",
+    "printButtonTextWaiting": "Обработка...",
     "startOverButtonText": "Начать заново",
     "loaderText": "Инициализация камеры...",
     "loaderMessages": [
@@ -45,6 +46,7 @@
     "resultScreenTitle": "Сіздің фотосуретіңіз дайын!",
     "backButtonText": "Артқа",
     "printButtonText": "Фотосуретті басып шығару",
+    "printButtonTextWaiting": "Өңдеу...",
     "startOverButtonText": "Қайта бастау",
     "loaderText": "Камераны іске қосу...",
     "loaderMessages": [

@@ -156,9 +156,7 @@ body::before {
   min-width: 200px;
   /* background: rgba(255, 255, 255, 0.2); */
   /* backdrop-filter: blur(10px) saturate(180%); */
-  transition:
-    transform 0.5s,
-    box-shadow 0.5s;
+  transition: transform 0.5s, box-shadow 0.5s;
   transition: all 0.3s ease;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   transform: translateY(0);
@@ -204,6 +202,8 @@ button:active {
   transition: all 0.3s ease;
 }
 #countdown {
+  position: relative;
+  bottom: 0;
   font-size: 3.9em;
   font-weight: 700;
   color: var(--text-color);
@@ -248,7 +248,11 @@ button:active {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 20%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.2),
+    transparent 20%
+  );
   background-size: 20px 20px;
   animation: floatParticles 2s linear infinite;
 }
@@ -306,7 +310,11 @@ button:active {
   transform: rotate(0deg);
 
   padding: 20px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(196, 213, 217, 0.7511379551820728) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(196, 213, 217, 0.7511379551820728) 100%
+  );
   box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
   border-radius: 40px;
 }
@@ -401,9 +409,7 @@ button:active {
   display: inline-flex;
   padding: 10px;
   cursor: pointer;
-  transition:
-    transform 0.5s,
-    box-shadow 0.5s;
+  transition: transform 0.5s, box-shadow 0.5s;
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
@@ -499,6 +505,12 @@ h1 {
   opacity: 0.5;
 }
 
+#print-photo:disabled {
+  background: rgba(255, 255, 255, 0.2);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 /* Стили для переключателя темы */
 .theme-switcher {
   display: none;
@@ -565,10 +577,7 @@ input:checked + .slider:before {
   background: rgba(255, 255, 255, 0.25);
   color: var(--text-color);
   font-weight: 600;
-  transition:
-    background-color 0.3s,
-    transform 0.5s,
-    box-shadow 0.5s;
+  transition: background-color 0.3s, transform 0.5s, box-shadow 0.5s;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -600,13 +609,9 @@ body.rotation-270 #video {
   max-height: 40vh;
 }
 
-#countdown {
-  position: relative;
-  bottom: 0;
+body.rotation-90 #countdown {
+  bottom: -35%;
 }
-
-/* body.rotation-90 #countdown { */
-/* } */
 
 /* Адаптивность под разные экраны */
 /* Вертикальная ориентация */
@@ -790,7 +795,6 @@ body.rotation-270 #video {
     /*? 160 */
   }
 }
-
 
 @media (min-width: 880px) and (min-height: 1800px) {
   #style-screen h1 {

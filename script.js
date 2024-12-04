@@ -37,6 +37,8 @@ let hasBrackets = false
 
 // Основная папка для хранения изображений
 const config = loadConfig()
+// Загрузка переводов
+const translations = require("./translations.json")
 const basePath = config.basePath
 const baseDir = path.join(basePath, "SavedPhotos")
 const stylesDir = config.stylesDir.replace("{{basePath}}", basePath)
@@ -305,6 +307,20 @@ function showScreen(screenId) {
     console.error(`Error in showScreen (${screenId}):`, error)
   }
 }
+
+// Ожидание после нажатия на #print-photo
+printPhotoButton.addEventListener("click", () => {
+  console.log("Start over button clicked")
+  printPhotoButton.disabled = true
+  printPhotoButton.textContent = translations[currentLanguage].printButtonTextWaiting;
+
+  setTimeout(() => {
+    printPhotoButton.disabled = false
+    printPhotoButton.textContent = translations[currentLanguage].printButtonText;
+}, 4000)
+})
+
+
 
 const resolutions = [
   { width: 1920, height: 1280 }, // Full HD
@@ -935,8 +951,6 @@ function resetInactivityTimer() {
 resetInactivityTimer()
 
 // currentLanguage = 'ru'; // Язык по умолчанию
-// Загрузка переводов
-const translations = require("./translations.json")
 // Обновляем тексты на основе конфигурации
 function updateTexts() {
   try {
