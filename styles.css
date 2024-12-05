@@ -6,6 +6,10 @@
   user-select: none; /* Запрещаем выделение элементов */
 }
 
+/* html {
+  scroll-behavior: smooth;
+} */
+
 body {
   font-family: "Roboto", sans-serif;
   background-color: var(--background-color);
@@ -98,13 +102,6 @@ body::before {
   opacity: 1; /* Показываем активный экран */
   animation: fadeIn 0.5s ease;
 }
-/* .active {
-  display: flex;
-  visibility: visible; 
-  pointer-events: all; 
-  z-index: 1; 
-  opacity: 1;
-} */
 
 /* Добавляем ключевые кадры для анимации появления */
 @keyframes fadeIn {
@@ -118,15 +115,81 @@ body::before {
   }
 }
 
+.style-block {
+  position: relative;
+  padding: 10px;
+}
+
 #style-buttons {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  /* display: grid; */
+  /* grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); */
+  gap: 15px;
   width: 100%;
   max-width: 1200px;
-  padding: 20px;
+  max-height: 700px; /* ! 700 */
+  overflow-y: auto;
+  padding: 20px 20px 0px;
   align-items: center;
+
+  /* Стили для скроллбара */
+  scrollbar-width: thin; /* Для браузера Firefox */
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent; /* Цвет для Firefox */
+
+  /* Для браузеров на базе WebKit */
+  scrollbar-width: none; /* Скрыть стандартный скроллбар */
 }
+
+
+/* Стили для скролла и класса hide */
+#style-buttons::-webkit-scrollbar {
+  width: 2px; /* Ширина вертикального скроллбара */
+  height: 8px; /* Высота горизонтального скроллбара (если есть) */
+}
+
+#style-buttons::-webkit-scrollbar-track {
+  background: transparent; /* Фоновый цвет трека */
+}
+
+#style-buttons::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3); /* Цвет ползунка */
+  border-radius: 4px; /* Радиус скругления углов ползунка */
+}
+
+#style-buttons.hide-scrollbar {
+  scrollbar-width: none; /* Для браузера Firefox */
+}
+
+#style-buttons.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Для браузеров на базе WebKit */
+}
+
+/* #style-buttons::before {
+  content: '';
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60px; 
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent); 
+  pointer-events: none;
+  z-index: 1; 
+} */
+
+/* #style-buttons::after {
+  content: '';
+  position: sticky; 
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60px; 
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+  pointer-events: none;
+  z-index: 1;
+} */
 
 #style-buttons .button {
   box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
@@ -457,6 +520,10 @@ h1 {
   margin-bottom: 20px;
 }
 
+#camera-screen {
+  position: relative;
+}
+
 /* Заголовок для экрана камеры */
 #camera-screen h1 {
   /* position: absolute;
@@ -603,26 +670,37 @@ input:checked + .slider:before {
   transition: transform 0.3s ease;
 }
 
-body.rotation-90 #video {
-  max-height: 40vh;
-}
+body.rotation-90 #video,
 body.rotation-270 #video {
   max-height: 40vh;
 }
+/* body.rotation-270 #video {
+  max-height: 40vh;
+} */
 
-body.rotation-90 #countdown {
-  bottom: -35%;
-}
-
+body.rotation-90 #countdown,
 body.rotation-270 #countdown {
   bottom: -35%;
 }
 
+/* body.rotation-270 #countdown {
+  bottom: -35%;
+} */
+
 /* Адаптивность под разные экраны */
 /* Вертикальная ориентация */
 @media (orientation: portrait) {
-  body.rotation-90 #countdown, body.rotation-270 #countdown {
-    bottom: -37%;
+  body.rotation-90 #countdown,
+  body.rotation-270 #countdown {
+    bottom: -27%;
+    /* -37 */
+  }
+
+  body.rotation-90 #video,
+  body.rotation-270 #video {
+    position: relative;
+    top: -15%;
+    max-height: 50vh;
   }
 
   .back-button {
@@ -636,8 +714,8 @@ body.rotation-270 #countdown {
 
   body.rotation-90 #camera-screen h1,
   body.rotation-270 #camera-screen h1 {
-    top: -20%;
-    /* -16 */
+    top: -29%;
+    /* -20 */
   }
 
   #camera-screen h1 {
@@ -645,6 +723,7 @@ body.rotation-270 #countdown {
   }
 
   #style-buttons {
+    max-width: 1200px;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     /*? Скролл */
     /* overflow-y: auto; */
@@ -652,8 +731,12 @@ body.rotation-270 #countdown {
 
   #style-buttons,
   #gender-buttons {
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
+  }
+
+  .button {
+    max-width: 275px;
   }
 
   .button-row {
@@ -714,11 +797,16 @@ body.rotation-270 #countdown {
 
   #logo-container {
     top: 1%;
+    /* ! 6 */
   }
 }
 
 /* Горизонтальная ориентация */
 @media (orientation: landscape) {
+  .style-block {
+    bottom: -4%;
+  }
+
   body.rotation-90 #video,
   body.rotation-270 #video {
     max-height: 45vh;
@@ -738,7 +826,13 @@ body.rotation-270 #countdown {
   }
 
   .button {
+    max-width: 240px;
     margin: 0;
+  }
+
+  #style-buttons {
+    gap: 30px;
+    max-height: 600px;
   }
 
   .back-button {
@@ -1163,5 +1257,23 @@ body.dark::before {
   100% {
     transform: translateY(-20px);
     opacity: 0;
+  }
+}
+
+.scroll-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: bounce 1.5s infinite;
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-50%, 10px);
   }
 }

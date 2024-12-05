@@ -118,7 +118,7 @@ ipcMain.on("print-photo", async (event, data) => {
     imageData,
     isLandscape,
     logoPosition = "bottom-right",
-    offset = 30,
+    offset = -100,
   } = data
   console.log("print-photo event received in main.js")
   console.log(`Image orientation: ${isLandscape ? "landscape" : "portrait"}`)

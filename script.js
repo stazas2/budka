@@ -245,13 +245,6 @@ function initGenderButtons() {
 function showScreen(screenId) {
   try {
     console.log(`Switching to screen: ${screenId}`)
-    // document.querySelectorAll(".screen").forEach((screen) => {
-    //   screen.classList.remove("active")
-    // })
-
-    // const activeScreen = document.getElementById(screenId)
-    // if (activeScreen) {
-    //   activeScreen.classList.add("active")
     const currentActive = document.querySelector(".screen.active")
     if (currentActive) {
       currentActive.classList.remove("active")
@@ -260,6 +253,25 @@ function showScreen(screenId) {
     const targetScreen = document.getElementById(screenId)
     if (targetScreen) {
       targetScreen.classList.add("active")
+
+      // Сбрасываем скролл контейнера style-buttons при показе экрана стилей
+      if (screenId === "style-screen") {
+        const styleButtons = document.getElementById("style-buttons")
+
+        // Добавляем класс для скрытия скроллбара
+        styleButtonsContainer.classList.add("hide-scrollbar")
+        
+        // Удаляем класс через 1 секунду, чтобы показать скроллбар
+        console.log('ФУНКЦИЯЯЯЯЯЯЯЯЯЯЯ SCROLLLLL')
+        setTimeout(() => { 
+          styleButtonsContainer.classList.remove("hide-scrollbar")
+        }, 2500)
+
+        if (styleButtons) {
+          styleButtons.scrollTop = 0
+        }
+      }
+
       const backButton = targetScreen.querySelector(".back-button")
       if (backButton) {
         if (screenId === "splash-screen" || screenId === "processing-screen") {
@@ -307,20 +319,6 @@ function showScreen(screenId) {
     console.error(`Error in showScreen (${screenId}):`, error)
   }
 }
-
-// Ожидание после нажатия на #print-photo
-printPhotoButton.addEventListener("click", () => {
-  console.log("Start over button clicked")
-  printPhotoButton.disabled = true
-  printPhotoButton.textContent = translations[currentLanguage].printButtonTextWaiting;
-
-  setTimeout(() => {
-    printPhotoButton.disabled = false
-    printPhotoButton.textContent = translations[currentLanguage].printButtonText;
-}, 4000)
-})
-
-
 
 const resolutions = [
   { width: 1920, height: 1280 }, // Full HD
@@ -607,6 +605,7 @@ function sendImageToServer(imageData) {
       }
     }, 900) // ��бновление каждые полсекунды
 
+    // Try sending to the primary server
     fetch("http://85.95.186.114/api/handler/", fetchOptions)
       .then((response) => {
         console.log("HTTP response status:", response.status)
@@ -621,12 +620,29 @@ function sendImageToServer(imageData) {
         handleServerResponse(responseData)
       })
       .catch((error) => {
-        console.error("Error sending data to server:", error)
-        clearInterval(progressInterval)
-        alert(
-          "An error occurred while sending the image to the server. Check the console for details."
-        )
-        showScreen("style-screen")
+        console.error("Error sending data to primary server:", error)
+        // Попытка отправить на резерв сервер
+        fetch("http://90.156.158.209/api/handler/", fetchOptions)
+          .then((response) => {
+            console.log("HTTP response status:", response.status)
+            if (!response.ok) {
+              throw new Error("Network error, status: " + response.status)
+            }
+            return response.json()
+          })
+          .then((responseData) => {
+            console.log("Data received from server:", responseData)
+            clearInterval(progressInterval)
+            handleServerResponse(responseData)
+          })
+          .catch((error) => {
+            console.error("Error sending data to backup server:", error)
+            clearInterval(progressInterval)
+            alert(
+              "An error occurred while sending the image to the server. Check the console for details."
+            )
+            showScreen("style-screen")
+          })
       })
   } catch (error) {
     console.error("Error in sendImageToServer:", error)
@@ -841,6 +857,16 @@ if (startOverButton) {
 if (printPhotoButton) {
   printPhotoButton.addEventListener("click", () => {
     console.log("Print photo button clicked")
+    printPhotoButton.disabled = true
+    printPhotoButton.textContent =
+      translations[currentLanguage].printButtonTextWaiting
+
+    setTimeout(() => {
+      printPhotoButton.disabled = false
+      printPhotoButton.textContent =
+        translations[currentLanguage].printButtonText
+    }, 4000)
+
     if (resultImage && resultImage.src) {
       const imageData = resultImage.src
       const isLandscape = resultImage.width > resultImage.height
@@ -1045,6 +1071,16 @@ function updateTexts() {
   }
 }
 
+// Начало измерения времени запуска
+const startupTimeStart = performance.now()
+
+// Функция для логирования времени запуска
+function logStartupTime() {
+  const startupTimeEnd = performance.now()
+  const startupDuration = startupTimeEnd - startupTimeStart
+  console.log(`Время запуска приложения: ${startupDuration.toFixed(2)} мс`)
+}
+
 // Вызываем функцию после загрузки страницы
 document.addEventListener("DOMContentLoaded", () => {
   updateTexts()
@@ -1167,22 +1203,6 @@ fullscreenToggleButton.addEventListener("click", function () {
       clickCount = 0
     }, 500)
   }
-})
-
-// Начало измерения времени запуска
-const startupTimeStart = performance.now()
-
-// Функция для логирования времени запуска
-function logStartupTime() {
-  const startupTimeEnd = performance.now()
-  const startupDuration = startupTimeEnd - startupTimeStart
-  console.log(`Время запуска приложения: ${startupDuration.toFixed(2)} мс`)
-}
-
-// Вызов logStartupTime после полной загрузки DOM
-document.addEventListener("DOMContentLoaded", () => {
-  updateTexts()
-  logStartupTime()
 })
 
 // Включение/выключение анимации
