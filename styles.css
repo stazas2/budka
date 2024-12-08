@@ -130,7 +130,7 @@ body::before {
   gap: 15px;
   width: 100%;
   max-width: 1200px;
-  max-height: 700px; /* ! 700 */
+  max-height: 700px;
   overflow-y: auto;
   padding: 20px 20px 0px;
   align-items: center;
@@ -724,6 +724,7 @@ body.rotation-270 #countdown {
 
   #style-buttons {
     max-width: 1200px;
+    max-height: 900px;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     /*? Скролл */
     /* overflow-y: auto; */
@@ -766,7 +767,7 @@ body.rotation-270 #countdown {
 
   body.rotation-90 #result-image,
   body.rotation-270 #result-image {
-    max-height: 75vh;
+    max-height: 85vh;
     /*? 40 */
   }
 
