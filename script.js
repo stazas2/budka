@@ -262,7 +262,6 @@ function showScreen(screenId) {
         styleButtonsContainer.classList.add("hide-scrollbar")
         
         // Удаляем класс через 1 секунду, чтобы показать скроллбар
-        console.log('ФУНКЦИЯЯЯЯЯЯЯЯЯЯЯ SCROLLLLL')
         setTimeout(() => { 
           styleButtonsContainer.classList.remove("hide-scrollbar")
         }, 2500)
@@ -603,10 +602,10 @@ function sendImageToServer(imageData) {
         progress += 10
         updateProgressBar(progress)
       }
-    }, 900) // ��бновление каждые полсекунды
+    }, 1100)
 
     // Try sending to the primary server
-    fetch("http://85.95.186.114/api/handler/", fetchOptions)
+    fetch("http://90.156.158.209/api/handler/", fetchOptions)
       .then((response) => {
         console.log("HTTP response status:", response.status)
         if (!response.ok) {
@@ -622,7 +621,7 @@ function sendImageToServer(imageData) {
       .catch((error) => {
         console.error("Error sending data to primary server:", error)
         // Попытка отправить на резерв сервер
-        fetch("http://90.156.158.209/api/handler/", fetchOptions)
+        fetch("http://85.95.186.114/api/handler/", fetchOptions)
           .then((response) => {
             console.log("HTTP response status:", response.status)
             if (!response.ok) {
@@ -669,25 +668,25 @@ async function handleServerResponse(responseData) {
       resultImage.src = finalImageWithLogo
 
       // Отображаем выбранные параметры
-      const selectedParamsText = document.getElementById("selected-params-text")
-      const texts = translations[currentLanguage]
+      // const selectedParamsText = document.getElementById("selected-params-text")
+      // const texts = translations[currentLanguage]
 
       console.log(selectedGender)
-      if (selectedParamsText && texts) {
-        const genderText = texts.genders[selectedGender] || selectedGender
-        let styleText = ""
+      // if (selectedParamsText && texts) {
+      //   const genderText = texts.genders[selectedGender] || selectedGender
+      //   let styleText = ""
 
-        if (!hasBrackets) {
-          styleText =
-            document
-              .querySelector(`[data-style="${selectedStyle}"]`)
-              ?.querySelector("div")?.textContent || selectedStyle
-        } else {
-          styleText = resultShowStyle[1]
-        }
+      //   if (!hasBrackets) {
+      //     styleText =
+      //       document
+      //         .querySelector(`[data-style="${selectedStyle}"]`)
+      //         ?.querySelector("div")?.textContent || selectedStyle
+      //   } else {
+      //     styleText = resultShowStyle[1]
+      //   }
 
-        selectedParamsText.innerHTML = `${texts.genderScreenTitleEnd}:&emsp;&emsp;<strong>${genderText}</strong><br/>${texts.styleScreenTitleEnd}:&emsp;<strong>${styleText}</strong>`
-      }
+      //   selectedParamsText.innerHTML = `${texts.genderScreenTitleEnd}:&emsp;&emsp;<strong>${genderText}</strong><br/>${texts.styleScreenTitleEnd}:&emsp;<strong>${styleText}</strong>`
+      // }
 
       // Сохранение готового изображения с логотипом в папку "output"
       saveImage("output", finalImageWithLogo)
@@ -800,44 +799,50 @@ async function overlayLogoOnImage(base64Image) {
 // Вспомогательная функция для получения случайного изображения из папки стиля
 function getRandomImageFromStyleFolder(style) {
   try {
-    // Updated path to include selectedGender
-    const styleFolderPath = path.join(stylesDir, selectedGender, style)
+    const styleFolderPath = path.join(stylesDir, selectedGender, style);
 
     if (!fs.existsSync(styleFolderPath)) {
-      console.warn(
-        `Folder for style "${style}" and gender "${selectedGender}" does not exist.`
-      )
-      return null
+      console.warn(`\x1b[41m[Warning]\x1b[0m Folder for style "${style}" and gender "${selectedGender}" does not exist.`);
+      return null;
     }
 
-    // Получаем все файлы изображений из папки
+    console.log(`[Info] Reading folder: ${styleFolderPath}`);
+
+    // Очистка стиля (удаляем содержимое скобок)
+    const cleanedStyle = style.replace(/\s*\(.*?\)/g, '').toLowerCase(); // Убираем пробелы и содержимое в скобках
+    const excludeList = [`1${cleanedStyle}.jpg`, `1${cleanedStyle}.jpeg`];
+
     const files = fs
       .readdirSync(styleFolderPath)
-      .filter((file) => /\.(jpg|jpeg|png)$/i.test(file))
-      .filter((file) => file !== `1${style}.jpg`)
+      .filter((file) => /\.(jpg|jpeg|png)$/i.test(file)) // Оставляем только изображения
+      .filter((file) => {
+        const isExcluded = excludeList.includes(file.toLowerCase());
+        console.log(`Checking exclusion: ${file}, Exclude List: ${excludeList}, Excluded: ${isExcluded}`);
+        return !isExcluded; // Исключаем файл
+      });
 
     if (files.length === 0) {
-      console.warn(`No images found in the folder for style: ${style}`)
-      return null
+      console.warn(`\x1b[41m[Warning]\x1b[0m No images found for style "${style}"`);
+      return null;
     }
 
-    // Выбираем случайный файл из списка
-    const randomFile = files[Math.floor(Math.random() * files.length)]
-    const filePath = path.join(styleFolderPath, randomFile)
+    console.log(`[Info] Filtered files: ${files}`);
+    const randomIndex = Math.floor(Math.random() * files.length);
+    console.log(`[Debug] Random index: ${randomIndex}, Files length: ${files.length}`);
+    const randomFile = files[randomIndex];
+    console.log(`\x1b[44m[Selected]\x1b[0m Random file: ${randomFile}`);
+    const filePath = path.join(styleFolderPath, randomFile);
 
-    // Читаем изображение и конвертируем его в base64
-    const imageData = fs.readFileSync(filePath, { encoding: "base64" })
-    const mimeType = randomFile.endsWith(".png") ? "image/png" : "image/jpeg"
+    const imageData = fs.readFileSync(filePath, { encoding: "base64" });
+    const mimeType = randomFile.endsWith(".png") ? "image/png" : "image/jpeg";
 
-    return `data:${mimeType};base64,${imageData}`
+    return `data:${mimeType};base64,${imageData}`;
   } catch (error) {
-    console.error(
-      `Error retrieving background image for style: ${style} and gender: ${selectedGender}`,
-      error
-    )
-    return null
+    console.error(`\x1b[41m[Error]\x1b[0m Error retrieving image for style "${style}"`, error);
+    return null;
   }
 }
+
 
 // Обработка нажатия кнопки начала заново
 if (startOverButton) {
@@ -1047,21 +1052,21 @@ function updateTexts() {
     updatePrintButtonVisibility()
 
     // Обновление selectedParamsText на экране результата
-    const selectedParamsText = document.getElementById("selected-params-text")
-    if (selectedParamsText) {
-      const genderText = texts.genders[selectedGender] || selectedGender
+    // const selectedParamsText = document.getElementById("selected-params-text")
+    // if (selectedParamsText) {
+    //   const genderText = texts.genders[selectedGender] || selectedGender
 
-      if (!hasBrackets) {
-        styleText =
-          document
-            .querySelector(`[data-style="${selectedStyle}"]`)
-            ?.querySelector("div")?.textContent || selectedStyle
-      } else {
-        styleText = resultShowStyle[1]
-      }
+    //   if (!hasBrackets) {
+    //     styleText =
+    //       document
+    //         .querySelector(`[data-style="${selectedStyle}"]`)
+    //         ?.querySelector("div")?.textContent || selectedStyle
+    //   } else {
+    //     styleText = resultShowStyle[1]
+    //   }
 
-      selectedParamsText.innerHTML = `${texts.genderScreenTitleEnd}:&emsp;&emsp;<strong>${genderText}</strong><br/>${texts.styleScreenTitleEnd}:&emsp;<strong>${styleText}</strong>`
-    }
+    //   selectedParamsText.innerHTML = `${texts.genderScreenTitleEnd}:&emsp;&emsp;<strong>${genderText}</strong><br/>${texts.styleScreenTitleEnd}:&emsp;<strong>${styleText}</strong>`
+    // }
 
     // Обновляем loaderMessages на основе текущего языка
     loaderMessages = translations[currentLanguage].loaderMessages || []
