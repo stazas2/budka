@@ -46,5 +46,3 @@ function createDateFolders() {
  }
  
  module.exports = { saveImageWithUtils }
-
-//  {saveImageWithUtils} from './utils.js';

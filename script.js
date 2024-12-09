@@ -2,7 +2,7 @@ const { ipcRenderer } = require("electron")
 const fs = require("fs")
 const path = require("path")
 const { loadConfig } = require("./utils/configLoader")
-const { saveImageWithUtils } = require("./utils/utils")
+const { saveImageWithUtils } = require("./utils/saveUtils")
 
 // DOM Elements
 const styleScreen = document.getElementById("style-screen")
@@ -115,8 +115,8 @@ function initStyleButtons(parsedStyles) {
 
       // Скрыть названия стилей
       if (config.showStyleNames) {
-        label.textContent = ""
-      } else label.textContent = match ? match[1] : style.displayName
+        label.textContent = match ? match[1] : style.displayName
+      } else label.textContent = ""
 
       button.appendChild(img)
       button.appendChild(label)
@@ -200,7 +200,7 @@ function showScreen(screenId) {
         styleButtonsContainer.classList.add("hide-scrollbar")
         setTimeout(() => {
           styleButtonsContainer.classList.remove("hide-scrollbar")
-        }, 2500)
+        }, 3200)
         const styleButtons = document.getElementById("style-buttons")
         if (styleButtons) {
           styleButtons.scrollTop = 0
@@ -503,10 +503,25 @@ function sendImageToServer(imageData) {
       if (progress >= 100) {
         clearInterval(progressInterval)
       } else {
-        progress += 10
+        progress += 10 // Уменьшаем шаг до 5%
         updateProgressBar(progress)
       }
-    }, 1100)
+    }, 1200) // Уменьшаем интервал до 500мс
+
+    let serverResponse = null;
+    let isProgressComplete = false;
+
+    const checkConditions = () => {
+      if (serverResponse && isProgressComplete) {
+        handleServerResponse(serverResponse);
+      }
+    };
+
+    setTimeout(() => {
+      isProgressComplete = true;
+      updateProgressBar(100);
+      checkConditions();
+    }, 13000); // Гарантируем, что прогресс бар будет идти минимум 10 секунд
 
     fetch("http://90.156.158.209/api/handler/", fetchOptions)
       .then((response) => {
@@ -516,8 +531,8 @@ function sendImageToServer(imageData) {
       })
       .then((responseData) => {
         console.log("Data received from server:", responseData)
-        clearInterval(progressInterval)
-        handleServerResponse(responseData)
+        serverResponse = responseData;
+        checkConditions();
       })
       .catch(() => {
         fetch("http://85.95.186.114/api/handler/", fetchOptions)
@@ -527,8 +542,8 @@ function sendImageToServer(imageData) {
             return response.json()
           })
           .then((responseData) => {
-            clearInterval(progressInterval)
-            handleServerResponse(responseData)
+            serverResponse = responseData;
+            checkConditions();
           })
           .catch((error) => {
             console.error("Error sending data to backup server:", error)

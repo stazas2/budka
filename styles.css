@@ -324,8 +324,8 @@ button:active {
   color: var(--text-color);
   font-weight: bold;
   text-align: center;
-  animation: pulse 0.9s 10 ease-in-out;
-  animation-delay: 0.9s;
+  animation: pulse 1.2s 10 ease-in-out;
+  animation-delay: 1.2s;
 }
 
 @keyframes pulse {
