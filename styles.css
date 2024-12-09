@@ -864,7 +864,7 @@ body.rotation-270 #countdown {
   }
   #result-image {
     max-width: 80%;
-    max-height: 80vh;
+    max-height: 85vh;
   }
   /* #video {
     max-width: 50%;
@@ -877,7 +877,7 @@ body.rotation-270 #countdown {
 
   body.rotation-90 #result-image,
   body.rotation-270 #result-image {
-    max-height: 80vh;
+    max-height: 90vh;
   }
 
   body.rotation-90 #result-screen h1,
