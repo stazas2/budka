@@ -85,9 +85,31 @@ function initStyleButtons(parsedStyles) {
         .replace(/\s*\(.*?\)/g, "")
         .replace(/\s+/g, "_")
         .replace(/[^\w\-]+/g, "")
-      img.src = `${stylesDir}\\${selectedGender}\\${style.originalName}\\1${sanitizedDisplayName}.jpg`
-      img.alt = style.displayName
+      const styleFolderPath = path.join(
+        stylesDir,
+        selectedGender,
+        style.originalName
+      )
+      const imageFileNamePrefix = `1${sanitizedDisplayName}`
+      const extensions = [".jpg", ".png", ".jpeg"]
+      let imagePath = null
 
+      for (const ext of extensions) {
+        const potentialPath = `${styleFolderPath}\\${imageFileNamePrefix}${ext}`
+        if (fs.existsSync(potentialPath)) {
+          imagePath = potentialPath
+          break
+        }
+      }
+
+      if (imagePath) {
+        img.src = imagePath
+      } else {
+        console.error(`Image not found for style: ${style.originalName}`)
+        // Можно установить изображение по умолчанию, если файл не найден
+        img.src = `${stylesDir}/default.png`
+      }
+      img.alt = style.displayName
       const label = document.createElement("div")
       const match = style.displayName.match(/\(([^)]+)\)/)
 
@@ -208,7 +230,6 @@ function showScreen(screenId) {
         // Запускаем камеру при отображении экрана camera-screen
         startCamera()
           .then(() => {
-            console.log("Camera started")
             // Начинаем обратный отсчет после инициализации камеры
             startCountdown()
           })
@@ -672,9 +693,10 @@ function getRandomImageFromStyleFolder(style) {
       .filter((file) => /\.(jpg|jpeg|png)$/i.test(file)) // Оставляем только изображения
       .filter((file) => {
         const isExcluded = excludeList.includes(file.toLowerCase())
-        console.log(
-          `Checking exclusion: ${file}, Exclude List: ${excludeList}, Excluded: ${isExcluded}`
-        )
+        // Раскомментировать для отладки
+        // console.log(
+        //   `Checking exclusion: ${file}, Exclude List: ${excludeList}, Excluded: ${isExcluded}`
+        // )
         return !isExcluded // Исключаем файл
       })
 
