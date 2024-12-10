@@ -147,6 +147,9 @@ genderItems.forEach((item) => {
   item.addEventListener("click", () => {
     const button = item.querySelector(".button")
     selectedGender = button.getAttribute("data-gender") // Сохраняем выбранный пол
+    if (selectedGender === "group") {
+      selectedGender = "man and woman"
+    }
     console.log(`Gender selected: ${selectedGender}`)
     showScreen("style-screen")
     fetchStyles() // Загружаем стили после выбора гендера
