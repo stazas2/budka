@@ -140,14 +140,14 @@ ipcMain.on("print-photo", async (event, data) => {
       console.warn("Logo file not found at path:", logoPath)
     }
 
-    await addLogoToPdf(
-      tempImagePath,
-      tempPdfPath,
-      logoPath,
-      logoPosition,
-      offset
-    )
-    await print(tempPdfPath)
+    // await addLogoToPdf(
+    //   tempImagePath,
+    //   tempPdfPath,
+    //   logoPath,
+    //   logoPosition,
+    //   offset
+    // )
+    // await print(tempPdfPath)
     console.log("Print job started.")
 
     fs.unlinkSync(tempPdfPath)
