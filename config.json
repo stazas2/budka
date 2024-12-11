@@ -7,8 +7,9 @@
     "current": "ru",
     "showSwitcher": false
   },
-  "showStyleNames": true,
+  "showStyleNames": false,
   "printButtonVisible": true,
+  "visibilityAgree": true,
   "stylesDir": "{{basePath}}\\styles",
   "basePath": "C:\\MosPhotoBooth2",
   "logoPath": "logo.png",
@@ -39,6 +40,7 @@
     [
       "man",
       "woman"
-    ]
+    ], 
+    "group"
   ]
 }

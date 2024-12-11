@@ -28,6 +28,15 @@
       <!-- Заголовок из config.json -->
       <button id="start-button"></button>
       <!-- Текст кнопки будет установлен из config.json -->
+      <label class="start-text">
+        <input type="checkbox" id="agreement-checkbox" checked />
+        <span class="custom-checkbox"></span>
+        <span
+          >Нажимая на кнопку «Начать» <br />вы даете
+          <span class="custom-checkbox-qr">согласиe</span> на использование
+          вашего фото в коммерческих целях
+        </span>
+      </label>
       <!-- Кнопка переключения темы -->
       <label class="theme-switcher">
         <input type="checkbox" id="theme-switcher" />
@@ -100,12 +109,12 @@
     <div id="style-screen" class="screen">
       <button class="back-button"></button>
       <div class="style-block">
-      <h1></h1>
-      <!-- Заголовок будет установлен из config.json -->
-      <div id="style-buttons">
-        <!-- Кнопки стилей будут добавлены динамически -->
-      </div>
-      <!-- <div class="scroll-hint">
+        <h1></h1>
+        <!-- Заголовок будет установлен из config.json -->
+        <div id="style-buttons">
+          <!-- Кнопки стилей будут добавлены динамически -->
+        </div>
+        <!-- <div class="scroll-hint">
         <span>⬇</span>
       </div> -->
       </div>

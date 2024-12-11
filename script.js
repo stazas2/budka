@@ -26,6 +26,7 @@ const progressBar = document.getElementById("progress-bar")
 const progressBarFill = document.getElementById("progress-bar-fill")
 const progressPercentage = document.getElementById("progress-percentage")
 const backButtons = document.querySelectorAll(".back-button")
+const startText = document.querySelector(".start-text")
 
 let selectedStyle = ""
 let selectedGender = ""
@@ -320,10 +321,11 @@ async function startCamera() {
             resolve()
           }
         }),
-        new Promise((_, reject) =>
-          setTimeout(() => {
-            reject(new Error("Camera initialization timed out"))
-          }, 3000) // Timeout in milliseconds
+        new Promise(
+          (_, reject) =>
+            setTimeout(() => {
+              reject(new Error("Camera initialization timed out"))
+            }, 3000) // Timeout in milliseconds
         ),
       ])
 
@@ -511,21 +513,6 @@ function sendImageToServer(imageData) {
       }
     }, 1200) // Уменьшаем интервал до 500мс
 
-    let serverResponse = null;
-    let isProgressComplete = false;
-
-    const checkConditions = () => {
-      if (serverResponse && isProgressComplete) {
-        handleServerResponse(serverResponse);
-      }
-    };
-
-    setTimeout(() => {
-      isProgressComplete = true;
-      updateProgressBar(100);
-      checkConditions();
-    }, 13000); // Гарантируем, что прогресс бар будет идти минимум 10 секунд
-
     fetch("http://90.156.158.209/api/handler/", fetchOptions)
       .then((response) => {
         console.log("HTTP response status:", response.status)
@@ -534,8 +521,8 @@ function sendImageToServer(imageData) {
       })
       .then((responseData) => {
         console.log("Data received from server:", responseData)
-        serverResponse = responseData;
-        checkConditions();
+        clearInterval(progressInterval)
+        handleServerResponse(responseData)
       })
       .catch(() => {
         fetch("http://85.95.186.114/api/handler/", fetchOptions)
@@ -545,8 +532,8 @@ function sendImageToServer(imageData) {
             return response.json()
           })
           .then((responseData) => {
-            serverResponse = responseData;
-            checkConditions();
+            clearInterval(progressInterval)
+            handleServerResponse(responseData)
           })
           .catch((error) => {
             console.error("Error sending data to backup server:", error)
@@ -991,6 +978,20 @@ function applyTheme(theme) {
 applyTheme(config.theme || "light")
 
 const startButton = document.getElementById("start-button")
+const agreementCheckbox = document.getElementById("agreement-checkbox")
+
+if (startButton && agreementCheckbox) {
+  startButton.disabled = !agreementCheckbox.checked
+
+  agreementCheckbox.addEventListener("change", () => {
+    startButton.disabled = !agreementCheckbox.checked
+  })
+}
+
+if (!config.visibilityAgree) {
+  startText.remove()
+}
+
 if (startButton) {
   startButton.addEventListener("click", () => {
     showScreen("gender-screen")
@@ -1140,4 +1141,12 @@ function flattenGenders(allowedGenders) {
 function updateProgressBar(percent) {
   progressBarFill.style.width = percent + "%"
   progressPercentage.textContent = percent + "%"
+}
+
+// Prevent the checkbox from being toggled when clicking on .custom-checkbox-qr
+const customCheckboxQr = document.querySelector(".custom-checkbox-qr")
+if (customCheckboxQr) {
+  customCheckboxQr.addEventListener("click", function (event) {
+    event.stopPropagation()
+  })
 }
