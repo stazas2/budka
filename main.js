@@ -117,8 +117,8 @@ ipcMain.on("print-photo", async (event, data) => {
   const {
     imageData,
     isLandscape,
-    logoPosition = "bottom-right",
-    offset = -100,
+    logoPosition,
+    offset,
   } = data
   console.log("print-photo event received in main.js")
   console.log(`Image orientation: ${isLandscape ? "landscape" : "portrait"}`)
@@ -140,14 +140,14 @@ ipcMain.on("print-photo", async (event, data) => {
       console.warn("Logo file not found at path:", logoPath)
     }
 
-    // await addLogoToPdf(
-    //   tempImagePath,
-    //   tempPdfPath,
-    //   logoPath,
-    //   logoPosition,
-    //   offset
-    // )
-    // await print(tempPdfPath)
+    await addLogoToPdf(
+      tempImagePath,
+      tempPdfPath,
+      // logoPath,
+      // logoPosition,
+      // offset
+    )
+    await print(tempPdfPath)
     console.log("Print job started.")
 
     fs.unlinkSync(tempPdfPath)

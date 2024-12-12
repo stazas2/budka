@@ -145,6 +145,7 @@ body::before {
 
 /* Стили для скролла и класса hide */
 #style-buttons::-webkit-scrollbar {
+  margin-right: -20px;
   width: 2px; /* Ширина вертикального скроллбара */
   height: 8px; /* Высота горизонтального скроллбара (если есть) */
 }
@@ -218,7 +219,9 @@ body::before {
   min-width: 200px;
   /* background: rgba(255, 255, 255, 0.2); */
   /* backdrop-filter: blur(10px) saturate(180%); */
-  transition: transform 0.5s, box-shadow 0.5s;
+  transition:
+    transform 0.5s,
+    box-shadow 0.5s;
   transition: all 0.3s ease;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   transform: translateY(0);
@@ -310,11 +313,7 @@ button:active {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.2),
-    transparent 20%
-  );
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 20%);
   background-size: 20px 20px;
   animation: floatParticles 2s linear infinite;
 }
@@ -372,11 +371,7 @@ button:active {
   transform: rotate(0deg);
 
   padding: 20px;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(196, 213, 217, 0.7511379551820728) 100%
-  );
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(196, 213, 217, 0.7511379551820728) 100%);
   box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
   border-radius: 40px;
 }
@@ -445,7 +440,7 @@ button:active {
   display: flex;
   flex-direction: column;
   align-items: center;
-  transform: none; /* Отключаем трансформацию */
+  transform: none; /* О��ключаем трансформацию */
   box-shadow: none; /* Отключаем тень */
   background: transparent;
   transition: none; /* Отключаем анимацию перехода */
@@ -471,7 +466,9 @@ button:active {
   display: inline-flex;
   padding: 10px;
   cursor: pointer;
-  transition: transform 0.5s, box-shadow 0.5s;
+  transition:
+    transform 0.5s,
+    box-shadow 0.5s;
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
@@ -653,7 +650,10 @@ input:checked + .slider:before {
   background: rgba(255, 255, 255, 0.25);
   color: var(--text-color);
   font-weight: 600;
-  transition: background-color 0.3s, transform 0.5s, box-shadow 0.5s;
+  transition:
+    background-color 0.3s,
+    transform 0.5s,
+    box-shadow 0.5s;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -700,6 +700,10 @@ body.rotation-270 #countdown {
 /* Адаптивность под разные экраны */
 /* Вертикальная ориентация */
 @media (orientation: portrait) {
+  .modal-content {
+    max-width: 50vw;
+  }
+
   body.rotation-90 #countdown,
   body.rotation-270 #countdown {
     bottom: -27%;
@@ -814,6 +818,10 @@ body.rotation-270 #countdown {
 
 /* Горизонтальная ориентация */
 @media (orientation: landscape) {
+  .modal-content {
+    max-width: 35vw;
+  }
+
   .style-block {
     bottom: -4%;
   }
@@ -1349,10 +1357,56 @@ body.dark::before {
 }
 
 .custom-checkbox-qr {
+  z-index: 1000;
   cursor: pointer;
-  color: rgb(71, 43, 75);
-  /* color: var(--text-color); */
+  color: rgb(35, 24, 131);
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 0.2em;
+}
+
+/* Стили модалки */
+.modal {
+  display: none; 
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.5); 
+  justify-content: center; 
+  align-items: center; 
+}
+
+.modal-content {
+  position: relative;
+  background-color: #fff;
+  margin: auto;
+  padding: 20px;
+  max-height: 80vh;
+  /* overflow: auto; */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content img {
+  width: 100%;
+  height: auto;
+}
+
+.close-modal {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  color: #aaa;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close-modal:hover,
+.close-modal:focus {
+  color: black;
+  text-decoration: none;
 }

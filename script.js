@@ -42,6 +42,7 @@ const basePath = config.basePath
 const baseDir = path.join(basePath, "SavedPhotos")
 const stylesDir = config.stylesDir.replace("{{basePath}}", basePath)
 
+const printLogo = config?.logoPath
 document.getElementById("logo").src = config?.brandLogoPath
 document.getElementById(
   "logo"
@@ -439,6 +440,7 @@ function takePicture() {
     context.restore()
     stopCamera()
 
+    
     const imageData = canvas.toDataURL("image/jpeg", 1.0)
     console.log("Picture taken successfully")
 
@@ -465,9 +467,19 @@ function sendImageToServer(imageData) {
     const fonImage = getRandomImageFromStyleFolder(nameDisplay)
     const base64FonImage = fonImage ? fonImage.split(",")[1] : base64Image
 
+    // Логотив в формате base64
+    const logoData = fs.readFileSync(printLogo, { encoding: "base64" })
+    const base64Logo = `data:image/png;base64,${logoData}`.split(",")[1]
+
     const data = {
       mode: `${config?.mode}` || "Avatar",
       style: selectedStyle,
+      return_s3_link: true,
+      event: basePath, 
+      logo_base64: base64Logo,
+      logo_pos_x: 0,
+      logo_pos_y: 0,
+      logo_scale: 1,
       params: {
         Sex: selectedGender,
         Face: base64Image,
@@ -647,8 +659,8 @@ async function overlayLogoOnImage(base64Image) {
         y = canvas.height - logoHeight - offsetY
         break
       case "center":
-        x = (canvas.width - logoImage.width) / 2
-        y = (canvas.height - logoImage.height) / 2
+        x = (canvas.width - logoWidth) / 2 + offsetX
+        y = (canvas.height - logoHeight) / 2 + offsetY
         break
       case "center-top":
         x = (canvas.width - logoImage.width) / 2
@@ -660,8 +672,8 @@ async function overlayLogoOnImage(base64Image) {
         break
       case "bottom-right":
       default:
-        x = canvas.width - logoWidth - offsetX
-        y = canvas.height - logoHeight - offsetY
+        x = (canvas.width - logoWidth) / 2 + offsetX
+        y = (canvas.height - logoHeight) / 2 + offsetY
     }
 
     context.drawImage(logoImage, x, y, logoWidth, logoHeight)
@@ -740,7 +752,7 @@ if (startOverButton) {
     selectedGender = ""
     resultImage.src = ""
     stopCamera()
-    showScreen("gender-screen")
+    showScreen("splash-screen")
   })
 }
 
@@ -761,6 +773,7 @@ if (printPhotoButton) {
       ipcRenderer.send("print-photo", {
         imageData: imageData,
         isLandscape: isLandscape,
+        // !
       })
     } else {
       console.error("Image not found for printing.")
@@ -1143,10 +1156,25 @@ function updateProgressBar(percent) {
   progressPercentage.textContent = percent + "%"
 }
 
-// Prevent the checkbox from being toggled when clicking on .custom-checkbox-qr
 const customCheckboxQr = document.querySelector(".custom-checkbox-qr")
 if (customCheckboxQr) {
   customCheckboxQr.addEventListener("click", function (event) {
-    event.stopPropagation()
+    showModal()
+  })
+}
+
+const modal = document.getElementById("qr-modal")
+function showModal() {
+  if (modal) {
+    modal.style.display = "flex"
+  }
+}
+
+
+if (modal) {
+  modal.addEventListener("click", function (event) {
+    if (event.target === modal || event.target.classList.contains("close-modal")) {
+      modal.style.display = "none"
+    }
   })
 }
