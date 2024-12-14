@@ -28,13 +28,15 @@ const progressPercentage = document.getElementById("progress-percentage")
 const backButtons = document.querySelectorAll(".back-button")
 const startText = document.querySelector(".start-text")
 
+let amountOfStyles = 0
 let selectedStyle = ""
 let selectedGender = ""
 let nameDisplay = ""
 let videoStream = null
 let cameraInitialized = false
-let resultShowStyle = ""
-let hasBrackets = false
+// Параметры для отображения в конце
+// let resultShowStyle = ""
+// let hasBrackets = false
 
 const config = loadConfig()
 const translations = require("./translations.json")
@@ -71,74 +73,86 @@ applyRotationStyles()
 
 function initStyleButtons(parsedStyles) {
   try {
+    amountOfStyles = parsedStyles.length
+
     if (!styleButtonsContainer) {
       console.error("Element style-buttons not found.")
       return
     }
     styleButtonsContainer.innerHTML = ""
 
-    parsedStyles.forEach((style, index) => {
-      const button = document.createElement("div")
-      button.classList.add("button")
-      button.setAttribute("data-style", style.originalName)
+    console.log(parsedStyles)
+    if (amountOfStyles > 1) {
+      parsedStyles.forEach((style, index) => {
+        const button = document.createElement("div")
 
-      const img = document.createElement("img")
-      const sanitizedDisplayName = style.displayName
-        .replace(/\s*\(.*?\)/g, "")
-        .replace(/\s+/g, "_")
-        .replace(/[^\w\-]+/g, "")
-      const styleFolderPath = path.join(
-        stylesDir,
-        selectedGender,
-        style.originalName
-      )
-      const imageFileNamePrefix = `1${sanitizedDisplayName}`
-      const extensions = [".jpg", ".png", ".jpeg"]
-      let imagePath = null
+        button.classList.add("button")
+        button.setAttribute("data-style", style.originalName)
 
-      for (const ext of extensions) {
-        const potentialPath = `${styleFolderPath}\\${imageFileNamePrefix}${ext}`
-        if (fs.existsSync(potentialPath)) {
-          imagePath = potentialPath
-          break
+        const img = document.createElement("img")
+        const sanitizedDisplayName = style.displayName
+          .replace(/\s*\(.*?\)/g, "")
+          .replace(/\s+/g, "_")
+          .replace(/[^\w\-]+/g, "")
+
+        const styleFolderPath = path.join(
+          stylesDir,
+          selectedGender,
+          style.originalName
+        )
+        const imageFileNamePrefix = `1${sanitizedDisplayName}`
+        const extensions = [".jpg", ".png", ".jpeg"]
+        let imagePath = null
+
+        for (const ext of extensions) {
+          const potentialPath = `${styleFolderPath}\\${imageFileNamePrefix}${ext}`
+          if (fs.existsSync(potentialPath)) {
+            imagePath = potentialPath
+            break
+          }
         }
-      }
 
-      if (imagePath) {
-        img.src = imagePath
-      } else {
-        console.error(`Image not found for style: ${style.originalName}`)
-        // Можно установить изображение по умолчанию, если файл не найден
-        img.src = `${stylesDir}/default.png`
-      }
-      img.alt = style.displayName
-      const label = document.createElement("div")
-      const match = style.displayName.match(/\(([^)]+)\)/)
-
-      // Скрыть названия стилей
-      if (config.showStyleNames) {
-        label.textContent = match ? match[1] : style.displayName
-      } else label.textContent = ""
-
-      button.appendChild(img)
-      button.appendChild(label)
-      console.log(`Style button created: ${style}`)
-
-      button.addEventListener("click", () => {
-        selectedStyle = style.originalName.replace(/\s*\(.*?\)/g, "")
-        nameDisplay = style.originalName
-        hasBrackets = /\(.*?\)/.test(style.originalName)
-        if (hasBrackets) {
-          resultShowStyle = style.originalName.match(/\((.*?)\)/)
+        if (imagePath) {
+          img.src = imagePath
+        } else {
+          console.error(`Image not found for style: ${style.originalName}`)
+          // Изображение по умолчанию
+          img.src = `${stylesDir}/default.png`
         }
-        showScreen("camera-screen")
-        console.log(`Style selected: ${selectedStyle}`)
-        // Изменено с gender-screen на camera-screen
+        img.alt = style.displayName
+        const label = document.createElement("div")
+        const match = style.displayName.match(/\(([^)]+)\)/)
+
+        // Скрыть названия стилей
+        if (config.showStyleNames) {
+          label.textContent = match ? match[1] : style.displayName
+        } else label.textContent = ""
+
+        button.appendChild(img)
+        button.appendChild(label)
+        console.log(`Style button created: ${style}`)
+
+        button.addEventListener("click", () => {
+          selectedStyle = style.originalName.replace(/\s*\(.*?\)/g, "")
+          nameDisplay = style.originalName
+          // hasBrackets = /\(.*?\)/.test(style.originalName)
+          // if (hasBrackets) {
+          //   resultShowStyle = style.originalName.match(/\((.*?)\)/)
+          // }
+          showScreen("camera-screen")
+          console.log(`Style selected: ${selectedStyle}`)
+        })
+
+        button.style.animationDelay = `${index * 0.3}s`
+        styleButtonsContainer.appendChild(button)
       })
+    } else {
+      selectedStyle = parsedStyles[0].originalName.replace(/\s*\(.*?\)/g, "")
+      nameDisplay = parsedStyles[0].originalName
 
-      button.style.animationDelay = `${index * 0.3}s`
-      styleButtonsContainer.appendChild(button)
-    })
+      showScreen("camera-screen")
+      console.log(`Style selected: ${selectedStyle}`)
+    }
   } catch (error) {
     console.error("Error in initStyleButtons:", error)
   }
@@ -440,7 +454,6 @@ function takePicture() {
     context.restore()
     stopCamera()
 
-    
     const imageData = canvas.toDataURL("image/jpeg", 1.0)
     console.log("Picture taken successfully")
 
@@ -475,7 +488,7 @@ function sendImageToServer(imageData) {
       mode: `${config?.mode}` || "Avatar",
       style: selectedStyle,
       return_s3_link: true,
-      event: basePath, 
+      event: basePath,
       logo_base64: base64Logo,
       logo_pos_x: 0,
       logo_pos_y: 0,
@@ -698,7 +711,8 @@ function getRandomImageFromStyleFolder(style) {
     console.log(`[Info] Reading folder: ${styleFolderPath}`)
 
     // Очистка стиля (удаляем содержимое скобок)
-    const cleanedStyle = style.replace(/\s*\(.*?\)/g, "").toLowerCase() // Убираем пробелы и содержимое в скобках
+    const cleanedStyle = style.replace(/\s*\(.*?\)/g, "") // Убираем пробелы и содержимое в скобках
+    console.log(cleanedStyle)
     const excludeList = [
       `1${cleanedStyle}.jpg`,
       `1${cleanedStyle}.jpeg`,
@@ -800,7 +814,7 @@ backButtons.forEach((button) => {
         showScreen("splash-screen")
         break
       case "camera-screen":
-        if (!button.disabled) {
+        if (!button.disabled && amountOfStyles > 1) {
           if (countdownInterval) {
             clearInterval(countdownInterval)
             countdownInterval = null
@@ -808,6 +822,8 @@ backButtons.forEach((button) => {
           countdownElement.textContent = ""
           stopCamera()
           showScreen("style-screen")
+        } else if (amountOfStyles === 1) {
+          showScreen("gender-screen")
         }
         break
       case "processing-screen":
@@ -1170,10 +1186,12 @@ function showModal() {
   }
 }
 
-
 if (modal) {
   modal.addEventListener("click", function (event) {
-    if (event.target === modal || event.target.classList.contains("close-modal")) {
+    if (
+      event.target === modal ||
+      event.target.classList.contains("close-modal")
+    ) {
       modal.style.display = "none"
     }
   })

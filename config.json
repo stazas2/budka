@@ -4,32 +4,32 @@
   "prePhotoTimer": 5,
   "inactivityTimeout": 60000,
   "language": {
-    "current": "ru",
-    "showSwitcher": false
+    "current": "kk",
+    "showSwitcher": true
   },
-  "showStyleNames": false,
+  "showStyleNames": true,
   "printButtonVisible": true,
-  "visibilityAgree": true,
+  "visibilityAgree": false,
   "stylesDir": "{{basePath}}\\styles",
   "basePath": "C:\\MosPhotoBooth2",
-  "logoPath": "logo.png",
-  "logoPosition": "bottom-center",
+  "logoPath": "C:/MosPhotoBooth2/logo.png",
+  "logoPosition": "center",
   "logoOffsetX": 30,
   "logoOffsetY": 30,
   "logoScale": 1,
-  "brandLogoPath": "logo.png",
+  "brandLogoPath": "C:/MosPhotoBooth2/logo.png",
   "mainLogoScale": 1,
-  "theme": "light", 
+  "theme": "light",
   "backdropBlur": "50px",
   "animationEnabled": false,
   "lightTheme": {
     "backgroundColor": "#ffebcd",
-    "backgroundImage": "ffon.jpg",
+    "backgroundImage": "C:/MosPhotoBooth2/ffon.jpg",
     "lightTextColor": "#000000"
   },
   "darkTheme": {
     "backgroundColor": "#696969",
-    "backgroundImage": "ffon.jpg",
+    "backgroundImage": "C:/MosPhotoBooth2/ffon.jpg",
     "darkTextColor": "#ffffff"
   },
   "camera_rotation": 0,
@@ -40,7 +40,6 @@
     [
       "man",
       "woman"
-    ], 
-    "group"
+    ]
   ]
 }
