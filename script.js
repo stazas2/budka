@@ -38,7 +38,7 @@ let cameraInitialized = false
 // let resultShowStyle = ""
 // let hasBrackets = false
 
-const config = loadConfig()
+let config = loadConfig()
 const translations = require("./translations.json")
 const basePath = config.basePath
 const baseDir = path.join(basePath, "SavedPhotos")
@@ -219,7 +219,7 @@ function showScreen(screenId) {
         styleButtonsContainer.classList.add("hide-scrollbar")
         setTimeout(() => {
           styleButtonsContainer.classList.remove("hide-scrollbar")
-        }, 3200)
+        }, 4000)
         const styleButtons = document.getElementById("style-buttons")
         if (styleButtons) {
           styleButtons.scrollTop = 0
@@ -487,7 +487,7 @@ function sendImageToServer(imageData) {
     const data = {
       mode: `${config?.mode}` || "Avatar",
       style: selectedStyle,
-      return_s3_link: true,
+      return_s3_link: false,
       event: basePath,
       logo_base64: base64Logo,
       logo_pos_x: 0,
@@ -697,6 +697,9 @@ async function overlayLogoOnImage(base64Image) {
   }
 }
 
+// Добавляем объект для хранения индексов для каждого стиля
+const styleImageIndices = {}
+
 function getRandomImageFromStyleFolder(style) {
   try {
     const styleFolderPath = path.join(stylesDir, selectedGender, style)
@@ -723,7 +726,7 @@ function getRandomImageFromStyleFolder(style) {
       .readdirSync(styleFolderPath)
       .filter((file) => /\.(jpg|jpeg|png)$/i.test(file)) // Оставляем только изображения
       .filter((file) => {
-        const isExcluded = excludeList.includes(file.toLowerCase())
+        const isExcluded = excludeList.includes(file)
         // Раскомментировать для отладки
         // console.log(
         //   `Checking exclusion: ${file}, Exclude List: ${excludeList}, Excluded: ${isExcluded}`
@@ -738,17 +741,25 @@ function getRandomImageFromStyleFolder(style) {
       return null
     }
 
-    console.log(`[Info] Filtered files: ${files}`)
-    const randomIndex = Math.floor(Math.random() * files.length)
-    console.log(
-      `[Debug] Random index: ${randomIndex}, Files length: ${files.length}`
-    )
-    const randomFile = files[randomIndex]
-    console.log(`\x1b[44m[Selected]\x1b[0m Random file: ${randomFile}`)
-    const filePath = path.join(styleFolderPath, randomFile)
+    console.log(`[Info] Фильтрованные файлы: ${files}`)
+
+    // Инициализируем индекс для стиля, если он еще не существует
+    if (!styleImageIndices[style]) {
+      styleImageIndices[style] = 0
+    }
+
+    // Используем текущий индекс для выбора файла
+    const currentIndex = styleImageIndices[style]
+    const fileName = files[currentIndex]
+
+    // Обновляем индекс для следующего вызова
+    styleImageIndices[style] = (currentIndex + 1) % files.length
+
+    console.log(`[Selected] Выбранный фон: ${fileName}`)
+    const filePath = path.join(styleFolderPath, fileName)
 
     const imageData = fs.readFileSync(filePath, { encoding: "base64" })
-    const mimeType = randomFile.endsWith(".png") ? "image/png" : "image/jpeg"
+    const mimeType = fileName.endsWith(".png") ? "image/png" : "image/jpeg"
 
     return `data:${mimeType};base64,${imageData}`
   } catch (error) {
@@ -767,6 +778,23 @@ if (startOverButton) {
     resultImage.src = ""
     stopCamera()
     showScreen("splash-screen")
+
+    // if (config) {
+    //   try {
+    //     config = loadConfig()
+    //     console.log('Конфиг перезагружен')
+    //     clearTimeout(inactivityTimer)
+    //     updateTexts()
+    //     handleOrientationChange()
+    //     applyRotationStyles()
+    //     initGenderButtons()
+    //     setGenderImages()
+    //     applyTheme(config.theme || "light")
+    //     applySettings()
+    //   } catch (error) {
+    //     console.error("Error in startOverButton click event:", error)
+    //   }
+    // }
   })
 }
 
@@ -967,8 +995,10 @@ function logStartupTime() {
   console.log(`Время запуска: ${startupDuration.toFixed(2)} мс`)
 }
 
+// ???????????????????????????????????????
 document.addEventListener("DOMContentLoaded", () => {
   updateTexts()
+  // applyRotationStyles()
   logStartupTime()
   initGenderButtons()
   setGenderImages()
@@ -1004,6 +1034,7 @@ function applyTheme(theme) {
     console.error("Error in applyTheme:", error)
   }
 }
+
 applyTheme(config.theme || "light")
 
 const startButton = document.getElementById("start-button")
@@ -1088,6 +1119,7 @@ function applySettings() {
     console.error("Error in applySettings:", error)
   }
 }
+
 applySettings()
 
 let loaderMessages = translations[currentLanguage].loaderMessages || []
