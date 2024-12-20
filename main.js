@@ -53,55 +53,105 @@ function createWindow() {
 }
 
 // Изменение обработчика 'get-styles' для оптимизации загрузки стилей
-ipcMain.handle("get-styles", async (event, gender) => {
-  // const stylesDir = config?.stylesDir || path.join(basePath, 'styles')
+// ipcMain.handle("get-styles", async (event, gender) => {
+//   // const stylesDir = config?.stylesDir || path.join(basePath, 'styles')
+//   console.log(
+//     `Loading styles for gender "${gender}" from directory: ${stylesDir}`
+//   )
+
+//   try {
+//     if (!gender) {
+//       console.warn("Gender not provided. Returning empty styles list.")
+//       return []
+//     }
+
+//     const genderDir = path.join(stylesDir, gender)
+//     console.log(`Gender directory path: ${genderDir}`)
+//     if (!fs.existsSync(genderDir)) {
+//       console.warn(`Gender directory does not exist: ${genderDir}`)
+//       return []
+//     }
+
+//     const styleFolders = fs
+//       .readdirSync(genderDir, { encoding: "utf8" })
+//       .filter((folder) =>
+//         fs.statSync(path.join(genderDir, folder)).isDirectory()
+//       )
+//     const styles = []
+
+//     for (const folder of styleFolders) {
+//       const folderPath = path.join(genderDir, folder)
+//       // console.log(`Checking style folder: ${folderPath}`)
+//       const files = fs.readdirSync(folderPath, { encoding: "utf8" })
+//       const imageFiles = files.filter(
+//         (file) => /\.(jpg|jpeg|png)$/i.test(file) && !file.startsWith("1")
+//       )
+
+//       if (imageFiles.length > 0) {
+//         styles.push({
+//           originalName: folder,
+//           displayName: folder,
+//         })
+//       }
+//     }
+
+//     if (styles.length === 0) {
+//       console.warn("No style images found in gender directory")
+//       return []
+//     }
+
+//     // console.log(`Styles found: ${styles.length}`)
+//     return styles
+//   } catch (error) {
+//     console.error("Error reading styles directory:", error)
+//     return []
+//   }
+// })
+
+ipcMain.handle("get-styles", async (event, genders) => {
   console.log(
-    `Loading styles for gender "${gender}" from directory: ${stylesDir}`
+    `Loading styles for genders "${(genders || []).join(
+      ", "
+    )}" from directory: ${stylesDir}`
   )
-
   try {
-    if (!gender) {
-      console.warn("Gender not provided. Returning empty styles list.")
+    if (!genders || genders.length === 0) {
+      console.warn("Genders not provided. Returning empty styles list.")
       return []
     }
 
-    const genderDir = path.join(stylesDir, gender)
-    console.log(`Gender directory path: ${genderDir}`)
-    if (!fs.existsSync(genderDir)) {
-      console.warn(`Gender directory does not exist: ${genderDir}`)
-      return []
-    }
+    const styles = new Set()
+    let files = []
+    for (const gender of genders) {
+      const genderDir = path.join(stylesDir, gender)
+      if (!fs.existsSync(genderDir)) {
+        console.warn(`Gender directory does not exist: ${genderDir}`)
+        continue
+      }
 
-    const styleFolders = fs
-      .readdirSync(genderDir, { encoding: "utf8" })
-      .filter((folder) =>
-        fs.statSync(path.join(genderDir, folder)).isDirectory()
-      )
-    const styles = []
-
-    for (const folder of styleFolders) {
-      const folderPath = path.join(genderDir, folder)
-      // console.log(`Checking style folder: ${folderPath}`)
-      const files = fs.readdirSync(folderPath, { encoding: "utf8" })
-      const imageFiles = files.filter(
-        (file) => /\.(jpg|jpeg|png)$/i.test(file) && !file.startsWith("1")
-      )
-
-      if (imageFiles.length > 0) {
-        styles.push({
-          originalName: folder,
-          displayName: folder,
+      const folders = fs
+        .readdirSync(genderDir, { encoding: "utf8" })
+        .filter((folder) => {
+          const folderPath = path.join(genderDir, folder)
+          return fs.statSync(folderPath).isDirectory()
         })
+
+      for (const folder of folders) {
+        const folderPath = path.join(genderDir, folder)
+        files = fs.readdirSync(folderPath, { encoding: "utf8" })
+        const imageFiles = files.filter((file) => /\.(jpg|jpeg|png)$/i.test(file) && !file.startsWith("1")) 
+        if (imageFiles.length > 0) {
+          styles.add({ originalName: folder, displayName: folder })
+        }
       }
     }
-
-    if (styles.length === 0) {
-      console.warn("No style images found in gender directory")
+    
+    if (styles.size === 0) {
+      console.warn("No style images found for the provided genders")
       return []
     }
 
-    // console.log(`Styles found: ${styles.length}`)
-    return styles
+    return Array.from(styles)
   } catch (error) {
     console.error("Error reading styles directory:", error)
     return []
@@ -114,12 +164,8 @@ ipcMain.on("print-photo", async (event, data) => {
     return
   }
 
-  const {
-    imageData,
-    isLandscape,
-    logoPosition,
-    offset,
-  } = data
+  const { imageData, isLandscape, logoPosition, offset } = data
+  console.log("КУКУСИКИ" + isLandscape)
   console.log("print-photo event received in main.js")
   console.log(`Image orientation: ${isLandscape ? "landscape" : "portrait"}`)
 
@@ -142,7 +188,7 @@ ipcMain.on("print-photo", async (event, data) => {
 
     await addLogoToPdf(
       tempImagePath,
-      tempPdfPath,
+      tempPdfPath
       // logoPath,
       // logoPosition,
       // offset

@@ -203,6 +203,35 @@ body::before {
   box-shadow: 0px 2px 12px rgba(0, 0, 0, 0.2);
 }
 
+#gender-continue {
+  display: flex;
+  color: var(--text-color);
+  margin: 20px auto;
+  margin-bottom: 0;
+  font-size: 1.7em;
+  /* 1.4 */
+  padding: 30px 60px;
+  /* 20 50 */
+  border-radius: 170px;
+  background: linear-gradient(
+    178deg,
+    rgba(36.65, 49.36, 81.12, 0.03) 0%,
+    rgba(98.2, 109.7, 138.45, 0.11) 39%,
+    rgba(0, 7.04, 28.15, 0) 100%
+  );
+  backdrop-filter: blur(10px) saturate(180%);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.button-row_item.selected {
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+  transform: scale(1.05);
+  background: rgba(0, 255, 0, 0.1);
+}
+
 /* Кнопки */
 .button {
   display: inline-block;
@@ -288,13 +317,38 @@ button:active {
 
 /* todo */
 #progress-bar-fill {
-  width: 0%;
+  width: 100%;
   height: 100%;
-  transition: width 0.8s;
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(90deg, #36d1dc, #b95be5);
+  position: absolute;
+  background: linear-gradient(270deg, #00c6ff, #b95be5, #00c6ff);
+  background-size: 300% 100%;
+  animation: gradientAnimation 4s ease infinite;
 }
+
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Анимация внутри бара */
+/* #progress-bar-fill::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 20%);
+  background-size: 20px 20px;
+  animation: floatParticles 2s linear infinite;
+} */
 
 /*? Градиент для светлой темы */
 /* body.light #progress-bar-fill {
@@ -306,18 +360,7 @@ button:active {
   background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
 } */
 
-#progress-bar-fill::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 20%);
-  background-size: 20px 20px;
-  animation: floatParticles 2s linear infinite;
-}
-
+/* ! время движения */
 #progress-percentage {
   margin-top: 5px;
   font-size: 2em;
@@ -440,7 +483,7 @@ button:active {
   display: flex;
   flex-direction: column;
   align-items: center;
-  transform: none; /* О��ключаем трансформацию */
+  transform: none; /* Отключаем трансформацию */
   box-shadow: none; /* Отключаем тень */
   background: transparent;
   transition: none; /* Отключаем анимацию перехода */
@@ -580,6 +623,12 @@ h1 {
   opacity: 0.5;
 }
 
+#gender-continue:disabled {
+  background: rgba(255, 255, 255, 0.2);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 /* Стили для переключателя темы */
 .theme-switcher {
   display: none;
@@ -690,7 +739,7 @@ body.rotation-270 #video {
 
 body.rotation-90 #countdown,
 body.rotation-270 #countdown {
-  bottom: -35%;
+  bottom: -25%;
 }
 
 /* body.rotation-270 #countdown {
@@ -706,7 +755,7 @@ body.rotation-270 #countdown {
 
   body.rotation-90 #countdown,
   body.rotation-270 #countdown {
-    bottom: -27%;
+    bottom: -18%;
     /* -37 */
   }
 
@@ -714,7 +763,7 @@ body.rotation-270 #countdown {
   body.rotation-270 #video {
     position: relative;
     top: -15%;
-    max-height: 50vh;
+    max-height: 53vh;
   }
 
   .back-button {
@@ -733,7 +782,7 @@ body.rotation-270 #countdown {
   }
 
   #camera-screen h1 {
-    top: -12%;
+    top: -15%;
   }
 
   #style-buttons {
@@ -828,7 +877,7 @@ body.rotation-270 #countdown {
 
   body.rotation-90 #video,
   body.rotation-270 #video {
-    max-height: 45vh;
+    max-height: 53vh;
   }
 
   #logo-container {
@@ -1357,6 +1406,7 @@ body.dark::before {
 }
 
 .custom-checkbox-qr {
+  letter-spacing: 0.3px;
   z-index: 1000;
   cursor: pointer;
   color: rgb(35, 24, 131);
@@ -1365,9 +1415,25 @@ body.dark::before {
   text-underline-offset: 0.2em;
 }
 
+body.light .custom-checkbox-text {
+  color: var(--text-color);
+}
+
+body.dark .custom-checkbox-text {
+  color: var(--text-color);
+}
+
+body.light .custom-checkbox-qr {
+  color: rgb(59, 66, 90);
+}
+
+body.dark .custom-checkbox-qr {
+  color: rgb(52, 140, 211);
+}
+
 /* Стили модалки */
 .modal {
-  display: none; 
+  display: none;
   position: fixed;
   z-index: 1000;
   left: 0;
@@ -1375,9 +1441,9 @@ body.dark::before {
   width: 100%;
   height: 100%;
   overflow: auto;
-  background-color: rgba(0, 0, 0, 0.5); 
-  justify-content: center; 
-  align-items: center; 
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
 }
 
 .modal-content {
@@ -1410,3 +1476,5 @@ body.dark::before {
   color: black;
   text-decoration: none;
 }
+
+

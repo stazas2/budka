@@ -1,14 +1,14 @@
 {
   "authToken": "fc612550-06e8-4be3-9191-0f97336d9966",
   "mode": "style_sdxl",
-  "prePhotoTimer": 5,
+  "prePhotoTimer": 4,
   "inactivityTimeout": 60000,
   "language": {
-    "current": "kk",
+    "current": "ru",
     "showSwitcher": true
   },
+  "printButtonVisible": false,
   "showStyleNames": true,
-  "printButtonVisible": true,
   "visibilityAgree": false,
   "stylesDir": "{{basePath}}\\styles",
   "basePath": "C:\\MosPhotoBooth2",
@@ -19,7 +19,7 @@
   "logoScale": 1,
   "brandLogoPath": "C:/MosPhotoBooth2/logo.png",
   "mainLogoScale": 1,
-  "theme": "light",
+  "theme": "dark",
   "backdropBlur": "50px",
   "animationEnabled": false,
   "lightTheme": {
@@ -40,6 +40,11 @@
     [
       "man",
       "woman"
-    ]
+    ],
+    [
+      "boy",
+      "girl"
+    ],
+    []
   ]
 }

@@ -15,7 +15,7 @@ const resultTitle = resultScreen.querySelector("h1")
 resultTitle.style.display = "none"
 
 const styleButtonsContainer = document.getElementById("style-buttons")
-const genderButtons = document.querySelectorAll("#gender-buttons .button")
+// const genderButtons = document.querySelectorAll("#gender-buttons .button")
 const countdownElement = document.getElementById("countdown")
 const video = document.getElementById("video")
 const canvas = document.getElementById("canvas")
@@ -27,13 +27,18 @@ const progressBarFill = document.getElementById("progress-bar-fill")
 const progressPercentage = document.getElementById("progress-percentage")
 const backButtons = document.querySelectorAll(".back-button")
 const startText = document.querySelector(".start-text")
+const languageSwitcher = document.getElementById("language-switcher")
+const genderButtons = document.querySelectorAll(
+  "#gender-buttons .button-row_item"
+)
+let continueButton = document.getElementById("gender-continue")
 
 let amountOfStyles = 0
 let selectedStyle = ""
-let selectedGender = ""
 let nameDisplay = ""
 let videoStream = null
 let cameraInitialized = false
+let selectedGenders = []
 // Параметры для отображения в конце
 // let resultShowStyle = ""
 // let hasBrackets = false
@@ -41,6 +46,7 @@ let cameraInitialized = false
 let config = loadConfig()
 const translations = require("./translations.json")
 const basePath = config.basePath
+const basePathName = path.basename(basePath)
 const baseDir = path.join(basePath, "SavedPhotos")
 const stylesDir = config.stylesDir.replace("{{basePath}}", basePath)
 
@@ -73,17 +79,24 @@ applyRotationStyles()
 
 function initStyleButtons(parsedStyles) {
   try {
-    amountOfStyles = parsedStyles.length
+    // Filter out duplicate styles based on style.originalName
+    console.log(parsedStyles)
+    const uniqueStyles = parsedStyles.filter(
+      (style, index, self) =>
+        index === self.findIndex((s) => s.originalName === style.originalName)
+    )
+    amountOfStyles = uniqueStyles.length
 
     if (!styleButtonsContainer) {
       console.error("Element style-buttons not found.")
       return
     }
     styleButtonsContainer.innerHTML = ""
+    
+    // console.log(uniqueStyles)
 
-    console.log(parsedStyles)
     if (amountOfStyles > 1) {
-      parsedStyles.forEach((style, index) => {
+      uniqueStyles.forEach((style, index) => {
         const button = document.createElement("div")
 
         button.classList.add("button")
@@ -95,19 +108,26 @@ function initStyleButtons(parsedStyles) {
           .replace(/\s+/g, "_")
           .replace(/[^\w\-]+/g, "")
 
-        const styleFolderPath = path.join(
-          stylesDir,
-          selectedGender,
-          style.originalName
-        )
-        const imageFileNamePrefix = `1${sanitizedDisplayName}`
-        const extensions = [".jpg", ".png", ".jpeg"]
         let imagePath = null
-
-        for (const ext of extensions) {
-          const potentialPath = `${styleFolderPath}\\${imageFileNamePrefix}${ext}`
-          if (fs.existsSync(potentialPath)) {
-            imagePath = potentialPath
+        for (const gender of selectedGenders) {
+          const styleFolderPath = path.join(
+            stylesDir,
+            gender,
+            style.originalName
+          )
+          const imageFileNamePrefix = `1${sanitizedDisplayName}`
+          const extensions = [".jpg", ".png", ".jpeg"]
+          for (const ext of extensions) {
+            const possiblePath = path.join(
+              styleFolderPath,
+              imageFileNamePrefix + ext
+            )
+            if (fs.existsSync(possiblePath)) {
+              imagePath = possiblePath
+              break
+            }
+          }
+          if (imagePath) {
             break
           }
         }
@@ -146,9 +166,14 @@ function initStyleButtons(parsedStyles) {
         button.style.animationDelay = `${index * 0.3}s`
         styleButtonsContainer.appendChild(button)
       })
-    } else {
-      selectedStyle = parsedStyles[0].originalName.replace(/\s*\(.*?\)/g, "")
-      nameDisplay = parsedStyles[0].originalName
+    }
+     else if (amountOfStyles === 0) {
+      alert(`No styles found for the ${selectedGenders}`)
+      showScreen('gender-screen')
+    }
+     else {
+      selectedStyle = uniqueStyles[0].originalName.replace(/\s*\(.*?\)/g, "")
+      nameDisplay = uniqueStyles[0].originalName
 
       showScreen("camera-screen")
       console.log(`Style selected: ${selectedStyle}`)
@@ -158,25 +183,80 @@ function initStyleButtons(parsedStyles) {
   }
 }
 
-const genderItems = document.querySelectorAll(".button-row_item")
-genderItems.forEach((item) => {
-  item.addEventListener("click", () => {
-    const button = item.querySelector(".button")
-    selectedGender = button.getAttribute("data-gender") // Сохраняем выбранный пол
-    if (selectedGender === "group") {
-      selectedGender = "man and woman"
-    }
-    console.log(`Gender selected: ${selectedGender}`)
-    showScreen("style-screen")
-    fetchStyles() // Загружаем стили после выбора гендера
-  })
-})
+// const genderItems = document.querySelectorAll(".button-row_item")
+// genderItems.forEach((item) => {
+//   item.addEventListener("click", () => {
+//     const button = item.querySelector(".button")
+//     selectedGender = button.getAttribute("data-gender") // Сохраняем выбранный пол
+//     if (selectedGender === "group") {
+//       selectedGender = "man and woman"
+//     }
+//     console.log(`Gender selected: ${selectedGender}`)
+//     showScreen("style-screen")
+//     fetchStyles() // Загружаем стили после выбора гендера
+//   })
+// })
+
+function initGenderButtons() {
+  try {
+    continueButton.disabled = true
+    continueButton.style.display = config.allowMultipleGenderSelection
+      ? "block"
+      : "none"
+
+    genderButtons.forEach((item, index) => {
+      item.style.animationDelay = `${index * 0.3}s`
+      item.classList.add("animate")
+      // Удаляем старые обработчики
+      item.replaceAllListeners?.("click")
+
+      item.addEventListener("click", () => {
+        const button = item.querySelector(".button")
+        const gender = button.getAttribute("data-gender")
+
+        if (config.allowMultipleGenderSelection) {
+          const index = selectedGenders.indexOf(gender)
+          if (index === -1) {
+            selectedGenders.push(gender)
+            item.classList.add("selected")
+            continueButton.disabled = false
+          } else {
+            selectedGenders.splice(index, 1)
+            item.classList.remove("selected")
+          }
+          if (selectedGenders.length < 1) {
+            continueButton.disabled = true
+          }
+
+          console.log("Selected genders:", selectedGenders)
+          // continueButton.style.display = selectedGenders.length > 0 ? "block" : "none";
+        } else {
+          // Режим одиночного выбора
+          genderButtons.forEach((btn) => btn.classList.remove("selected"))
+          selectedGenders = [gender]
+          showScreen("style-screen")
+          fetchStyles()
+        }
+      })
+    })
+
+    continueButton.addEventListener("click", () => {
+      if (selectedGenders.length > 0) {
+        showScreen("style-screen")
+        fetchStyles()
+      }
+    })
+  } catch (error) {
+    console.error("Error in initGenderButtons:", error)
+  }
+}
 
 // Функция для получения доступных стилей
 function fetchStyles() {
   try {
+    console.log(selectedGenders)
     ipcRenderer
-      .invoke("get-styles", selectedGender)
+      .invoke("get-styles", selectedGenders)
       .then((styles) => {
         console.log("Получены стили:", styles)
         initStyleButtons(styles)
@@ -190,19 +270,20 @@ function fetchStyles() {
   }
 }
 
-function initGenderButtons() {
-  try {
-    const genderButtons = document.querySelectorAll(
-      "#gender-buttons .button-row_item"
-    )
-    genderButtons.forEach((button, index) => {
-      button.style.animationDelay = `${index * 0.3}s`
-      button.classList.add("animate")
-    })
-  } catch (error) {
-    console.error("Error in initGenderButtons:", error)
-  }
-}
+// !
+// function initGenderButtons() {
+//   try {
+//     const genderButtons = document.querySelectorAll(
+//       "#gender-buttons .button-row_item"
+//     )
+//     genderButtons.forEach((button, index) => {
+//       button.style.animationDelay = `${index * 0.3}s`
+//       button.classList.add("animate")
+//     })
+//   } catch (error) {
+//     console.error("Error in initGenderButtons:", error)
+//   }
+// }
 
 function showScreen(screenId) {
   try {
@@ -254,7 +335,8 @@ function showScreen(screenId) {
           })
           .catch((err) => {
             alert("Unable to access the webcam.")
-            showScreen("style-screen")
+            console.log('Error: ' + err)
+            amountOfStyles === 1 ? showScreen("gender-screen") : showScreen("style-screen")
           })
       }
     } else {
@@ -464,7 +546,7 @@ function takePicture() {
       console.error("Failed to save input image:", error)
     }
 
-    sendImageToServer(imageData)
+    sendDateToServer(imageData)
   } catch (error) {
     console.error("Error in takePicture:", error)
     alert("Failed to take picture.")
@@ -472,7 +554,7 @@ function takePicture() {
   }
 }
 
-function sendImageToServer(imageData) {
+function sendDateToServer(imageData) {
   try {
     console.log("sending image to server")
     showScreen("processing-screen")
@@ -484,17 +566,20 @@ function sendImageToServer(imageData) {
     const logoData = fs.readFileSync(printLogo, { encoding: "base64" })
     const base64Logo = `data:image/png;base64,${logoData}`.split(",")[1]
 
+    const genders = selectedGenders.join(", ")
+
+    console.log(genders)
     const data = {
       mode: `${config?.mode}` || "Avatar",
       style: selectedStyle,
       return_s3_link: false,
-      event: basePath,
+      event: basePathName,
       logo_base64: base64Logo,
       logo_pos_x: 0,
       logo_pos_y: 0,
       logo_scale: 1,
       params: {
-        Sex: selectedGender,
+        Sex: genders,
         Face: base64Image,
         Fon: base64FonImage,
       },
@@ -525,18 +610,8 @@ function sendImageToServer(imageData) {
     console.log("request log saved to:", logFilePath)
 
     progressBar.style.display = "block"
-    progressBarFill.style.width = "0%"
-    progressPercentage.textContent = "0%"
-
-    let progress = 0
-    const progressInterval = setInterval(() => {
-      if (progress >= 100) {
-        clearInterval(progressInterval)
-      } else {
-        progress += 10 // Уменьшаем шаг до 5%
-        updateProgressBar(progress)
-      }
-    }, 1200) // Уменьшаем интервал до 500мс
+    progressBarFill.style.width = "100%"
+    progressPercentage.style.display = "none"
 
     fetch("http://90.156.158.209/api/handler/", fetchOptions)
       .then((response) => {
@@ -546,7 +621,6 @@ function sendImageToServer(imageData) {
       })
       .then((responseData) => {
         console.log("Data received from server:", responseData)
-        clearInterval(progressInterval)
         handleServerResponse(responseData)
       })
       .catch(() => {
@@ -557,18 +631,16 @@ function sendImageToServer(imageData) {
             return response.json()
           })
           .then((responseData) => {
-            clearInterval(progressInterval)
             handleServerResponse(responseData)
           })
           .catch((error) => {
             console.error("Error sending data to backup server:", error)
-            clearInterval(progressInterval)
             alert("Error sending the image to the server.")
             showScreen("style-screen")
           })
       })
   } catch (error) {
-    console.error("Error in sendImageToServer:", error)
+    console.error("Error in sendDateToServer:", error)
   }
 }
 
@@ -702,11 +774,11 @@ const styleImageIndices = {}
 
 function getRandomImageFromStyleFolder(style) {
   try {
-    const styleFolderPath = path.join(stylesDir, selectedGender, style)
+    const styleFolderPath = path.join(stylesDir, selectedGenders[0], style)
 
     if (!fs.existsSync(styleFolderPath)) {
       console.warn(
-        `\x1b[41m[Warning]\x1b[0m Folder for style "${style}" and gender "${selectedGender}" does not exist.`
+        `\x1b[41m[Warning]\x1b[0m Folder for style "${style}" and gender "${selectedGenders[0]}" does not exist.`
       )
       return null
     }
@@ -715,7 +787,6 @@ function getRandomImageFromStyleFolder(style) {
 
     // Очистка стиля (удаляем содержимое скобок)
     const cleanedStyle = style.replace(/\s*\(.*?\)/g, "") // Убираем пробелы и содержимое в скобках
-    console.log(cleanedStyle)
     const excludeList = [
       `1${cleanedStyle}.jpg`,
       `1${cleanedStyle}.jpeg`,
@@ -726,12 +797,12 @@ function getRandomImageFromStyleFolder(style) {
       .readdirSync(styleFolderPath)
       .filter((file) => /\.(jpg|jpeg|png)$/i.test(file)) // Оставляем только изображения
       .filter((file) => {
-        const isExcluded = excludeList.includes(file)
-        // Раскомментировать для отладки
-        // console.log(
-        //   `Checking exclusion: ${file}, Exclude List: ${excludeList}, Excluded: ${isExcluded}`
-        // )
-        return !isExcluded // Исключаем файл
+          const isExcluded = excludeList.includes(file)
+          // Раскомментировать для отладки
+          // console.log(
+          //   `Checking exclusion: ${file}, Exclude List: ${excludeList}, Excluded: ${isExcluded}`
+          // )
+          return !isExcluded // Исключаем файл
       })
 
     if (files.length === 0) {
@@ -774,7 +845,6 @@ function getRandomImageFromStyleFolder(style) {
 if (startOverButton) {
   startOverButton.addEventListener("click", () => {
     selectedStyle = ""
-    selectedGender = ""
     resultImage.src = ""
     stopCamera()
     showScreen("splash-screen")
@@ -836,9 +906,17 @@ backButtons.forEach((button) => {
     const currentScreen = document.querySelector(".screen.active")
     switch (currentScreen.id) {
       case "style-screen":
+        selectedGenders = []
+        genderButtons.forEach((item) => {
+          item.classList.remove("selected")
+        })
         showScreen("gender-screen")
         break
       case "gender-screen":
+        selectedGenders = []
+        genderButtons.forEach((item) => {
+          item.classList.remove("selected")
+        })
         showScreen("splash-screen")
         break
       case "camera-screen":
@@ -851,17 +929,21 @@ backButtons.forEach((button) => {
           stopCamera()
           showScreen("style-screen")
         } else if (amountOfStyles === 1) {
+          selectedGenders = []
+          genderButtons.forEach((item) => {
+            item.classList.remove("selected")
+          })
           showScreen("gender-screen")
         }
         break
-      case "processing-screen":
-        showScreen("camera-screen")
-        break
-      case "result-screen":
-        showScreen("gender-screen")
-        selectedStyle = ""
-        selectedGender = ""
-        break
+      // case "processing-screen":
+      //   showScreen("camera-screen")
+      //   break
+      // case "result-screen":
+      //   showScreen("gender-screen")
+      //   selectedStyle = ""
+      //   selectedGenders = []
+      //   break
     }
   })
 })
@@ -891,7 +973,10 @@ function resetInactivityTimer() {
     inactivityTimer = setTimeout(() => {
       showScreen("splash-screen")
       selectedStyle = ""
-      selectedGender = ""
+      selectedGenders = []
+      genderButtons.forEach((item) => {
+        item.classList.remove("selected")
+      })
       resultImage.src = ""
       stopCamera()
     }, inactivityTimeout)
@@ -931,6 +1016,10 @@ function updateTexts() {
     const startButton = document.getElementById("start-button")
     if (startButton) {
       startButton.textContent = texts.startButtonText
+    }
+
+    if (continueButton) {
+      continueButton.textContent = texts.continueButtonText
     }
 
     const backButtons = document.querySelectorAll(".back-button")
@@ -1055,17 +1144,20 @@ if (!config.visibilityAgree) {
 if (startButton) {
   startButton.addEventListener("click", () => {
     showScreen("gender-screen")
+    selectedGenders = []
+    genderButtons.forEach((item) => {
+      item.classList.remove("selected")
+    })
   })
 }
 
 let currentLanguage = config.language?.current || "ru"
-const languageSwitcher = document.getElementById("language-switcher")
 if (languageSwitcher) {
   languageSwitcher.style.display = config.language?.showSwitcher
     ? "block"
     : "none"
   languageSwitcher.addEventListener("click", () => {
-    currentLanguage = currentLanguage === "ru" ? "kk" : "ru"
+    currentLanguage = currentLanguage === "ru" ? "kz" : "ru"
     config.language.current = currentLanguage
     fs.writeFileSync(
       path.join(__dirname, "config.json"),
@@ -1199,10 +1291,7 @@ function flattenGenders(allowedGenders) {
   return [...new Set(genders)]
 }
 
-function updateProgressBar(percent) {
-  progressBarFill.style.width = percent + "%"
-  progressPercentage.textContent = percent + "%"
-}
+
 
 const customCheckboxQr = document.querySelector(".custom-checkbox-qr")
 if (customCheckboxQr) {

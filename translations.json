@@ -14,6 +14,7 @@
     "printButtonTextWaiting": "Обработка...",
     "startOverButtonText": "Начать заново",
     "loaderText": "Инициализация камеры...",
+    "continueButtonText": "Продолжить",
     "loaderMessages": [
       "Призываем ИИ-мастера...",
       "Пиксели встали в очередь...",
@@ -49,6 +50,7 @@
     "printButtonTextWaiting": "Өңдеу...",
     "startOverButtonText": "Қайта бастау",
     "loaderText": "Камераны іске қосу...",
+    "continueButtonText": "Жалғастыру",
     "loaderMessages": [
       "ИИ-суретшіні шақырудамыз...",
       "Пикселдер ретке келтірілуде...",
