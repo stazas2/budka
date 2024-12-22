@@ -7,6 +7,11 @@ const { print } = require("pdf-to-printer")
 const { loadConfig } = require("./utils/configLoader")
 const si = require("systeminformation")
 const { exec } = require("child_process")
+//Добавил
+let fetch;
+(async () => {
+  fetch = (await import('node-fetch')).default;
+})();
 
 // Загружаем конфигурацию после импорта необходимых модулей
 const config = loadConfig()
@@ -139,13 +144,15 @@ ipcMain.handle("get-styles", async (event, genders) => {
       for (const folder of folders) {
         const folderPath = path.join(genderDir, folder)
         files = fs.readdirSync(folderPath, { encoding: "utf8" })
-        const imageFiles = files.filter((file) => /\.(jpg|jpeg|png)$/i.test(file) && !file.startsWith("1")) 
+        const imageFiles = files.filter(
+          (file) => /\.(jpg|jpeg|png)$/i.test(file) && !file.startsWith("1")
+        )
         if (imageFiles.length > 0) {
           styles.add({ originalName: folder, displayName: folder })
         }
       }
     }
-    
+
     if (styles.size === 0) {
       console.warn("No style images found for the provided genders")
       return []
@@ -165,9 +172,9 @@ ipcMain.on("print-photo", async (event, data) => {
   }
 
   const { imageData, isLandscape, logoPosition, offset } = data
-  console.log("КУКУСИКИ" + isLandscape)
   console.log("print-photo event received in main.js")
   console.log(`Image orientation: ${isLandscape ? "landscape" : "portrait"}`)
+  console.log('imageData:   ' + imageData)
 
   try {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "print-"))
@@ -177,8 +184,14 @@ ipcMain.on("print-photo", async (event, data) => {
     const tempPdfPath = path.join(tempDir, pdfFileName)
     const logoPath = config.logoPath // Загружаем путь к логотипу из конфигурации
 
-    const base64Data = imageData.replace(/^data:image\/\w+;base64,/, "")
-    const buffer = Buffer.from(base64Data, "base64")
+    // const base64Data = imageData.replace(/^data:image\/\w+;base64,/, "")
+    // const response = await fetch(imageData)
+    // const buffer = Buffer.from(base64Data, "base64")
+
+    const response = await fetch(imageData)
+    const arrayBuffer = await response.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
     fs.writeFileSync(tempImagePath, buffer)
     console.log(`Image saved: ${tempImagePath}`)
 

@@ -248,9 +248,7 @@ body::before {
   min-width: 200px;
   /* background: rgba(255, 255, 255, 0.2); */
   /* backdrop-filter: blur(10px) saturate(180%); */
-  transition:
-    transform 0.5s,
-    box-shadow 0.5s;
+  transition: transform 0.5s, box-shadow 0.5s;
   transition: all 0.3s ease;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   transform: translateY(0);
@@ -315,7 +313,6 @@ button:active {
   position: relative;
 }
 
-/* todo */
 #progress-bar-fill {
   width: 100%;
   height: 100%;
@@ -414,7 +411,11 @@ button:active {
   transform: rotate(0deg);
 
   padding: 20px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(196, 213, 217, 0.7511379551820728) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(196, 213, 217, 0.7511379551820728) 100%
+  );
   box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
   border-radius: 40px;
 }
@@ -509,9 +510,7 @@ button:active {
   display: inline-flex;
   padding: 10px;
   cursor: pointer;
-  transition:
-    transform 0.5s,
-    box-shadow 0.5s;
+  transition: transform 0.5s, box-shadow 0.5s;
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
@@ -699,10 +698,7 @@ input:checked + .slider:before {
   background: rgba(255, 255, 255, 0.25);
   color: var(--text-color);
   font-weight: 600;
-  transition:
-    background-color 0.3s,
-    transform 0.5s,
-    box-shadow 0.5s;
+  transition: background-color 0.3s, transform 0.5s, box-shadow 0.5s;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -749,6 +745,14 @@ body.rotation-270 #countdown {
 /* Адаптивность под разные экраны */
 /* Вертикальная ориентация */
 @media (orientation: portrait) {
+  /* Отсутствие ЛОГО */
+  .brandLogo-false #gender-buttons {
+    margin-bottom: 150px;
+  }
+  .brandLogo-false #style-buttons {
+    margin-bottom: 200px;
+  }
+
   .modal-content {
     max-width: 50vw;
   }
@@ -867,6 +871,13 @@ body.rotation-270 #countdown {
 
 /* Горизонтальная ориентация */
 @media (orientation: landscape) {
+  .brandLogo-false #gender-buttons {
+    margin-bottom: 100px;
+  }
+  .brandLogo-false #style-buttons {
+    margin-bottom: 150px;
+  }
+
   .modal-content {
     max-width: 35vw;
   }
@@ -1448,12 +1459,19 @@ body.dark .custom-checkbox-qr {
 
 .modal-content {
   position: relative;
-  background-color: #fff;
+  background: linear-gradient(
+    90deg,
+    rgba(85, 84, 84, 0.98) 0%,
+    rgba(196, 213, 217, 0.911379551820728) 100%
+  );
   margin: auto;
+  border-radius: 10px;
   padding: 20px;
   max-height: 80vh;
   /* overflow: auto; */
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  opacity: 1;
+  animation: fadeIn 0.5s ease;
 }
 
 .modal-content img {
@@ -1463,10 +1481,9 @@ body.dark .custom-checkbox-qr {
 
 .close-modal {
   position: absolute;
-  top: 10px;
-  right: 15px;
-  color: #aaa;
-  font-size: 28px;
+  top: -24px;
+  right: 1px;
+  font-size: 70px;
   font-weight: bold;
   cursor: pointer;
 }
@@ -1477,4 +1494,10 @@ body.dark .custom-checkbox-qr {
   text-decoration: none;
 }
 
+#show-qr-button {
+  color: var(--text-color);
+}
 
+#qr-code-img {
+  width: 375px;
+}

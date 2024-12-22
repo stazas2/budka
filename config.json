@@ -5,37 +5,38 @@
   "inactivityTimeout": 60000,
   "language": {
     "current": "ru",
-    "showSwitcher": true
+    "showSwitcher": false
   },
   "printButtonVisible": false,
+  "showResultQrBtn": true,
   "showStyleNames": true,
   "visibilityAgree": false,
   "stylesDir": "{{basePath}}\\styles",
   "basePath": "C:\\MosPhotoBooth2",
-  "logoPath": "C:/MosPhotoBooth2/logo.png",
+  "logoPath": "logo.png",
   "logoPosition": "center",
   "logoOffsetX": 30,
   "logoOffsetY": 30,
   "logoScale": 1,
-  "brandLogoPath": "C:/MosPhotoBooth2/logo.png",
+  "brandLogoPath": "",
   "mainLogoScale": 1,
   "theme": "dark",
   "backdropBlur": "50px",
-  "animationEnabled": false,
+  "animationEnabled": true,
   "lightTheme": {
     "backgroundColor": "#ffebcd",
-    "backgroundImage": "C:/MosPhotoBooth2/ffon.jpg",
+    "backgroundImage": "ffon.jpg",
     "lightTextColor": "#000000"
   },
   "darkTheme": {
     "backgroundColor": "#696969",
-    "backgroundImage": "C:/MosPhotoBooth2/ffon.jpg",
+    "backgroundImage": "ffon.jpg",
     "darkTextColor": "#ffffff"
   },
   "camera_rotation": 0,
   "final_image_rotation": 0,
   "send_image_rotation": 0,
-  "allowMultipleGenderSelection": true,
+  "allowMultipleGenderSelection": false,
   "allowedGenders": [
     [
       "man",

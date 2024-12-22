@@ -15,6 +15,7 @@
     "startOverButtonText": "Начать заново",
     "loaderText": "Инициализация камеры...",
     "continueButtonText": "Продолжить",
+    "showResultQrBtn": "QR-код",
     "loaderMessages": [
       "Призываем ИИ-мастера...",
       "Пиксели встали в очередь...",
@@ -51,6 +52,7 @@
     "startOverButtonText": "Қайта бастау",
     "loaderText": "Камераны іске қосу...",
     "continueButtonText": "Жалғастыру",
+    "showResultQrBtn": "QR кодын",
     "loaderMessages": [
       "ИИ-суретшіні шақырудамыз...",
       "Пикселдер ретке келтірілуде...",

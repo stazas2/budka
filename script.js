@@ -3,6 +3,7 @@ const fs = require("fs")
 const path = require("path")
 const { loadConfig } = require("./utils/configLoader")
 const { saveImageWithUtils } = require("./utils/saveUtils")
+const QRCode = require("qrcode")
 
 // DOM Elements
 const styleScreen = document.getElementById("style-screen")
@@ -31,7 +32,12 @@ const languageSwitcher = document.getElementById("language-switcher")
 const genderButtons = document.querySelectorAll(
   "#gender-buttons .button-row_item"
 )
+const showResultQrBtn = document.getElementById("show-qr-button")
+const qrCodeAgree = document.getElementById("qr-code-agree")
+const qrCodeImage = document.getElementById("qr-code-img")
+const startButton = document.getElementById("start-button")
 let continueButton = document.getElementById("gender-continue")
+const brandLogo = document.getElementById("logo")
 
 let amountOfStyles = 0
 let selectedStyle = ""
@@ -51,11 +57,20 @@ const baseDir = path.join(basePath, "SavedPhotos")
 const stylesDir = config.stylesDir.replace("{{basePath}}", basePath)
 
 const printLogo = config?.logoPath
-document.getElementById("logo").src = config?.brandLogoPath
-document.getElementById(
-  "logo"
-).style.transform = `scale(${config.mainLogoScale})`
+brandLogo.src = config?.brandLogoPath
+console.log(brandLogo.src)
+brandLogo.style.transform = `scale(${config.mainLogoScale})`
 document.body.classList.add(`rotation-${config.camera_rotation}`)
+document.body.classList.add(
+  `brandLogo-${config.brandLogoPath ? "true" : "false"}`
+)
+
+if (!fs.existsSync(brandLogo.src)) {
+  config.brandLogoPath = ""
+}
+config?.showResultQrBtn
+  ? (showResultQrBtn.style.display = "block")
+  : (showResultQrBtn.style.display = "none")
 
 function applyRotationStyles() {
   try {
@@ -80,11 +95,11 @@ applyRotationStyles()
 function initStyleButtons(parsedStyles) {
   try {
     // Filter out duplicate styles based on style.originalName
-    console.log(parsedStyles)
     const uniqueStyles = parsedStyles.filter(
       (style, index, self) =>
         index === self.findIndex((s) => s.originalName === style.originalName)
     )
+    console.log("Отфильтрованные стили: ", uniqueStyles)
     amountOfStyles = uniqueStyles.length
 
     if (!styleButtonsContainer) {
@@ -92,7 +107,7 @@ function initStyleButtons(parsedStyles) {
       return
     }
     styleButtonsContainer.innerHTML = ""
-    
+
     // console.log(uniqueStyles)
 
     if (amountOfStyles > 1) {
@@ -166,12 +181,10 @@ function initStyleButtons(parsedStyles) {
         button.style.animationDelay = `${index * 0.3}s`
         styleButtonsContainer.appendChild(button)
       })
-    }
-     else if (amountOfStyles === 0) {
+    } else if (amountOfStyles === 0) {
       alert(`No styles found for the ${selectedGenders}`)
-      showScreen('gender-screen')
-    }
-     else {
+      showScreen("gender-screen")
+    } else {
       selectedStyle = uniqueStyles[0].originalName.replace(/\s*\(.*?\)/g, "")
       nameDisplay = uniqueStyles[0].originalName
 
@@ -234,6 +247,7 @@ function initGenderButtons() {
           // Режим одиночного выбора
           genderButtons.forEach((btn) => btn.classList.remove("selected"))
           selectedGenders = [gender]
+          console.log(selectedGenders)
           showScreen("style-screen")
           fetchStyles()
         }
@@ -254,7 +268,6 @@ function initGenderButtons() {
 // Функция для получения доступных стилей
 function fetchStyles() {
   try {
-    console.log(selectedGenders)
     ipcRenderer
       .invoke("get-styles", selectedGenders)
       .then((styles) => {
@@ -307,6 +320,16 @@ function showScreen(screenId) {
         }
       }
 
+      if (screenId === "splash-screen") {
+        selectedStyle = ""
+        resultImage.src = ""
+        stopCamera()
+        //?
+        modal.style.display = "none"
+        qrCodeImage.style.display = "none"
+        qrCodeAgree.style.display = "initial"
+      }
+
       const backButton = targetScreen.querySelector(".back-button")
       if (backButton) {
         if (screenId === "splash-screen" || screenId === "processing-screen") {
@@ -335,8 +358,10 @@ function showScreen(screenId) {
           })
           .catch((err) => {
             alert("Unable to access the webcam.")
-            console.log('Error: ' + err)
-            amountOfStyles === 1 ? showScreen("gender-screen") : showScreen("style-screen")
+            console.log("Error: " + err)
+            amountOfStyles === 1
+              ? showScreen("gender-screen")
+              : showScreen("style-screen")
           })
       }
     } else {
@@ -353,11 +378,18 @@ function showScreen(screenId) {
     if (screenId === "camera-screen" || screenId === "result-screen") {
       logoContainer.style.display = "none"
     } else {
-      logoContainer.style.display = "block"
+      if (config.brandLogoPath) {
+        logoContainer.style.display = "block"
+      }
     }
   } catch (error) {
     console.error(`Error in showScreen (${screenId}):`, error)
   }
+}
+
+if (!config.brandLogoPath) {
+  const logoContainer = document.getElementById("logo-container")
+  logoContainer.style.display = "none"
 }
 
 const resolutions = [
@@ -568,11 +600,10 @@ function sendDateToServer(imageData) {
 
     const genders = selectedGenders.join(", ")
 
-    console.log(genders)
     const data = {
       mode: `${config?.mode}` || "Avatar",
       style: selectedStyle,
-      return_s3_link: false,
+      return_s3_link: true,
       event: basePathName,
       logo_base64: base64Logo,
       logo_pos_x: 0,
@@ -644,29 +675,34 @@ function sendDateToServer(imageData) {
   }
 }
 
+// Example function for generating a QR code (you can replace with your library/method)
+async function generateQrCodeFromURL(url) {
+  try {
+    const qrCodeData = await QRCode.toDataURL(url) // Генерация QR-кода в формате Base64
+    return qrCodeData
+  } catch (err) {
+    console.error("Ошибка при генерации QR-кода:", err)
+    throw err
+  }
+}
+
 async function handleServerResponse(responseData) {
   try {
     const imagesArray = Object.values(responseData)[0]
     if (imagesArray && imagesArray.length > 0) {
-      const base64Image = imagesArray[0].replace(/[\n\r"']/g, "").trim()
-      const finalImageWithLogo = await overlayLogoOnImage(base64Image)
-      resultImage.src = finalImageWithLogo
-      // const selectedParamsText = document.getElementById("selected-params-text");
-      // const texts = translations[currentLanguage];
+      const cleanedURL = imagesArray[0].replace("?image_url=", "").trim()
 
-      // if (selectedParamsText && texts) {
-      //   const genderText = texts.genders[selectedGender] || selectedGender;
-      //   let styleText = "";
-      //   if (!hasBrackets) {
-      //     styleText =
-      //       document.querySelector(`[data-style="${selectedStyle}"]`)?.querySelector("div")?.textContent || selectedStyle;
-      //   } else {
-      //     styleText = resultShowStyle[1];
-      //   }
-      //   selectedParamsText.innerHTML = `${texts.genderScreenTitleEnd}:  <strong>${genderText}</strong><br/>${texts.styleScreenTitleEnd}:  <strong>${styleText}</strong>`;
-      // }
-
-      saveImageWithUtils("output", finalImageWithLogo)
+      // Проверяем ссылка или base64
+      if (cleanedURL.startsWith("data:image")) {
+        const finalImageWithLogo = await overlayLogoOnImage(cleanedURL)
+        if (finalImageWithLogo) {
+          resultImage.src = finalImageWithLogo
+          saveImageWithUtils("output", finalImageWithLogo)
+        }
+      } else {
+        // Доп вариант в случае отс-я лого
+        resultImage.src = cleanedURL
+      }
 
       resultImage.onload = () => {
         console.log("Image loaded successfully")
@@ -676,9 +712,15 @@ async function handleServerResponse(responseData) {
           "x",
           resultImage.height
         )
-
         showScreen("result-screen")
         updatePrintButtonVisibility()
+      }
+
+      try {
+        const qrCodeData = await generateQrCodeFromURL(imagesArray[0])
+        qrCodeImage.src = qrCodeData
+      } catch (error) {
+        console.error("Error in getQrDate:", error)
       }
     } else {
       alert("Failed to retrieve processed image.")
@@ -797,12 +839,12 @@ function getRandomImageFromStyleFolder(style) {
       .readdirSync(styleFolderPath)
       .filter((file) => /\.(jpg|jpeg|png)$/i.test(file)) // Оставляем только изображения
       .filter((file) => {
-          const isExcluded = excludeList.includes(file)
-          // Раскомментировать для отладки
-          // console.log(
-          //   `Checking exclusion: ${file}, Exclude List: ${excludeList}, Excluded: ${isExcluded}`
-          // )
-          return !isExcluded // Исключаем файл
+        const isExcluded = excludeList.includes(file)
+        // Раскомментировать для отладки
+        // console.log(
+        //   `Checking exclusion: ${file}, Exclude List: ${excludeList}, Excluded: ${isExcluded}`
+        // )
+        return !isExcluded // Исключаем файл
       })
 
     if (files.length === 0) {
@@ -848,7 +890,8 @@ if (startOverButton) {
     resultImage.src = ""
     stopCamera()
     showScreen("splash-screen")
-
+    qrCodeImage.style.display = "none"
+    qrCodeAgree.style.display = "initial"
     // if (config) {
     //   try {
     //     config = loadConfig()
@@ -882,10 +925,11 @@ if (printPhotoButton) {
     if (resultImage && resultImage.src) {
       const imageData = resultImage.src
       const isLandscape = resultImage.width > resultImage.height
+      console.log(`isLandscape: ${isLandscape}: ${resultImage.width}x${resultImage.height}`)
       ipcRenderer.send("print-photo", {
         imageData: imageData,
         isLandscape: isLandscape,
-        // !
+        // todo isLandscape: false,
       })
     } else {
       console.error("Image not found for printing.")
@@ -973,10 +1017,10 @@ function resetInactivityTimer() {
     inactivityTimer = setTimeout(() => {
       showScreen("splash-screen")
       selectedStyle = ""
-      selectedGenders = []
-      genderButtons.forEach((item) => {
-        item.classList.remove("selected")
-      })
+      // selectedGenders = []
+      // genderButtons.forEach((item) => {
+      //   item.classList.remove("selected")
+      // })
       resultImage.src = ""
       stopCamera()
     }, inactivityTimeout)
@@ -1013,13 +1057,24 @@ function updateTexts() {
       }
     }
 
-    const startButton = document.getElementById("start-button")
     if (startButton) {
       startButton.textContent = texts.startButtonText
+      // if (config.showQrIcon) {
+      //   startButton.innerHTML = `
+      //     <img src="./icons/fi_printer.svg" width="25" height="25" st alt="Printer Icon"/>
+      //     ${texts.startButtonText}
+      //   `
+      // } else {
+      //   startButton.textContent = texts.startButtonText
+      // }
     }
 
     if (continueButton) {
       continueButton.textContent = texts.continueButtonText
+    }
+
+    if (showResultQrBtn) {
+      showResultQrBtn.textContent = texts.showResultQrBtn
     }
 
     const backButtons = document.querySelectorAll(".back-button")
@@ -1126,7 +1181,6 @@ function applyTheme(theme) {
 
 applyTheme(config.theme || "light")
 
-const startButton = document.getElementById("start-button")
 const agreementCheckbox = document.getElementById("agreement-checkbox")
 
 if (startButton && agreementCheckbox) {
@@ -1291,11 +1345,10 @@ function flattenGenders(allowedGenders) {
   return [...new Set(genders)]
 }
 
-
-
 const customCheckboxQr = document.querySelector(".custom-checkbox-qr")
 if (customCheckboxQr) {
   customCheckboxQr.addEventListener("click", function (event) {
+    qrCodeImage.style.display = "none"
     showModal()
   })
 }
@@ -1312,8 +1365,18 @@ if (modal) {
     if (
       event.target === modal ||
       event.target.classList.contains("close-modal")
+      // ||
+      // event.target.classList.contains("modal-content")
     ) {
       modal.style.display = "none"
     }
   })
 }
+
+// Show QR button handler
+showResultQrBtn.addEventListener("click", () => {
+  // Use the existing showModal or similar method
+  qrCodeAgree.style.display = "none"
+  qrCodeImage.style.display = "initial"
+  showModal()
+})
