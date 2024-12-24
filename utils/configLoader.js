@@ -38,6 +38,7 @@ function loadConfig() {
       //Логика для лого на экране
       if (config.brandLogoPath) {
         let logoPath = path.join(config.basePath, config.brandLogoPath)
+        
         logoPath = logoPath.replace(/\\/g, "/")
         // console.log(`Формированный путь (logo):`, logoPath)
         config.brandLogoPath = logoPath

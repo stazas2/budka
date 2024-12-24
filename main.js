@@ -7,7 +7,9 @@ const { print } = require("pdf-to-printer")
 const { loadConfig } = require("./utils/configLoader")
 const si = require("systeminformation")
 const { exec } = require("child_process")
+
 //Добавил
+// todo
 let fetch;
 (async () => {
   fetch = (await import('node-fetch')).default;
@@ -171,7 +173,7 @@ ipcMain.on("print-photo", async (event, data) => {
     return
   }
 
-  const { imageData, isLandscape, logoPosition, offset } = data
+  const { imageData, isLandscape } = data
   console.log("print-photo event received in main.js")
   console.log(`Image orientation: ${isLandscape ? "landscape" : "portrait"}`)
   console.log('imageData:   ' + imageData)
@@ -227,6 +229,7 @@ async function addLogoToPdf(
 ) {
   console.log("Adding logo to PDF...")
   try {
+    // todo
     const pdfDoc = await PDFDocument.create()
     const page = pdfDoc.addPage()
 

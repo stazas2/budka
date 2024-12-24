@@ -58,16 +58,14 @@ const stylesDir = config.stylesDir.replace("{{basePath}}", basePath)
 
 const printLogo = config?.logoPath
 brandLogo.src = config?.brandLogoPath
-console.log(brandLogo.src)
 brandLogo.style.transform = `scale(${config.mainLogoScale})`
 document.body.classList.add(`rotation-${config.camera_rotation}`)
 document.body.classList.add(
   `brandLogo-${config.brandLogoPath ? "true" : "false"}`
 )
-
-if (!fs.existsSync(brandLogo.src)) {
-  config.brandLogoPath = ""
-}
+// if (!fs.existsSync(brandLogo.src)) {
+//   config.brandLogoPath = ""
+// }
 config?.showResultQrBtn
   ? (showResultQrBtn.style.display = "block")
   : (showResultQrBtn.style.display = "none")
@@ -532,7 +530,7 @@ function beginCountdown() {
   }
 }
 
-function takePicture() {
+async function takePicture() {
   try {
     const context = canvas.getContext("2d")
     const rotationAngle = config.send_image_rotation || 0
@@ -572,7 +570,7 @@ function takePicture() {
     console.log("Picture taken successfully")
 
     try {
-      saveImageWithUtils("input", imageData)
+      await saveImageWithUtils("input", imageData)
       console.log("Input image saved successfully")
     } catch (error) {
       console.error("Failed to save input image:", error)
@@ -590,9 +588,9 @@ function sendDateToServer(imageData) {
   try {
     console.log("sending image to server")
     showScreen("processing-screen")
-    const base64Image = imageData.split(",")[1]
+    const urlImage = imageData.split(",")[1]
     const fonImage = getRandomImageFromStyleFolder(nameDisplay)
-    const base64FonImage = fonImage ? fonImage.split(",")[1] : base64Image
+    const base64FonImage = fonImage ? fonImage.split(",")[1] : urlImage
 
     // Логотив в формате base64
     const logoData = fs.readFileSync(printLogo, { encoding: "base64" })
@@ -608,13 +606,15 @@ function sendDateToServer(imageData) {
       logo_base64: base64Logo,
       logo_pos_x: 0,
       logo_pos_y: 0,
-      logo_scale: 1,
+      logo_scale: 100,
       params: {
         Sex: genders,
-        Face: base64Image,
+        Face: urlImage,
         Fon: base64FonImage,
       },
     }
+
+    console.log('' + data)
 
     const headers = {
       Accept: "application/json",
@@ -692,17 +692,9 @@ async function handleServerResponse(responseData) {
     if (imagesArray && imagesArray.length > 0) {
       const cleanedURL = imagesArray[0].replace("?image_url=", "").trim()
 
-      // Проверяем ссылка или base64
-      if (cleanedURL.startsWith("data:image")) {
-        const finalImageWithLogo = await overlayLogoOnImage(cleanedURL)
-        if (finalImageWithLogo) {
-          resultImage.src = finalImageWithLogo
-          saveImageWithUtils("output", finalImageWithLogo)
-        }
-      } else {
-        // Доп вариант в случае отс-я лого
-        resultImage.src = cleanedURL
-      }
+      // todo: добавить проверку
+      resultImage.src = cleanedURL
+      await saveImageWithUtils("output", resultImage.src)
 
       resultImage.onload = () => {
         console.log("Image loaded successfully")
@@ -739,77 +731,78 @@ function updatePrintButtonVisibility() {
   }
 }
 
-async function overlayLogoOnImage(base64Image) {
-  try {
-    const canvas = document.createElement("canvas")
-    const context = canvas.getContext("2d")
-    const mainImage = new Image()
-    const logoImage = new Image()
+// async function overlayLogoOnImage(base64Image) {
+//   try {
+//     console.log('КУКУСИКИ')
+//     const canvas = document.createElement("canvas")
+//     const context = canvas.getContext("2d")
+//     const mainImage = new Image()
+//     const logoImage = new Image()
 
-    mainImage.src = `data:image/jpeg;base64,${base64Image}`
-    logoImage.src = config.logoPath
+//     mainImage.src = `data:image/jpeg;base64,${base64Image}`
+//     logoImage.src = config.logoPath
 
-    await Promise.all([
-      new Promise((resolve, reject) => {
-        mainImage.onload = resolve
-        mainImage.onerror = reject
-      }),
-      new Promise((resolve, reject) => {
-        logoImage.onload = resolve
-        logoImage.onerror = reject
-      }),
-    ])
+//     await Promise.all([
+//       new Promise((resolve, reject) => {
+//         mainImage.onload = resolve
+//         mainImage.onerror = reject
+//       }),
+//       new Promise((resolve, reject) => {
+//         logoImage.onload = resolve
+//         logoImage.onerror = reject
+//       }),
+//     ])
 
-    canvas.width = mainImage.width
-    canvas.height = mainImage.height
-    context.drawImage(mainImage, 0, 0)
+//     canvas.width = mainImage.width
+//     canvas.height = mainImage.height
+//     context.drawImage(mainImage, 0, 0)
 
-    let x = 0
-    let y = 0
-    const offsetX = config.logoOffsetX || 30
-    const offsetY = config.logoOffsetY || 30
-    const scaleFactor = config.logoScale || 1
-    const logoWidth = logoImage.width * scaleFactor
-    const logoHeight = logoImage.height * scaleFactor
+//     let x = 0
+//     let y = 0
+//     const offsetX = config.logoOffsetX || 30
+//     const offsetY = config.logoOffsetY || 30
+//     const scaleFactor = config.logoScale || 1
+//     const logoWidth = logoImage.width * scaleFactor
+//     const logoHeight = logoImage.height * scaleFactor
 
-    switch (config.logoPosition) {
-      case "top-left":
-        x = offsetX
-        y = offsetY
-        break
-      case "top-right":
-        x = canvas.width - logoWidth - offsetX
-        y = offsetY
-        break
-      case "bottom-left":
-        x = offsetX
-        y = canvas.height - logoHeight - offsetY
-        break
-      case "center":
-        x = (canvas.width - logoWidth) / 2 + offsetX
-        y = (canvas.height - logoHeight) / 2 + offsetY
-        break
-      case "center-top":
-        x = (canvas.width - logoImage.width) / 2
-        y = offsetY
-        break
-      case "center-bottom":
-        x = (canvas.width - logoImage.width) / 2
-        y = canvas.height - logoImage.height - offsetY
-        break
-      case "bottom-right":
-      default:
-        x = (canvas.width - logoWidth) / 2 + offsetX
-        y = (canvas.height - logoHeight) / 2 + offsetY
-    }
+//     switch (config.logoPosition) {
+//       case "top-left":
+//         x = offsetX
+//         y = offsetY
+//         break
+//       case "top-right":
+//         x = canvas.width - logoWidth - offsetX
+//         y = offsetY
+//         break
+//       case "bottom-left":
+//         x = offsetX
+//         y = canvas.height - logoHeight - offsetY
+//         break
+//       case "center":
+//         x = (canvas.width - logoWidth) / 2 + offsetX
+//         y = (canvas.height - logoHeight) / 2 + offsetY
+//         break
+//       case "center-top":
+//         x = (canvas.width - logoImage.width) / 2
+//         y = offsetY
+//         break
+//       case "center-bottom":
+//         x = (canvas.width - logoImage.width) / 2
+//         y = canvas.height - logoImage.height - offsetY
+//         break
+//       case "bottom-right":
+//       default:
+//         x = (canvas.width - logoWidth) / 2 + offsetX
+//         y = (canvas.height - logoHeight) / 2 + offsetY
+//     }
 
-    context.drawImage(logoImage, x, y, logoWidth, logoHeight)
-    return canvas.toDataURL("image/jpeg", 1.0)
-  } catch (error) {
-    console.error("Error in overlayLogoOnImage:", error)
-    return null
-  }
-}
+//     context.drawImage(logoImage, x, y, logoWidth, logoHeight)
+//     return canvas.toDataURL("image/jpeg", 1.0)
+//   } catch (error) {
+//     console.error("Error in overlayLogoOnImage:", error)
+//     return null
+//   }
+// }
 
 // Добавляем объект для хранения индексов для каждого стиля
 const styleImageIndices = {}
@@ -925,7 +918,9 @@ if (printPhotoButton) {
     if (resultImage && resultImage.src) {
       const imageData = resultImage.src
       const isLandscape = resultImage.width > resultImage.height
-      console.log(`isLandscape: ${isLandscape}: ${resultImage.width}x${resultImage.height}`)
+      console.log(
+        `isLandscape: ${isLandscape}: ${resultImage.width}x${resultImage.height}`
+      )
       ipcRenderer.send("print-photo", {
         imageData: imageData,
         isLandscape: isLandscape,
@@ -1161,12 +1156,34 @@ function applyTheme(theme) {
           ? config.lightTheme.backgroundColor
           : config.darkTheme.backgroundColor
       )
+
       document.documentElement.style.setProperty(
         "--background-image",
         theme === "light"
           ? `url("${config.lightTheme.backgroundImage.replace(/\\\\/g, "/")}")`
           : `url("${config.darkTheme.backgroundImage.replace(/\\\\/g, "/")}")`
       )
+
+      // if (config.theme === "light") {
+      //   if (!fs.existsSync(path.join(basePath, config.lightTheme.backgroundImage))) {
+      //     config.animationEnabled = true
+      //   }
+      // } else if (!fs.existsSync(path.join(basePath, config.darkTheme.backgroundImage))) {
+      //   config.animationEnabled = true
+      // }
+
+      // Проверяем тему, если нет картинки и цвета, либо неправильны, то включаем анимацию
+      if (
+        (config.theme === "light" &&
+          !fs.existsSync(config.lightTheme.backgroundImage) &&
+          config.lightTheme.backgroundColor === "") ||
+        (config.theme === "dark" &&
+          !fs.existsSync(config.darkTheme.backgroundImage) &&
+          config.darkTheme.backgroundColor === "")
+      ) {
+        config.animationEnabled = true
+      }
+
       document.documentElement.style.setProperty(
         "--text-color",
         theme === "light"
@@ -1252,8 +1269,17 @@ fullscreenToggleButton.addEventListener("click", function () {
 
 function applySettings() {
   try {
+    const appTheme =
+      config.theme === "light" ? config.lightTheme : config.darkTheme
+
     if (config.animationEnabled) {
       document.body.classList.add("animated-background")
+      document.body.style.setProperty(
+        "--animated-background",
+        config.animatedBackground
+          ? config.animatedBackground
+          : appTheme.backgroundColor
+      )
     } else {
       document.body.classList.remove("animated-background")
     }

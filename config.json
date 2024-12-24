@@ -15,6 +15,7 @@
   "basePath": "C:\\MosPhotoBooth2",
   "logoPath": "logo.png",
   "logoPosition": "center",
+  "animatedBackground": "linear-gradient(-45deg, #ed030c, #c5c4fa, #c4facd, #ab9aff)",
   "logoOffsetX": 30,
   "logoOffsetY": 30,
   "logoScale": 1,
@@ -29,14 +30,14 @@
     "lightTextColor": "#000000"
   },
   "darkTheme": {
-    "backgroundColor": "#696969",
-    "backgroundImage": "ffon.jpg",
+    "backgroundColor": "lightblue",
+    "backgroundImage": "ffonn.jpg",
     "darkTextColor": "#ffffff"
   },
   "camera_rotation": 0,
   "final_image_rotation": 0,
   "send_image_rotation": 0,
-  "allowMultipleGenderSelection": false,
+  "allowMultipleGenderSelection": true,
   "allowedGenders": [
     [
       "man",

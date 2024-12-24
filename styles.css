@@ -49,7 +49,7 @@ body::before {
 
 /* Анимация */
 .animated-background {
-  background: linear-gradient(-45deg, #ed030c, #c5c4fa, #c4facd, #ab9aff);
+  background: var(--animated-background);
   background-size: 400% 400%;
   animation: gradientBackground 15s ease infinite;
 }
@@ -832,6 +832,10 @@ body.rotation-270 #countdown {
     height: auto;
   }
 
+  #qr-code-img {
+    width: 375px;
+  }
+
   body.rotation-90 #result-image,
   body.rotation-270 #result-image {
     max-height: 85vh;
@@ -876,6 +880,10 @@ body.rotation-270 #countdown {
   }
   .brandLogo-false #style-buttons {
     margin-bottom: 150px;
+  }
+
+  #qr-code-img {
+    width: 325px;
   }
 
   .modal-content {
@@ -1480,10 +1488,13 @@ body.dark .custom-checkbox-qr {
 }
 
 .close-modal {
-  position: absolute;
-  top: -24px;
-  right: 1px;
-  font-size: 70px;
+  /* ? */
+  display: flex;
+  justify-content: right;
+  font-size: 50px;
+  margin-bottom: -15px;
+  margin-top: -35px;
+  margin-right: -19px;
   font-weight: bold;
   cursor: pointer;
 }
@@ -1496,8 +1507,4 @@ body.dark .custom-checkbox-qr {
 
 #show-qr-button {
   color: var(--text-color);
-}
-
-#qr-code-img {
-  width: 375px;
 }
