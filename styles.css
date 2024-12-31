@@ -1,4 +1,6 @@
-/* Общие стили */
+/* -----------------------------------------------------
+   RESET & GLOBAL
+----------------------------------------------------- */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -66,7 +68,102 @@ body::before {
   }
 }
 
-/* Контейнер для экранов */
+@keyframes zoomBackground {
+  0% {
+    background-size: 100%;
+  }
+  100% {
+    background-size: 110%;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes floatParticles {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-20px);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin-light {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin-dark {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes progress-animation {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes fade-up {
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-50%, 10px);
+  }
+}
+
+/* -----------------------------------------------------
+   LAYOUT: SCREENS & ELEMENTS
+----------------------------------------------------- */
 #screen-container {
   position: relative;
   width: 100%;
@@ -74,7 +171,6 @@ body::before {
   overflow: hidden;
 }
 
-/* Добавляем переход для классов .screen */
 .screen {
   display: none;
   padding: 20px;
@@ -103,18 +199,6 @@ body::before {
   animation: fadeIn 0.5s ease;
 }
 
-/* Добавляем ключевые кадры для анимации появления */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .style-block {
   position: relative;
   padding: 10px;
@@ -132,7 +216,8 @@ body::before {
   max-width: 1200px;
   max-height: 700px;
   overflow-y: auto;
-  padding: 20px 20px 0px;
+  padding: 20px 20px 17px;
+  /* padding: 20px 20px 0px; */
   align-items: center;
 
   /* Стили для скроллбара */
@@ -166,30 +251,6 @@ body::before {
 #style-buttons.hide-scrollbar::-webkit-scrollbar {
   display: none; /* Для браузеров на базе WebKit */
 }
-
-/* #style-buttons::before {
-  content: '';
-  position: sticky;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 60px; 
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent); 
-  pointer-events: none;
-  z-index: 1; 
-} */
-
-/* #style-buttons::after {
-  content: '';
-  position: sticky; 
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 60px; 
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
-  pointer-events: none;
-  z-index: 1;
-} */
 
 #style-buttons .button {
   box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
@@ -232,7 +293,6 @@ body::before {
   background: rgba(0, 255, 0, 0.1);
 }
 
-/* Кнопки */
 .button {
   display: inline-block;
   vertical-align: top;
@@ -259,17 +319,20 @@ body::before {
   transform: scale(0.95) translateY(2px);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
+
 .button img {
   max-width: 100%;
   height: auto;
   border-radius: 8px;
   pointer-events: none; /* Чтобы клики проходили к родителю */
 }
+
 .button div {
   margin-top: 10px;
   font-weight: 500;
   pointer-events: none; /* Чтобы клики проходили к родителю */
 }
+
 button {
   /* font-family: "Chakra Petch", sans-serif; */
   font-family: "Roboto", sans-serif;
@@ -288,11 +351,13 @@ button:active {
   transform: scale(0.95) translateY(2px);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
+
 #print-photo,
 #start-over {
   color: var(--text-color);
   transition: all 0.3s ease;
 }
+
 #countdown {
   position: relative;
   bottom: 0;
@@ -300,7 +365,7 @@ button:active {
   font-weight: 700;
   color: var(--text-color);
 }
-/* Стили для прогресс-бара */
+
 #progress-bar {
   width: 90%;
   max-width: 600px;
@@ -319,7 +384,7 @@ button:active {
   position: absolute;
   background: linear-gradient(270deg, #00c6ff, #b95be5, #00c6ff);
   background-size: 300% 100%;
-  animation: gradientAnimation 4s ease infinite;
+  animation: gradientAnimation 3s ease infinite;
 }
 
 @keyframes gradientAnimation {
@@ -347,16 +412,6 @@ button:active {
   animation: floatParticles 2s linear infinite;
 } */
 
-/*? Градиент для светлой темы */
-/* body.light #progress-bar-fill {
-  background: linear-gradient(90deg, #36d1dc, #5b86e5);
-} */
-
-/*? Градиент для темной темы */
-/* body.dark #progress-bar-fill {
-  background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
-} */
-
 /* ! время движения */
 #progress-percentage {
   margin-top: 5px;
@@ -368,26 +423,6 @@ button:active {
   animation-delay: 1.2s;
 }
 
-@keyframes pulse {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-@keyframes floatParticles {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-20px);
-  }
-}
-
-/* Стили для кнопок на экране результата */
 #result-screen {
   display: flex;
   flex-direction: column;
@@ -396,6 +431,7 @@ button:active {
   height: 100vh;
   transition: none;
 }
+
 .content-container {
   display: flex;
   /* flex: 1; */
@@ -419,7 +455,7 @@ button:active {
   box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
   border-radius: 40px;
 }
-/* Стили для видео-контейнера и видео */
+
 .video-container {
   display: flex;
   flex-direction: column;
@@ -476,7 +512,6 @@ button:active {
   justify-content: center;
 }
 
-/* Стили для кнопок выбора пола */
 #gender-buttons .button {
   width: 260px;
   height: auto;
@@ -541,7 +576,6 @@ h1 {
   text-align: center;
 }
 
-/* Общие стили для заголовков */
 .screen h1 {
   color: var(--text-color);
   letter-spacing: 1px;
@@ -550,14 +584,12 @@ h1 {
   margin: 0; */
 }
 
-/* Заголовок для экрана стилей */
 #style-screen h1 {
   /* margin-bottom: 40px; */
   /* position: absolute; */
   top: 15%;
 }
 
-/* Заголовок для экрана выбора пола */
 #gender-screen h1 {
   margin-bottom: 20px;
 }
@@ -566,7 +598,6 @@ h1 {
   position: relative;
 }
 
-/* Заголовок для экрана камеры */
 #camera-screen h1 {
   /* position: absolute;
   top: 50px; 
@@ -578,12 +609,10 @@ h1 {
   text-align: center;
 }
 
-/* Заголовок для экрана обработки */
 #processing-screen h1 {
   margin-bottom: 20px;
 }
 
-/* Заголовок для экрана результата */
 .buttons-container {
   display: flex;
   gap: 10px;
@@ -591,7 +620,6 @@ h1 {
   padding-top: 10px; /* Отступ сверху для кнопок */
 }
 
-/* Стили для кнопки "Назад" */
 .back-button {
   position: absolute;
   bottom: 5%;
@@ -603,7 +631,6 @@ h1 {
   z-index: 1000;
 }
 
-/* Стили для неактивной кнопки "Назад" */
 .back-button:disabled {
   background: rgba(255, 255, 255, 0.2);
   cursor: not-allowed;
@@ -628,7 +655,6 @@ h1 {
   opacity: 0.5;
 }
 
-/* Стили для переключателя темы */
 .theme-switcher {
   display: none;
   position: absolute;
@@ -708,12 +734,11 @@ input:checked + .slider:before {
   transform: scale(0.95) translateY(2px);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
-/* Скрываем кнопку "Назад" на заставке */
+
 #splash-screen .back-button {
   display: none;
 }
 
-/* Добавьте стили для логотипа */
 #logo-container {
   position: fixed;
   left: 50%;
@@ -729,18 +754,11 @@ body.rotation-90 #video,
 body.rotation-270 #video {
   max-height: 40vh;
 }
-/* body.rotation-270 #video {
-  max-height: 40vh;
-} */
 
 body.rotation-90 #countdown,
 body.rotation-270 #countdown {
   bottom: -25%;
 }
-
-/* body.rotation-270 #countdown {
-  bottom: -35%;
-} */
 
 /* Адаптивность под разные экраны */
 /* Вертикальная ориентация */
@@ -759,8 +777,8 @@ body.rotation-270 #countdown {
 
   body.rotation-90 #countdown,
   body.rotation-270 #countdown {
-    bottom: -18%;
-    /* -37 */
+    bottom: -27%;
+    /* -18 */
   }
 
   body.rotation-90 #video,
@@ -875,6 +893,12 @@ body.rotation-270 #countdown {
 
 /* Горизонтальная ориентация */
 @media (orientation: landscape) {
+  body.rotation-90 #countdown,
+  body.rotation-270 #countdown {
+    bottom: -34%;
+    /* -37 */
+  }
+
   .brandLogo-false #gender-buttons {
     margin-bottom: 100px;
   }
@@ -890,17 +914,18 @@ body.rotation-270 #countdown {
     max-width: 35vw;
   }
 
-  .style-block {
+  /* .style-block {
     bottom: -4%;
-  }
+  } */
 
   body.rotation-90 #video,
   body.rotation-270 #video {
-    max-height: 53vh;
+    max-height: 46vh;
   }
 
   #logo-container {
-    top: 3%;
+    top: 1%;
+    /* 3 */
   }
 
   #logo {
@@ -1103,7 +1128,6 @@ body.rotation-270 #countdown {
   opacity: 0;
 }
 
-/* Стили для загрузчика камеры */
 #camera-loader {
   position: absolute;
   top: 50%;
@@ -1130,7 +1154,6 @@ body.rotation-270 #countdown {
   text-align: center;
 }
 
-/* Добавляем стиль для скрытия видео во время загрузки */
 .video-container.loading #video {
   opacity: 0;
 }
@@ -1138,9 +1161,6 @@ body.rotation-270 #countdown {
 .video-container.loading #camera-loader {
   display: flex;
 }
-
-/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-/* Стили для светлой темы */
 
 body.light .button {
   background: rgba(255, 255, 255, 0.2);
@@ -1172,7 +1192,6 @@ body.light #camera-loader .loader-text {
   color: var(--text-color);
 }
 
-/* Стили для загрузчика камеры в светлой теме */
 body.light #camera-loader .loader-spinner {
   border-color: rgba(0, 0, 0, 0.3);
   border-top-color: #000;
@@ -1184,7 +1203,6 @@ body.light::before {
   background: linear-gradient(to top, transparent, white 200%);
 }
 
-/*! Стили для темной темы */
 body.dark .button {
   background: rgba(0, 0, 0, 0.2);
   color: var(--text-color);
@@ -1202,14 +1220,6 @@ body.dark #camera-loader .loader-text {
   color: #e6e6fa;
 }
 
-@keyframes spin-light {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Стили для темной темы */
-
 body.dark .back-button {
   background: linear-gradient(
     178deg,
@@ -1224,13 +1234,6 @@ body.dark .invert-image {
   filter: invert(0);
 }
 
-@keyframes spin-dark {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Стили для загрузчика камеры в темной теме */
 body.dark #camera-loader .loader-spinner {
   border-color: rgba(255, 255, 255, 0.3);
   border-top-color: #fff;
@@ -1245,8 +1248,6 @@ body.dark::before {
   /* background: rgba(0, 0, 0, 0.4); */
   background: linear-gradient(to top, transparent, black 200%);
 }
-
-/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 #style-loader {
   display: flex;
@@ -1278,15 +1279,6 @@ body.dark::before {
   color: #333;
 }
 
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
 #language-switcher {
   position: absolute;
   top: 20px;
@@ -1306,23 +1298,12 @@ body.dark::before {
   transform: translateY(-2px);
 }
 
-/* Анимация поялвение текстов */
 #progress {
   width: 0;
   height: 100%;
   animation: progress-animation 5s linear infinite;
 }
 
-@keyframes progress-animation {
-  0% {
-    width: 0;
-  }
-  100% {
-    width: 100%;
-  }
-}
-
-/* Надписи */
 .floating-text {
   position: absolute;
   top: 70%;
@@ -1333,36 +1314,12 @@ body.dark::before {
   opacity: 0;
 }
 
-@keyframes fade-up {
-  0% {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-20px);
-    opacity: 0;
-  }
-}
-
 .scroll-hint {
   position: absolute;
   bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
   animation: bounce 1.5s infinite;
-}
-
-@keyframes bounce {
-  0%,
-  100% {
-    transform: translate(-50%, 0);
-  }
-  50% {
-    transform: translate(-50%, 10px);
-  }
 }
 
 .start-text {
@@ -1396,13 +1353,11 @@ body.dark::before {
   border: 0.5px solid rgba(0, 0, 0, 0.2);
 }
 
-/* Style when the checkbox is checked */
 .start-text input[type="checkbox"]:checked + .custom-checkbox {
   /* background-color: #2196F3; */
   background-color: rgba(0, 0, 0, 0.5);
 }
 
-/* Add a checkmark indicator */
 .start-text .custom-checkbox::after {
   content: "";
   position: absolute;
@@ -1450,7 +1405,6 @@ body.dark .custom-checkbox-qr {
   color: rgb(52, 140, 211);
 }
 
-/* Стили модалки */
 .modal {
   display: none;
   position: fixed;

@@ -1,3 +1,21 @@
+// ================== SCRIPT.JS (HINTS) ================== //
+// IMPORTS AND REQUIREMENTS
+// DOM ELEMENTS
+// CONFIGURATION AND STATE
+// STYLE HANDLING MODULE
+// GENDER HANDLING MODULE
+// CAMERA MODULE
+// COUNTDOWN MODULE
+// IMAGE PROCESSING MODULE
+// UI NAVIGATION MODULE
+// PRINTING MODULE
+// LOCALIZATION MODULE
+// THEME HANDLING MODULE
+// INACTIVITY HANDLER MODULE
+// EVENT LISTENERS
+
+
+//* ================ IMPORTS AND REQUIREMENTS ================
 const { ipcRenderer } = require("electron")
 const fs = require("fs")
 const path = require("path")
@@ -5,7 +23,7 @@ const { loadConfig } = require("./utils/configLoader")
 const { saveImageWithUtils } = require("./utils/saveUtils")
 const QRCode = require("qrcode")
 
-// DOM Elements
+//* ================ DOM ELEMENTS ================
 const styleScreen = document.getElementById("style-screen")
 const genderScreen = document.getElementById("gender-screen")
 const cameraScreen = document.getElementById("camera-screen")
@@ -16,7 +34,6 @@ const resultTitle = resultScreen.querySelector("h1")
 resultTitle.style.display = "none"
 
 const styleButtonsContainer = document.getElementById("style-buttons")
-// const genderButtons = document.querySelectorAll("#gender-buttons .button")
 const countdownElement = document.getElementById("countdown")
 const video = document.getElementById("video")
 const canvas = document.getElementById("canvas")
@@ -39,6 +56,7 @@ const startButton = document.getElementById("start-button")
 let continueButton = document.getElementById("gender-continue")
 const brandLogo = document.getElementById("logo")
 
+//* ================ CONFIGURATION AND STATE ================
 let amountOfStyles = 0
 let selectedStyle = ""
 let nameDisplay = ""
@@ -63,9 +81,11 @@ document.body.classList.add(`rotation-${config.camera_rotation}`)
 document.body.classList.add(
   `brandLogo-${config.brandLogoPath ? "true" : "false"}`
 )
-// if (!fs.existsSync(brandLogo.src)) {
-//   config.brandLogoPath = ""
-// }
+
+if (!fs.existsSync(brandLogo.src.replace(/^file:\/\/\//, ''))) {
+  config.brandLogoPath = ""
+}
+
 config?.showResultQrBtn
   ? (showResultQrBtn.style.display = "block")
   : (showResultQrBtn.style.display = "none")
@@ -90,6 +110,9 @@ function applyRotationStyles() {
 }
 applyRotationStyles()
 
+//* ================ STYLE HANDLING MODULE ================
+// === Управление стилями ===
+// Инициализирует кнопки стилей на основе полученных данных
 function initStyleButtons(parsedStyles) {
   try {
     // Filter out duplicate styles based on style.originalName
@@ -194,20 +217,27 @@ function initStyleButtons(parsedStyles) {
   }
 }
 
-// const genderItems = document.querySelectorAll(".button-row_item")
-// genderItems.forEach((item) => {
-//   item.addEventListener("click", () => {
-//     const button = item.querySelector(".button")
-//     selectedGender = button.getAttribute("data-gender") // Сохраняем выбранный пол
-//     if (selectedGender === "group") {
-//       selectedGender = "man and woman"
-//     }
-//     console.log(`Gender selected: ${selectedGender}`)
-//     showScreen("style-screen")
-//     fetchStyles() // Загружаем стили после выбора гендера
-//   })
-// })
+// Запрашивает доступные стили с сервера
+function fetchStyles() {
+  try {
+    ipcRenderer
+      .invoke("get-styles", selectedGenders)
+      .then((styles) => {
+        console.log("Получены стили:", styles)
+        initStyleButtons(styles)
+      })
+      .catch((error) => {
+        console.error("Ошибка при загрузке стилей:", error)
+        alert("Не удалось загрузить стили. Попробуйте позже.")
+      })
+  } catch (error) {
+    console.error("Ошибка в fetchStyles:", error)
+  }
+}
 
+//* ================ GENDER HANDLING MODULE ================
+// === Управление выбором пола ===
+// Инициализирует кнопки выбора пола и их обработчики
 function initGenderButtons() {
   try {
     continueButton.disabled = true
@@ -263,39 +293,471 @@ function initGenderButtons() {
   }
 }
 
-// Функция для получения доступных стилей
-function fetchStyles() {
+// Устанавливает изображения для кнопок выбора пола
+function setGenderImages() {
+  const allowedGenders = config.allowedGenders || [
+    "man",
+    "woman",
+    "boy",
+    "girl",
+    "group",
+  ]
+  const arrGenders = flattenGenders(allowedGenders)
+  arrGenders.forEach((gender) => {
+    const imgElement = document.getElementById(`gender-${gender}`)
+    if (imgElement) {
+      imgElement.src = `./gender/${gender}.png`
+    }
+  })
+  const allGenders = ["man", "woman", "boy", "girl", "group"]
+  allGenders.forEach((gender) => {
+    if (!arrGenders.includes(gender)) {
+      const buttonElement = document.querySelector(
+        `.button[data-gender="${gender}"]`
+      )
+      if (buttonElement && buttonElement.parentElement) {
+        buttonElement.parentElement.style.display = "none"
+      }
+    }
+  })
+}
+
+// Преобразует массив разрешенных полов в плоский список
+function flattenGenders(allowedGenders) {
+  const genders = []
+  const flatten = (item) => {
+    if (Array.isArray(item)) {
+      item.forEach(flatten)
+    } else if (typeof item === "string") {
+      item.split(" ").forEach((g) => genders.push(g))
+    }
+  }
+  allowedGenders.forEach(flatten)
+  return [...new Set(genders)]
+}
+
+//* ================ CAMERA MODULE ================
+// === Управление камерой ===
+// Инициализирует и запускает камеру с оптимальным разрешением
+async function startCamera() {
   try {
-    ipcRenderer
-      .invoke("get-styles", selectedGenders)
-      .then((styles) => {
-        console.log("Получены стили:", styles)
-        initStyleButtons(styles)
+    const videoContainer = document.querySelector(".video-container")
+    const cameraBackButton = document.querySelector(
+      "#camera-screen .back-button"
+    )
+    cameraBackButton.disabled = true
+    try {
+      videoContainer.classList.add("loading")
+      const bestResolution = await findBestResolution()
+      console.log(
+        `Using resolution: ${bestResolution.width}x${bestResolution.height}`
+      )
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: bestResolution.width,
+          height: bestResolution.height,
+        },
       })
-      .catch((error) => {
-        console.error("Ошибка при загрузке стилей:", error)
-        alert("Не удалось загрузить стили. Попробуйте позже.")
-      })
+      videoStream = stream
+      video.srcObject = stream
+
+      await Promise.race([
+        new Promise((resolve) => {
+          video.onloadedmetadata = () => {
+            cameraInitialized = true
+            console.log("Camera metadata loaded successfully")
+            resolve()
+          }
+        }),
+        new Promise(
+          (_, reject) =>
+            setTimeout(() => {
+              reject(new Error("Camera initialization timed out"))
+            }, 3000) // Timeout in milliseconds
+        ),
+      ])
+
+      videoContainer.classList.remove("loading")
+      console.log("Camera started successfully")
+    } catch (error) {
+      console.error("Camera initialization failed:", error)
+      videoContainer.classList.remove("loading")
+      throw error
+    } finally {
+      cameraBackButton.disabled = false
+    }
   } catch (error) {
-    console.error("Ошибка в fetchStyles:", error)
+    console.error("Error in startCamera:", error)
+    throw error
   }
 }
 
-// !
-// function initGenderButtons() {
-//   try {
-//     const genderButtons = document.querySelectorAll(
-//       "#gender-buttons .button-row_item"
-//     )
-//     genderButtons.forEach((button, index) => {
-//       button.style.animationDelay = `${index * 0.3}s`
-//       button.classList.add("animate")
-//     })
-//   } catch (error) {
-//     console.error("Error in initGenderButtons:", error)
-//   }
-// }
+// Останавливает работу камеры и очищает ресурсы
+function stopCamera() {
+  try {
+    if (videoStream) {
+      videoStream.getTracks().forEach((track) => track.stop())
+      video.srcObject = null
+      videoStream = null
+      cameraInitialized = false
+      console.log("Camera stopped")
+    }
+  } catch (error) {
+    console.error("Error in stopCamera:", error)
+  }
+}
 
+// Делает снимок с камеры с учетом поворота
+async function takePicture() {
+  try {
+    const context = canvas.getContext("2d")
+    const rotationAngle = config.send_image_rotation || 0
+    if (rotationAngle === 90 || rotationAngle === 270) {
+      canvas.width = video.videoHeight
+      canvas.height = video.videoWidth
+    } else {
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+    }
+
+    context.clearRect(0, 0, canvas.width, canvas.height)
+    context.save()
+    context.translate(canvas.width / 2, canvas.height / 2)
+    context.rotate((rotationAngle * Math.PI) / 180)
+    if (rotationAngle === 90 || rotationAngle === 270) {
+      context.drawImage(
+        video,
+        -video.videoWidth / 2,
+        -video.videoHeight / 2,
+        video.videoWidth,
+        video.videoHeight
+      )
+    } else {
+      context.drawImage(
+        video,
+        -canvas.width / 2,
+        -canvas.height / 2,
+        canvas.width,
+        canvas.height
+      )
+    }
+    context.restore()
+    stopCamera()
+
+    const imageData = canvas.toDataURL("image/jpeg", 1.0)
+    console.log("Picture taken successfully")
+
+    try {
+      await saveImageWithUtils("input", imageData)
+      console.log("Input image saved successfully")
+    } catch (error) {
+      console.error("Failed to save input image:", error)
+    }
+
+    sendDateToServer(imageData)
+  } catch (error) {
+    console.error("Error in takePicture:", error)
+    alert("Failed to take picture.")
+    showScreen("style-screen")
+  }
+}
+
+const resolutions = [
+  { width: 1920, height: 1280 },
+  { width: 1080, height: 720 },
+  { width: 640, height: 480 },
+]
+
+// Находит оптимальное разрешение для камеры устройства
+async function findBestResolution() {
+  try {
+    for (let resolution of resolutions) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { exact: resolution.width },
+            height: { exact: resolution.height },
+          },
+        })
+        stream.getTracks().forEach((track) => track.stop())
+        return resolution
+      } catch {}
+    }
+    throw new Error("No supported resolutions found.")
+  } catch (error) {
+    console.error("Error in findBestResolution:", error)
+    throw error
+  }
+}
+
+//* ================ COUNTDOWN MODULE ================
+// === Управление обратным отсчетом ===
+// Запускает обратный отсчет перед съемкой
+function startCountdown() {
+  try {
+    if (!cameraInitialized) {
+      console.log("Camera not ready, waiting for initialization...")
+      // Ждем события onloadedmetadata, если камера еще не готова
+      video.onloadedmetadata = () => {
+        cameraInitialized = true
+        console.log("Camera initialized, starting countdown")
+        beginCountdown()
+      }
+    } else {
+      beginCountdown()
+    }
+  } catch (error) {
+    console.error("Error in startCountdown:", error)
+  }
+}
+
+let countdownInterval
+
+// Выполняет обратный отсчет и делает снимок
+function beginCountdown() {
+  try {
+    let countdown = config.prePhotoTimer || 5
+    const backButton = document.querySelector("#camera-screen .back-button")
+    countdownElement.textContent = countdown
+    countdownInterval = setInterval(() => {
+      countdown--
+      if (countdown > 0) {
+        countdownElement.textContent = countdown
+        backButton.style.opacity = "1"
+        if (countdown <= 2 && backButton) {
+          backButton.disabled = true
+          backButton.style.opacity = "0.5"
+        }
+      } else {
+        clearInterval(countdownInterval)
+        countdownElement.textContent = ""
+        takePicture()
+      }
+    }, 1000)
+  } catch (error) {
+    console.error("Error in beginCountdown:", error)
+  }
+}
+
+//* ================ IMAGE PROCESSING MODULE ================
+// === Обработка изображений ===
+// Отправляет фото на сервер для обработки
+function sendDateToServer(imageData) {
+  try {
+    console.log("sending image to server")
+    showScreen("processing-screen")
+    const urlImage = imageData.split(",")[1]
+    const fonImage = getRandomImageFromStyleFolder(nameDisplay)
+    const base64FonImage = fonImage ? fonImage.split(",")[1] : urlImage
+
+    // Логотив в формате base64
+    const logoData = fs.readFileSync(printLogo, { encoding: "base64" })
+    const base64Logo = `data:image/png;base64,${logoData}`.split(",")[1]
+
+    const genders = selectedGenders.join(", ")
+
+    const data = {
+      mode: `${config?.mode}` || "Avatar",
+      style: selectedStyle,
+      return_s3_link: true,
+      event: basePathName,
+      logo_base64: base64Logo,
+      logo_pos_x: 0,
+      logo_pos_y: 0,
+      logo_scale: 100,
+      params: {
+        Sex: genders,
+        Face: urlImage,
+        Fon: base64FonImage,
+      },
+    }
+
+    console.log('' + data)
+
+    const headers = {
+      Accept: "application/json",
+      Authorization: `Bearer ${config?.authToken}`,
+      "Content-Type": "application/json",
+    }
+
+    const fetchOptions = {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify(data),
+    }
+
+    const logFilePath = path.join(basePath, "request_log.txt")
+    fs.writeFileSync(
+      logFilePath,
+      `Headers: ${JSON.stringify(headers, null, 2)}\nData: ${JSON.stringify(
+        data,
+        null,
+        2
+      )}`,
+      "utf-8"
+    )
+    console.log("request log saved to:", logFilePath)
+
+    progressBar.style.display = "block"
+    progressBarFill.style.width = "100%"
+    progressPercentage.style.display = "none"
+
+    fetch("http://90.156.158.209/api/handler/", fetchOptions)
+      .then((response) => {
+        console.log("HTTP response status:", response.status)
+        if (!response.ok) throw new Error("Network error: " + response.status)
+        return response.json()
+      })
+      .then((responseData) => {
+        console.log("Data received from server:", responseData)
+        handleServerResponse(responseData)
+      })
+      .catch(() => {
+        fetch("http://85.95.186.114/api/handler/", fetchOptions)
+          .then((response) => {
+            if (!response.ok)
+              throw new Error("Network error: " + response.status)
+            return response.json()
+          })
+          .then((responseData) => {
+            handleServerResponse(responseData)
+          })
+          .catch((error) => {
+            console.error("Error sending data to backup server:", error)
+            alert("Error sending the image to the server.")
+            showScreen("style-screen")
+          })
+      })
+  } catch (error) {
+    console.error("Error in sendDateToServer:", error)
+  }
+}
+
+// Генерирует QR-код для ссылки на фото
+async function generateQrCodeFromURL(url) {
+  try {
+    const qrCodeData = await QRCode.toDataURL(url) // Генерация QR-кода в формате Base64
+    return qrCodeData
+  } catch (err) {
+    console.error("Ошибка при генерации QR-кода:", err)
+    throw err
+  }
+}
+
+// Обрабатывает ответ сервера с обработанным изображением
+async function handleServerResponse(responseData) {
+  try {
+    const imagesArray = Object.values(responseData)[0]
+    if (imagesArray && imagesArray.length > 0) {
+      const cleanedURL = imagesArray[0].replace("?image_url=", "").trim()
+
+      // todo: добавить проверку
+      resultImage.src = cleanedURL
+      await saveImageWithUtils("output", resultImage.src)
+
+      resultImage.onload = () => {
+        console.log("Image loaded successfully")
+        console.log(
+          "Image dimensions: ",
+          resultImage.width,
+          "x",
+          resultImage.height
+        )
+        showScreen("result-screen")
+        updatePrintButtonVisibility()
+      }
+
+      try {
+        const qrCodeData = await generateQrCodeFromURL(imagesArray[0])
+        qrCodeImage.src = qrCodeData
+      } catch (error) {
+        console.error("Error in getQrDate:", error)
+      }
+    } else {
+      alert("Failed to retrieve processed image.")
+      showScreen("style-screen")
+    }
+  } catch (error) {
+    console.error("Error in handleServerResponse:", error)
+  }
+}
+
+// Выбирает случайный фон из папки стиля
+function getRandomImageFromStyleFolder(style) {
+  try {
+    const styleFolderPath = path.join(stylesDir, selectedGenders[0], style)
+
+    if (!fs.existsSync(styleFolderPath)) {
+      console.warn(
+        `\x1b[41m[Warning]\x1b[0m Folder for style "${style}" and gender "${selectedGenders[0]}" does not exist.`
+      )
+      return null
+    }
+
+    console.log(`[Info] Reading folder: ${styleFolderPath}`)
+
+    // Очистка стиля (удаляем содержимое скобок)
+    const cleanedStyle = style.replace(/\s*\(.*?\)/g, "") // Убираем пробелы и содержимое в скобках
+    const excludeList = [
+      `1${cleanedStyle}.jpg`,
+      `1${cleanedStyle}.jpeg`,
+      `1${cleanedStyle}.png`,
+    ]
+
+    const files = fs
+      .readdirSync(styleFolderPath)
+      .filter((file) => /\.(jpg|jpeg|png)$/i.test(file)) // Оставляем только изображения
+      .filter((file) => {
+        const isExcluded = excludeList.includes(file)
+        // Раскомментировать для отладки
+        // console.log(
+        //   `Checking exclusion: ${file}, Exclude List: ${excludeList}, Excluded: ${isExcluded}`
+        // )
+        return !isExcluded // Исключаем файл
+      })
+
+
+    if (files.length === 0) {
+      console.warn(
+        `\x1b[41m[Warning]\x1b[0m No images found for style "${style}"`
+      )
+      return null
+    }
+
+    console.log(`[Info] Фильтрованные файлы: ${files}`)
+
+    // Инициализируем индекс для стиля, если он еще не существует
+    if (!styleImageIndices[style]) {
+      styleImageIndices[style] = 0
+    }
+
+    // Используем текущий индекс для выбора файла
+    const currentIndex = styleImageIndices[style]
+    const fileName = files[currentIndex]
+
+    // Обновляем индекс для следующего вызова
+    styleImageIndices[style] = (currentIndex + 1) % files.length
+
+    console.log(`[Selected] Выбранный фон: ${fileName}`)
+    const filePath = path.join(styleFolderPath, fileName)
+
+    const imageData = fs.readFileSync(filePath, { encoding: "base64" })
+    const mimeType = fileName.endsWith(".png") ? "image/png" : "image/jpeg"
+
+    return `data:${mimeType};base64,${imageData}`
+  } catch (error) {
+    console.error(
+      `\x1b[41m[Error]\x1b[0m Error retrieving image for style "${style}"`,
+      error
+    )
+    return null
+  }
+}
+
+//* ================ UI NAVIGATION MODULE ================
+// === Навигация по экранам ===
+// Переключает видимость экранов приложения
 function showScreen(screenId) {
   try {
     console.log(`Switching to screen: ${screenId}`)
@@ -390,493 +852,7 @@ if (!config.brandLogoPath) {
   logoContainer.style.display = "none"
 }
 
-const resolutions = [
-  { width: 1920, height: 1280 },
-  { width: 1080, height: 720 },
-  { width: 640, height: 480 },
-]
-
-async function findBestResolution() {
-  try {
-    for (let resolution of resolutions) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            width: { exact: resolution.width },
-            height: { exact: resolution.height },
-          },
-        })
-        stream.getTracks().forEach((track) => track.stop())
-        return resolution
-      } catch {}
-    }
-    throw new Error("No supported resolutions found.")
-  } catch (error) {
-    console.error("Error in findBestResolution:", error)
-    throw error
-  }
-}
-
-async function startCamera() {
-  try {
-    const videoContainer = document.querySelector(".video-container")
-    const cameraBackButton = document.querySelector(
-      "#camera-screen .back-button"
-    )
-    cameraBackButton.disabled = true
-    try {
-      videoContainer.classList.add("loading")
-      const bestResolution = await findBestResolution()
-      console.log(
-        `Using resolution: ${bestResolution.width}x${bestResolution.height}`
-      )
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: bestResolution.width,
-          height: bestResolution.height,
-        },
-      })
-      videoStream = stream
-      video.srcObject = stream
-
-      await Promise.race([
-        new Promise((resolve) => {
-          video.onloadedmetadata = () => {
-            cameraInitialized = true
-            console.log("Camera metadata loaded successfully")
-            resolve()
-          }
-        }),
-        new Promise(
-          (_, reject) =>
-            setTimeout(() => {
-              reject(new Error("Camera initialization timed out"))
-            }, 3000) // Timeout in milliseconds
-        ),
-      ])
-
-      videoContainer.classList.remove("loading")
-      console.log("Camera started successfully")
-    } catch (error) {
-      console.error("Camera initialization failed:", error)
-      videoContainer.classList.remove("loading")
-      throw error
-    } finally {
-      cameraBackButton.disabled = false
-    }
-  } catch (error) {
-    console.error("Error in startCamera:", error)
-    throw error
-  }
-}
-
-function stopCamera() {
-  try {
-    if (videoStream) {
-      videoStream.getTracks().forEach((track) => track.stop())
-      video.srcObject = null
-      videoStream = null
-      cameraInitialized = false
-      console.log("Camera stopped")
-    }
-  } catch (error) {
-    console.error("Error in stopCamera:", error)
-  }
-}
-
-function startCountdown() {
-  try {
-    if (!cameraInitialized) {
-      console.log("Camera not ready, waiting for initialization...")
-      // Ждем события onloadedmetadata, если камера еще не готова
-      video.onloadedmetadata = () => {
-        cameraInitialized = true
-        console.log("Camera initialized, starting countdown")
-        beginCountdown()
-      }
-    } else {
-      beginCountdown()
-    }
-  } catch (error) {
-    console.error("Error in startCountdown:", error)
-  }
-}
-
-let countdownInterval
-
-function beginCountdown() {
-  try {
-    let countdown = config.prePhotoTimer || 5
-    const backButton = document.querySelector("#camera-screen .back-button")
-    countdownElement.textContent = countdown
-    countdownInterval = setInterval(() => {
-      countdown--
-      if (countdown > 0) {
-        countdownElement.textContent = countdown
-        backButton.style.opacity = "1"
-        if (countdown <= 2 && backButton) {
-          backButton.disabled = true
-          backButton.style.opacity = "0.5"
-        }
-      } else {
-        clearInterval(countdownInterval)
-        countdownElement.textContent = ""
-        takePicture()
-      }
-    }, 1000)
-  } catch (error) {
-    console.error("Error in beginCountdown:", error)
-  }
-}
-
-async function takePicture() {
-  try {
-    const context = canvas.getContext("2d")
-    const rotationAngle = config.send_image_rotation || 0
-    if (rotationAngle === 90 || rotationAngle === 270) {
-      canvas.width = video.videoHeight
-      canvas.height = video.videoWidth
-    } else {
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-    }
-
-    context.clearRect(0, 0, canvas.width, canvas.height)
-    context.save()
-    context.translate(canvas.width / 2, canvas.height / 2)
-    context.rotate((rotationAngle * Math.PI) / 180)
-    if (rotationAngle === 90 || rotationAngle === 270) {
-      context.drawImage(
-        video,
-        -video.videoWidth / 2,
-        -video.videoHeight / 2,
-        video.videoWidth,
-        video.videoHeight
-      )
-    } else {
-      context.drawImage(
-        video,
-        -canvas.width / 2,
-        -canvas.height / 2,
-        canvas.width,
-        canvas.height
-      )
-    }
-    context.restore()
-    stopCamera()
-
-    const imageData = canvas.toDataURL("image/jpeg", 1.0)
-    console.log("Picture taken successfully")
-
-    try {
-      await saveImageWithUtils("input", imageData)
-      console.log("Input image saved successfully")
-    } catch (error) {
-      console.error("Failed to save input image:", error)
-    }
-
-    sendDateToServer(imageData)
-  } catch (error) {
-    console.error("Error in takePicture:", error)
-    alert("Failed to take picture.")
-    showScreen("style-screen")
-  }
-}
-
-function sendDateToServer(imageData) {
-  try {
-    console.log("sending image to server")
-    showScreen("processing-screen")
-    const urlImage = imageData.split(",")[1]
-    const fonImage = getRandomImageFromStyleFolder(nameDisplay)
-    const base64FonImage = fonImage ? fonImage.split(",")[1] : urlImage
-
-    // Логотив в формате base64
-    const logoData = fs.readFileSync(printLogo, { encoding: "base64" })
-    const base64Logo = `data:image/png;base64,${logoData}`.split(",")[1]
-
-    const genders = selectedGenders.join(", ")
-
-    const data = {
-      mode: `${config?.mode}` || "Avatar",
-      style: selectedStyle,
-      return_s3_link: true,
-      event: basePathName,
-      logo_base64: base64Logo,
-      logo_pos_x: 0,
-      logo_pos_y: 0,
-      logo_scale: 100,
-      params: {
-        Sex: genders,
-        Face: urlImage,
-        Fon: base64FonImage,
-      },
-    }
-
-    console.log('' + data)
-
-    const headers = {
-      Accept: "application/json",
-      Authorization: `Bearer ${config?.authToken}`,
-      "Content-Type": "application/json",
-    }
-
-    const fetchOptions = {
-      method: "POST",
-      headers: headers,
-      body: JSON.stringify(data),
-    }
-
-    const logFilePath = path.join(basePath, "request_log.txt")
-    fs.writeFileSync(
-      logFilePath,
-      `Headers: ${JSON.stringify(headers, null, 2)}\nData: ${JSON.stringify(
-        data,
-        null,
-        2
-      )}`,
-      "utf-8"
-    )
-    console.log("request log saved to:", logFilePath)
-
-    progressBar.style.display = "block"
-    progressBarFill.style.width = "100%"
-    progressPercentage.style.display = "none"
-
-    fetch("http://90.156.158.209/api/handler/", fetchOptions)
-      .then((response) => {
-        console.log("HTTP response status:", response.status)
-        if (!response.ok) throw new Error("Network error: " + response.status)
-        return response.json()
-      })
-      .then((responseData) => {
-        console.log("Data received from server:", responseData)
-        handleServerResponse(responseData)
-      })
-      .catch(() => {
-        fetch("http://85.95.186.114/api/handler/", fetchOptions)
-          .then((response) => {
-            if (!response.ok)
-              throw new Error("Network error: " + response.status)
-            return response.json()
-          })
-          .then((responseData) => {
-            handleServerResponse(responseData)
-          })
-          .catch((error) => {
-            console.error("Error sending data to backup server:", error)
-            alert("Error sending the image to the server.")
-            showScreen("style-screen")
-          })
-      })
-  } catch (error) {
-    console.error("Error in sendDateToServer:", error)
-  }
-}
-
-// Example function for generating a QR code (you can replace with your library/method)
-async function generateQrCodeFromURL(url) {
-  try {
-    const qrCodeData = await QRCode.toDataURL(url) // Генерация QR-кода в формате Base64
-    return qrCodeData
-  } catch (err) {
-    console.error("Ошибка при генерации QR-кода:", err)
-    throw err
-  }
-}
-
-async function handleServerResponse(responseData) {
-  try {
-    const imagesArray = Object.values(responseData)[0]
-    if (imagesArray && imagesArray.length > 0) {
-      const cleanedURL = imagesArray[0].replace("?image_url=", "").trim()
-
-      // todo: добавить проверку
-      resultImage.src = cleanedURL
-      await saveImageWithUtils("output", resultImage.src)
-
-      resultImage.onload = () => {
-        console.log("Image loaded successfully")
-        console.log(
-          "Image dimensions: ",
-          resultImage.width,
-          "x",
-          resultImage.height
-        )
-        showScreen("result-screen")
-        updatePrintButtonVisibility()
-      }
-
-      try {
-        const qrCodeData = await generateQrCodeFromURL(imagesArray[0])
-        qrCodeImage.src = qrCodeData
-      } catch (error) {
-        console.error("Error in getQrDate:", error)
-      }
-    } else {
-      alert("Failed to retrieve processed image.")
-      showScreen("style-screen")
-    }
-  } catch (error) {
-    console.error("Error in handleServerResponse:", error)
-  }
-}
-
-function updatePrintButtonVisibility() {
-  if (config.printButtonVisible) {
-    printPhotoButton.style.display = "block"
-  } else {
-    printPhotoButton.style.display = "none"
-  }
-}
-
-// async function overlayLogoOnImage(base64Image) {
-//   try {
-//     console.log('КУКУСИКИ')
-//     const canvas = document.createElement("canvas")
-//     const context = canvas.getContext("2d")
-//     const mainImage = new Image()
-//     const logoImage = new Image()
-
-//     mainImage.src = `data:image/jpeg;base64,${base64Image}`
-//     logoImage.src = config.logoPath
-
-//     await Promise.all([
-//       new Promise((resolve, reject) => {
-//         mainImage.onload = resolve
-//         mainImage.onerror = reject
-//       }),
-//       new Promise((resolve, reject) => {
-//         logoImage.onload = resolve
-//         logoImage.onerror = reject
-//       }),
-//     ])
-
-//     canvas.width = mainImage.width
-//     canvas.height = mainImage.height
-//     context.drawImage(mainImage, 0, 0)
-
-//     let x = 0
-//     let y = 0
-//     const offsetX = config.logoOffsetX || 30
-//     const offsetY = config.logoOffsetY || 30
-//     const scaleFactor = config.logoScale || 1
-//     const logoWidth = logoImage.width * scaleFactor
-//     const logoHeight = logoImage.height * scaleFactor
-
-//     switch (config.logoPosition) {
-//       case "top-left":
-//         x = offsetX
-//         y = offsetY
-//         break
-//       case "top-right":
-//         x = canvas.width - logoWidth - offsetX
-//         y = offsetY
-//         break
-//       case "bottom-left":
-//         x = offsetX
-//         y = canvas.height - logoHeight - offsetY
-//         break
-//       case "center":
-//         x = (canvas.width - logoWidth) / 2 + offsetX
-//         y = (canvas.height - logoHeight) / 2 + offsetY
-//         break
-//       case "center-top":
-//         x = (canvas.width - logoImage.width) / 2
-//         y = offsetY
-//         break
-//       case "center-bottom":
-//         x = (canvas.width - logoImage.width) / 2
-//         y = canvas.height - logoImage.height - offsetY
-//         break
-//       case "bottom-right":
-//       default:
-//         x = (canvas.width - logoWidth) / 2 + offsetX
-//         y = (canvas.height - logoHeight) / 2 + offsetY
-//     }
-
-//     context.drawImage(logoImage, x, y, logoWidth, logoHeight)
-//     return canvas.toDataURL("image/jpeg", 1.0)
-//   } catch (error) {
-//     console.error("Error in overlayLogoOnImage:", error)
-//     return null
-//   }
-// }
-
-// Добавляем объект для хранения индексов для каждого стиля
-const styleImageIndices = {}
-
-function getRandomImageFromStyleFolder(style) {
-  try {
-    const styleFolderPath = path.join(stylesDir, selectedGenders[0], style)
-
-    if (!fs.existsSync(styleFolderPath)) {
-      console.warn(
-        `\x1b[41m[Warning]\x1b[0m Folder for style "${style}" and gender "${selectedGenders[0]}" does not exist.`
-      )
-      return null
-    }
-
-    console.log(`[Info] Reading folder: ${styleFolderPath}`)
-
-    // Очистка стиля (удаляем содержимое скобок)
-    const cleanedStyle = style.replace(/\s*\(.*?\)/g, "") // Убираем пробелы и содержимое в скобках
-    const excludeList = [
-      `1${cleanedStyle}.jpg`,
-      `1${cleanedStyle}.jpeg`,
-      `1${cleanedStyle}.png`,
-    ]
-
-    const files = fs
-      .readdirSync(styleFolderPath)
-      .filter((file) => /\.(jpg|jpeg|png)$/i.test(file)) // Оставляем только изображения
-      .filter((file) => {
-        const isExcluded = excludeList.includes(file)
-        // Раскомментировать для отладки
-        // console.log(
-        //   `Checking exclusion: ${file}, Exclude List: ${excludeList}, Excluded: ${isExcluded}`
-        // )
-        return !isExcluded // Исключаем файл
-      })
-
-    if (files.length === 0) {
-      console.warn(
-        `\x1b[41m[Warning]\x1b[0m No images found for style "${style}"`
-      )
-      return null
-    }
-
-    console.log(`[Info] Фильтрованные файлы: ${files}`)
-
-    // Инициализируем индекс для стиля, если он еще не существует
-    if (!styleImageIndices[style]) {
-      styleImageIndices[style] = 0
-    }
-
-    // Используем текущий индекс для выбора файла
-    const currentIndex = styleImageIndices[style]
-    const fileName = files[currentIndex]
-
-    // Обновляем индекс для следующего вызова
-    styleImageIndices[style] = (currentIndex + 1) % files.length
-
-    console.log(`[Selected] Выбранный фон: ${fileName}`)
-    const filePath = path.join(styleFolderPath, fileName)
-
-    const imageData = fs.readFileSync(filePath, { encoding: "base64" })
-    const mimeType = fileName.endsWith(".png") ? "image/png" : "image/jpeg"
-
-    return `data:${mimeType};base64,${imageData}`
-  } catch (error) {
-    console.error(
-      `\x1b[41m[Error]\x1b[0m Error retrieving image for style "${style}"`,
-      error
-    )
-    return null
-  }
-}
-
+//* ================ PRINTING MODULE ================
 if (startOverButton) {
   startOverButton.addEventListener("click", () => {
     selectedStyle = ""
@@ -940,94 +916,9 @@ ipcRenderer.on("print-photo-response", (event, success) => {
   }
 })
 
-backButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const currentScreen = document.querySelector(".screen.active")
-    switch (currentScreen.id) {
-      case "style-screen":
-        selectedGenders = []
-        genderButtons.forEach((item) => {
-          item.classList.remove("selected")
-        })
-        showScreen("gender-screen")
-        break
-      case "gender-screen":
-        selectedGenders = []
-        genderButtons.forEach((item) => {
-          item.classList.remove("selected")
-        })
-        showScreen("splash-screen")
-        break
-      case "camera-screen":
-        if (!button.disabled && amountOfStyles > 1) {
-          if (countdownInterval) {
-            clearInterval(countdownInterval)
-            countdownInterval = null
-          }
-          countdownElement.textContent = ""
-          stopCamera()
-          showScreen("style-screen")
-        } else if (amountOfStyles === 1) {
-          selectedGenders = []
-          genderButtons.forEach((item) => {
-            item.classList.remove("selected")
-          })
-          showScreen("gender-screen")
-        }
-        break
-      // case "processing-screen":
-      //   showScreen("camera-screen")
-      //   break
-      // case "result-screen":
-      //   showScreen("gender-screen")
-      //   selectedStyle = ""
-      //   selectedGenders = []
-      //   break
-    }
-  })
-})
-
-window.addEventListener("resize", handleOrientationChange)
-
-function handleOrientationChange() {
-  try {
-    if (window.innerHeight > window.innerWidth) {
-      console.log("Портретная ориентация")
-      // Дополнительная логика для портретной ориентации, если необходимо
-    } else {
-      console.log("Ландшафтная ориентация")
-      // Дополнительная логика для ландшафтной ориентации, если необходимо
-    }
-  } catch (error) {
-    console.error("Error in handleOrientationChange:", error)
-  }
-}
-handleOrientationChange()
-
-const inactivityTimeout = config.inactivityTimeout || 60000
-let inactivityTimer
-function resetInactivityTimer() {
-  try {
-    clearTimeout(inactivityTimer)
-    inactivityTimer = setTimeout(() => {
-      showScreen("splash-screen")
-      selectedStyle = ""
-      // selectedGenders = []
-      // genderButtons.forEach((item) => {
-      //   item.classList.remove("selected")
-      // })
-      resultImage.src = ""
-      stopCamera()
-    }, inactivityTimeout)
-  } catch (error) {
-    console.error("Error in resetInactivityTimer:", error)
-  }
-}
-;["click", "mousemove", "keypress", "touchstart"].forEach((event) => {
-  document.addEventListener(event, resetInactivityTimer)
-})
-resetInactivityTimer()
-
+//* ================ LOCALIZATION MODULE ================
+// === Локализация ===
+// Обновляет все текстовые элементы согласно выбранному языку
 function updateTexts() {
   try {
     const texts = translations[currentLanguage]
@@ -1127,22 +1018,9 @@ function updateTexts() {
   }
 }
 
-const startupTimeStart = performance.now()
-function logStartupTime() {
-  const startupTimeEnd = performance.now()
-  const startupDuration = startupTimeEnd - startupTimeStart
-  console.log(`Время запуска: ${startupDuration.toFixed(2)} мс`)
-}
-
-// ???????????????????????????????????????
-document.addEventListener("DOMContentLoaded", () => {
-  updateTexts()
-  // applyRotationStyles()
-  logStartupTime()
-  initGenderButtons()
-  setGenderImages()
-})
-
+//* ================ THEME HANDLING MODULE ================
+// === Управление темой ===
+// Применяет выбранную тему оформления
 function applyTheme(theme) {
   try {
     const themeConfig = config[`${theme}Theme`]
@@ -1197,6 +1075,156 @@ function applyTheme(theme) {
 }
 
 applyTheme(config.theme || "light")
+
+// Применяет общие настройки приложения
+function applySettings() {
+  try {
+    const appTheme =
+      config.theme === "light" ? config.lightTheme : config.darkTheme
+
+    if (config.animationEnabled) {
+      document.body.classList.add("animated-background")
+      document.body.style.setProperty(
+        "--animated-background",
+        config.animatedBackground
+          ? config.animatedBackground
+          : appTheme.backgroundColor
+      )
+    } else {
+      document.body.classList.remove("animated-background")
+    }
+    document.documentElement.style.setProperty(
+      "--backdrop-blur",
+      config.backdropBlur
+    )
+  } catch (error) {
+    console.error("Error in applySettings:", error)
+  }
+}
+
+applySettings()
+
+//* ================ INACTIVITY HANDLER MODULE ================
+// === Управление бездействием ===
+// Сбрасывает таймер бездействия
+const inactivityTimeout = config.inactivityTimeout || 60000
+let inactivityTimer
+function resetInactivityTimer() {
+  try {
+    clearTimeout(inactivityTimer)
+    inactivityTimer = setTimeout(() => {
+      showScreen("splash-screen")
+      selectedStyle = ""
+      // selectedGenders = []
+      // genderButtons.forEach((item) => {
+      //   item.classList.remove("selected")
+      // })
+      resultImage.src = ""
+      stopCamera()
+    }, inactivityTimeout)
+  } catch (error) {
+    console.error("Error in resetInactivityTimer:", error)
+  }
+}
+;["click", "mousemove", "keypress", "touchstart"].forEach((event) => {
+  document.addEventListener(event, resetInactivityTimer)
+})
+resetInactivityTimer()
+
+//* ================ EVENT LISTENERS ================
+document.addEventListener("DOMContentLoaded", () => {
+  updateTexts()
+  // applyRotationStyles()
+  logStartupTime()
+  initGenderButtons()
+  setGenderImages()
+})
+
+// Записывает время запуска приложения
+function logStartupTime() {
+  const startupTimeEnd = performance.now()
+  const startupDuration = startupTimeEnd - startupTimeStart
+  console.log(`Время запуска: ${startupDuration.toFixed(2)} мс`)
+}
+
+const startupTimeStart = performance.now()
+
+backButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const currentScreen = document.querySelector(".screen.active")
+    switch (currentScreen.id) {
+      case "style-screen":
+        selectedGenders = []
+        genderButtons.forEach((item) => {
+          item.classList.remove("selected")
+        })
+        showScreen("gender-screen")
+        break
+      case "gender-screen":
+        selectedGenders = []
+        genderButtons.forEach((item) => {
+          item.classList.remove("selected")
+        })
+        showScreen("splash-screen")
+        break
+      case "camera-screen":
+        if (!button.disabled && amountOfStyles > 1) {
+          if (countdownInterval) {
+            clearInterval(countdownInterval)
+            countdownInterval = null
+          }
+          countdownElement.textContent = ""
+          stopCamera()
+          showScreen("style-screen")
+        } else if (amountOfStyles === 1) {
+          selectedGenders = []
+          genderButtons.forEach((item) => {
+            item.classList.remove("selected")
+          })
+          showScreen("gender-screen")
+        }
+        break
+      // case "processing-screen":
+      //   showScreen("camera-screen")
+      //   break
+      // case "result-screen":
+      //   showScreen("gender-screen")
+      //   selectedStyle = ""
+      //   selectedGenders = []
+      //   break
+    }
+  })
+})
+
+window.addEventListener("resize", handleOrientationChange)
+
+// Обработка изменения ориентации экрана
+function handleOrientationChange() {
+  try {
+    if (window.innerHeight > window.innerWidth) {
+      console.log("Портретная ориентация")
+      // Дополнительная логика для портретной ориентации, если необходимо
+    } else {
+      console.log("Ландшафтная ориентация")
+      // Дополнительная логика для ландшафтной ориентации, если необходимо
+    }
+  } catch (error) {
+    console.error("Error in handleOrientationChange:", error)
+  }
+}
+handleOrientationChange()
+
+// Управляет видимостью кнопки печати
+function updatePrintButtonVisibility() {
+  if (config.printButtonVisible) {
+    printPhotoButton.style.display = "block"
+  } else {
+    printPhotoButton.style.display = "none"
+  }
+}
+
+// Добавляем объект для хранения индексов для каждого стиля
+const styleImageIndices = {}
 
 const agreementCheckbox = document.getElementById("agreement-checkbox")
 
@@ -1267,34 +1295,9 @@ fullscreenToggleButton.addEventListener("click", function () {
   }
 })
 
-function applySettings() {
-  try {
-    const appTheme =
-      config.theme === "light" ? config.lightTheme : config.darkTheme
-
-    if (config.animationEnabled) {
-      document.body.classList.add("animated-background")
-      document.body.style.setProperty(
-        "--animated-background",
-        config.animatedBackground
-          ? config.animatedBackground
-          : appTheme.backgroundColor
-      )
-    } else {
-      document.body.classList.remove("animated-background")
-    }
-    document.documentElement.style.setProperty(
-      "--backdrop-blur",
-      config.backdropBlur
-    )
-  } catch (error) {
-    console.error("Error in applySettings:", error)
-  }
-}
-
-applySettings()
-
 let loaderMessages = translations[currentLanguage].loaderMessages || []
+
+// Создает анимированный текст во время обработки
 function createFloatingText(message) {
   const textElement = document.createElement("div")
   const progressBarRect = progressBar.getBoundingClientRect()
@@ -1319,6 +1322,8 @@ function createFloatingText(message) {
 }
 
 let currentMessageIndex = 0
+
+// Показывает следующее сообщение в процессе обработки
 function displayNextMessage() {
   const processingScreen = document.getElementById("processing-screen")
   if (processingScreen.classList.contains("active")) {
@@ -1330,47 +1335,6 @@ function displayNextMessage() {
 }
 setInterval(displayNextMessage, 2000)
 
-function setGenderImages() {
-  const allowedGenders = config.allowedGenders || [
-    "man",
-    "woman",
-    "boy",
-    "girl",
-    "group",
-  ]
-  const arrGenders = flattenGenders(allowedGenders)
-  arrGenders.forEach((gender) => {
-    const imgElement = document.getElementById(`gender-${gender}`)
-    if (imgElement) {
-      imgElement.src = `./gender/${gender}.png`
-    }
-  })
-  const allGenders = ["man", "woman", "boy", "girl", "group"]
-  allGenders.forEach((gender) => {
-    if (!arrGenders.includes(gender)) {
-      const buttonElement = document.querySelector(
-        `.button[data-gender="${gender}"]`
-      )
-      if (buttonElement && buttonElement.parentElement) {
-        buttonElement.parentElement.style.display = "none"
-      }
-    }
-  })
-}
-
-function flattenGenders(allowedGenders) {
-  const genders = []
-  const flatten = (item) => {
-    if (Array.isArray(item)) {
-      item.forEach(flatten)
-    } else if (typeof item === "string") {
-      item.split(" ").forEach((g) => genders.push(g))
-    }
-  }
-  allowedGenders.forEach(flatten)
-  return [...new Set(genders)]
-}
-
 const customCheckboxQr = document.querySelector(".custom-checkbox-qr")
 if (customCheckboxQr) {
   customCheckboxQr.addEventListener("click", function (event) {
@@ -1380,6 +1344,8 @@ if (customCheckboxQr) {
 }
 
 const modal = document.getElementById("qr-modal")
+
+// Показывает модальное окно
 function showModal() {
   if (modal) {
     modal.style.display = "flex"
