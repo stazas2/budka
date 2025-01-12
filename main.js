@@ -2,8 +2,8 @@ const { app, BrowserWindow, ipcMain } = require("electron")
 const path = require("path")
 const fs = require("fs")
 const os = require("os")
-const { PDFDocument, degrees } = require("pdf-lib")
-const { print, list } = require("pdf-to-printer")
+const PDFDocument = require("pdfkit")
+const { print, getDefaultPrinter } = require("pdf-to-printer")
 const { loadConfig } = require("./utils/configLoader")
 const si = require("systeminformation")
 const { exec } = require("child_process")
@@ -12,23 +12,17 @@ const { exec } = require("child_process")
 const config = loadConfig()
 const basePath = config.basePath
 const stylesDir = config.stylesDir.replace("{{basePath}}", basePath)
+const borderPrintImage = config.borderPrintImage
 
 /** Начало измерения времени запуска main процесса */
 const mainStartupTimeStart = Date.now()
 
+// Функция создания окна приложения
 function createWindow() {
-  // // Получение списка принтеров
-  // exec('wmic printer get name', (err, stdout, stderr) => {
-  //   if (err) {
-  //     console.error('Ошибка при получении списка принтеров:', err);
-  //     return;
-  //   }
-  //   console.log('Доступные принтеры:');
-  //   console.log(stdout);
-  // });
-
   console.log("Creating main window...")
   try {
+    getDefaultPrinter().then(console.log);
+
     const win = new BrowserWindow({
       width: 1080,
       height: 1440,
@@ -52,6 +46,8 @@ function createWindow() {
       // const startupDuration = mainStartupTimeEnd - mainStartupTimeStart
       // console.log(`Время запуска main процесса: ${startupDuration} мс`)
     })
+    // Получение списка принтеров
+    // console.log(win.webContents.getPrinters());
 
     win.on("error", (error) => {
       console.error("Window error:", error)
@@ -62,6 +58,7 @@ function createWindow() {
   }
 }
 
+// Обработчик запроса стилей
 ipcMain.handle("get-styles", async (event, genders) => {
   console.log(
     `Loading styles for genders "${(genders || []).join(
@@ -95,7 +92,8 @@ ipcMain.handle("get-styles", async (event, genders) => {
         files = fs.readdirSync(folderPath, { encoding: "utf8" })
 
         const imageFiles = files.filter(
-          (file) => /\.(jpg|jpeg|png)$/i.test(file) && !file.startsWith(`1${folder}`)
+          (file) =>
+            /\.(jpg|jpeg|png)$/i.test(file) && !file.startsWith(`1${folder}`)
         )
         if (imageFiles.length > 0) {
           styles.add({ originalName: folder, displayName: folder })
@@ -115,113 +113,130 @@ ipcMain.handle("get-styles", async (event, genders) => {
   }
 })
 
+// Обработчик печати фотографии
 ipcMain.on("print-photo", async (event, data) => {
-  //todo показать
-  const options = {
-    orientation: "portrait", // landscape
-    // printer: "Имя принтера", // Удалите для принтера по умолчанию
-  };
-
   if (!data || !data.imageData) {
-    console.error("Error: imageData not provided or invalid.")
-    return
+    console.error("Error: imageData not provided or invalid.");
+    return;
   }
 
-  const { imageData, isLandscape } = data
-  console.log("print-photo event received in main.js")
-  console.log(`Image orientation: ${isLandscape ? "landscape" : "portrait"}`)
-  console.log('imageData:   ' + imageData)
+  const { imageData, isLandscape } = data;
+  console.log(`Image orientation: ${isLandscape ? "landscape" : "portrait"}`);
 
   try {
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "print-"))
-    const imageFileName = "image.jpg"
-    const pdfFileName = "print.pdf"
-    const tempImagePath = path.join(tempDir, imageFileName)
-    const tempPdfPath = path.join(tempDir, pdfFileName)
+    let orientation = ""
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "print-"));
+    const imageFileName = "image.jpg";
+    const pdfFileName = "print.pdf";
+    const tempImagePath = path.join(tempDir, imageFileName);
+    const tempPdfPath = path.join(tempDir, pdfFileName);
 
-    const response = await fetch(imageData)
-    const arrayBuffer = await response.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+    const response = await fetch(imageData);
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-    fs.writeFileSync(tempImagePath, buffer)
-    console.log(`Image saved: ${tempImagePath}`)
+    fs.writeFileSync(tempImagePath, buffer);
+    console.log(`Image saved: ${tempImagePath}`);
 
-    await createPdf(
-      tempImagePath,
-      tempPdfPath,
-      isLandscape
-    )
-    await print(tempPdfPath, options)
-    console.log("Print job started.")
-
-    fs.unlinkSync(tempPdfPath)
-    fs.unlinkSync(tempImagePath)
-    fs.rmdirSync(tempDir)
-    console.log("Temporary files deleted.")
-  } catch (error) {
-    console.error("Error during printing process:", error)
-  }
-})
-
-async function createPdf(
-  tempImagePath,
-  tempPdfPath,
-  isLandscape
-) {
-  console.log("Adding logo to PDF...")
-  try {
-    const pdfDoc = await PDFDocument.create()
-    const page = pdfDoc.addPage()
-
-    //? page.setRotation(degrees(90))
-
-    console.log("Reading image file...")
-    const imageBytes = fs.readFileSync(tempImagePath)
-    const extension = path.extname(tempImagePath).toLowerCase()
-
-    let embeddedImage
-    if (extension === ".jpg" || extension === ".jpeg") {
-      embeddedImage = await pdfDoc.embedJpg(imageBytes)
-    } else if (extension === ".png") {
-      embeddedImage = await pdfDoc.embedPng(imageBytes)
-    } else {
-      throw new Error(`Unsupported image format: ${extension}`)
+    // Генерация PDF
+    const generatedPdfPath = await createPdf(tempImagePath, tempPdfPath, isLandscape);
+    console.log(`Generated PDF path: ${generatedPdfPath}`);
+    
+    if (config.orientation === "landscape") {
+      orientation = "landscape";
+    } else if (config.orientation === "portrait" || config.orientation.trim() === "") {
+      orientation = "portrait";
     }
 
+    const printOptions = {
+      paperSize: "A6",
+      orientation,
+      scale: 'fit',
+      silent: false,
+    };
 
-    const { width, height } = embeddedImage.scale(1)
-    console.log(`Image dimensions: ${width}x${height}`)
+    // Печать PDF
+    await print(generatedPdfPath, printOptions);
+    console.log("Print job started.");
 
-    //todo показать
-  //   const page = isLandscape
-  //   ? pdfDoc.addPage([width, height]) // Горизонтальная страница
-  //   : pdfDoc.addPage([height, width]); // Вертикальная страница
-
-  // page.drawImage(embeddedImage, {
-  //   x: 0,
-  //   y: 0,
-  //   width: isLandscape ? width : height,
-  //   height: isLandscape ? height : width,
-  // });
-
-    //todo - расстягивает ищзображение
-    //todo - поля
-      page.setSize(width, height)
-      page.drawImage(embeddedImage, {
-        x: 0,
-        y: 0,
-        width,
-        height,
-        //? rotate: degrees(90),
-      })
-
-    const pdfBytes = await pdfDoc.save()
-    fs.writeFileSync(tempPdfPath, pdfBytes)
-    console.log(`PDF created successfully: ${tempPdfPath}`)
+    // Удаление временных файлов
+    fs.unlinkSync(tempPdfPath);
+    fs.unlinkSync(tempImagePath);
+    fs.rmdirSync(tempDir);
+    console.log("Temporary files deleted.");
   } catch (error) {
-    console.error("Failed to create PDF:", error)
-    throw error
+    console.error("Error during printing process:", error);
   }
+});
+
+
+// Создание PDF-файла с изображением
+async function createPdf(tempImagePath, tempPdfPath, isLandscape) {
+  console.log("Adding logo to PDF...");
+  return new Promise((resolve, reject) => {
+    try {
+      const A6 = [297.64, 419.53]; // Размеры A6 в точках
+      const A6Landscape = [419.53, 297.64]; // Размеры A6 в точках (альбомная ориентация)
+
+      // Создаем новый документ PDF
+      const doc = new PDFDocument({
+        size: isLandscape ? A6Landscape : A6,
+        margins: { top: 0, bottom: 0, left: 0, right: 0 }, // Убираем отступы
+      });
+
+      // Поток записи PDF-файла
+      const writeStream = fs.createWriteStream(tempPdfPath);
+      doc.pipe(writeStream);
+
+      console.log("Reading image file...");
+      const extension = path.extname(tempImagePath).toLowerCase();
+
+      // Проверяем поддерживаемые форматы изображений
+      if (extension !== ".jpg" && extension !== ".jpeg" && extension !== ".png") {
+        throw new Error(`Unsupported image format: ${extension}`);
+      }
+
+      //todo
+      //? если рамки не нужны по дефолту, то убрать точные размеры и оставить масштабирование (fit)
+      if (!borderPrintImage) {
+        [width, height] = [
+          ...doc.image(tempImagePath, 0, 0, {
+            width: isLandscape ? A6Landscape[0] : A6[0], // Полная ширина страницы
+            height: isLandscape ? A6[0] : A6Landscape[0], // Полная высота страницы
+          }).options.size,
+        ]
+      } else {
+        [width, height] = [
+          ...doc
+            .image(tempImagePath, 0, 0, {
+              fit: isLandscape ? A6Landscape : A6,
+              align: "center",
+              valign: "center",
+            })
+            .scale(1).options.size,
+        ]
+      }
+  
+      console.log(`Image dimensions: ${width} x ${height}`)
+
+      console.log("Finishing PDF...");
+      doc.end();
+
+      // Завершаем выполнение при завершении потока
+      writeStream.on("finish", () => {
+        console.log(`PDF created successfully: ${tempPdfPath}`);
+        resolve(tempPdfPath); // Возвращаем путь к файлу
+      });
+
+      writeStream.on("error", (err) => {
+        console.error("Error writing PDF:", err);
+        reject(err); // Отклоняем Promise при ошибке
+      });
+    } catch (error) {
+      console.error("Failed to create PDF:", error);
+      reject(error);
+    }
+  });
 }
 
 app.whenReady().then(createWindow)
@@ -242,8 +257,6 @@ process.on("uncaughtException", (error) => {
 process.on("unhandledRejection", (error) => {
   console.error("Unhandled rejection:", error)
 })
-
-
 
 // TEST
 // Функция для мониторинга ЦП и GPU

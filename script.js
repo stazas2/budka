@@ -1134,20 +1134,19 @@ resetInactivityTimer()
 //* ================ EVENT LISTENERS ================
 document.addEventListener("DOMContentLoaded", () => {
   updateTexts()
-  // applyRotationStyles()
-  logStartupTime()
   initGenderButtons()
   setGenderImages()
+  // applyRotationStyles()
+  // logStartupTime()
 })
 
-// Записывает время запуска приложения
-function logStartupTime() {
-  const startupTimeEnd = performance.now()
-  const startupDuration = startupTimeEnd - startupTimeStart
-  console.log(`Время запуска: ${startupDuration.toFixed(2)} мс`)
-}
-
-const startupTimeStart = performance.now()
+//? Записывает время запуска приложения
+// function logStartupTime() {
+//   const startupTimeEnd = performance.now()
+//   const startupDuration = startupTimeEnd - startupTimeStart
+//   console.log(`Время запуска: ${startupDuration.toFixed(2)} мс`)
+// }
+// const startupTimeStart = performance.now()
 
 backButtons.forEach((button) => {
   button.addEventListener("click", () => {
@@ -1184,14 +1183,6 @@ backButtons.forEach((button) => {
           showScreen("gender-screen")
         }
         break
-      // case "processing-screen":
-      //   showScreen("camera-screen")
-      //   break
-      // case "result-screen":
-      //   showScreen("gender-screen")
-      //   selectedStyle = ""
-      //   selectedGenders = []
-      //   break
     }
   })
 })

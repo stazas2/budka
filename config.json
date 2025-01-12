@@ -1,14 +1,16 @@
 {
   "authToken": "fc612550-06e8-4be3-9191-0f97336d9966",
   "mode": "style_sdxl",
-  "prePhotoTimer": 4,
+  "prePhotoTimer": 3,
   "inactivityTimeout": 60000,
   "language": {
     "current": "ru",
     "showSwitcher": false
   },
-  "printButtonVisible": false,
-  "showResultQrBtn": true,
+  "borderPrintImage": true,
+  "orientation": "",
+  "printButtonVisible": true,
+  "showResultQrBtn": false,
   "showStyleNames": true,
   "visibilityAgree": false,
   "stylesDir": "{{basePath}}\\styles",
@@ -23,7 +25,7 @@
   "mainLogoScale": 1,
   "theme": "dark",
   "backdropBlur": "50px",
-  "animationEnabled": true,
+  "animationEnabled": false,
   "lightTheme": {
     "backgroundColor": "#ffebcd",
     "backgroundImage": "ffon.jpg",
@@ -31,13 +33,13 @@
   },
   "darkTheme": {
     "backgroundColor": "lightblue",
-    "backgroundImage": "ffonn.jpg",
+    "backgroundImage": "",
     "darkTextColor": "#ffffff"
   },
-  "camera_rotation": 0,
+  "camera_rotation": 90,
   "final_image_rotation": 0,
-  "send_image_rotation": 0,
-  "allowMultipleGenderSelection": true,
+  "send_image_rotation": 90,
+  "allowMultipleGenderSelection": false,
   "allowedGenders": [
     [
       "man",
