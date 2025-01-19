@@ -144,15 +144,17 @@ ipcMain.on("print-photo", async (event, data) => {
     
     if (config.orientation === "landscape") {
       orientation = "landscape";
-    } else if (config.orientation === "portrait" || config.orientation.trim() === "") {
+    } else if (config.orientation === "portrait" || config?.orientation.trim() === "") {
       orientation = "portrait";
     }
 
+
+  
     const printOptions = {
-      paperSize: "A6",
+      paperSize: 'A6',
       orientation,
-      scale: 'fit',
-      silent: false,
+      scale: "fit",
+      silent: true,
     };
 
     // Печать PDF
@@ -175,8 +177,8 @@ async function createPdf(tempImagePath, tempPdfPath, isLandscape) {
   console.log("Adding logo to PDF...");
   return new Promise((resolve, reject) => {
     try {
-      const A6 = [297.64, 419.53]; // Размеры A6 в точках
-      const A6Landscape = [419.53, 297.64]; // Размеры A6 в точках (альбомная ориентация)
+      const A6 = [100, 100]; // Размеры A6 в точках
+      const A6Landscape = [100, 100]; // Размеры A6 в точках (альбомная ориентация)
 
       // Создаем новый документ PDF
       const doc = new PDFDocument({
@@ -239,7 +241,18 @@ async function createPdf(tempImagePath, tempPdfPath, isLandscape) {
   });
 }
 
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+  if (config.cameraMode === "canon") {
+    exec("start.bat", { cwd: `${basePath}/canon` }, (error, stdout, stderr) => {
+      if (error) {
+        console.error("Could not start Canon camera:", error);
+        return;
+      }
+      console.log(stdout || stderr);
+    });
+  }
+  createWindow();
+});
 
 app.on("window-all-closed", () => {
   app.quit()

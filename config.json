@@ -7,13 +7,13 @@
     "current": "ru",
     "showSwitcher": false
   },
-  "borderPrintImage": true,
+  "borderPrintImage": false,
   "orientation": "",
   "printButtonVisible": true,
   "showResultQrBtn": false,
   "showStyleNames": true,
   "visibilityAgree": false,
-  "stylesDir": "{{basePath}}\\styles",
+  "stylesDir": "{{basePath}}\\styles", 
   "basePath": "C:\\MosPhotoBooth2",
   "logoPath": "logo.png",
   "logoPosition": "center",
@@ -25,7 +25,7 @@
   "mainLogoScale": 1,
   "theme": "dark",
   "backdropBlur": "50px",
-  "animationEnabled": false,
+  "animationEnabled": true,
   "lightTheme": {
     "backgroundColor": "#ffebcd",
     "backgroundImage": "ffon.jpg",
@@ -39,6 +39,7 @@
   "camera_rotation": 90,
   "final_image_rotation": 0,
   "send_image_rotation": 90,
+  "cameraMode": "canon",
   "allowMultipleGenderSelection": false,
   "allowedGenders": [
     [
@@ -50,5 +51,6 @@
       "girl"
     ],
     []
-  ]
+  ],
+  "isEvf": false
 }

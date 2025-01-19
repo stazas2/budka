@@ -1012,7 +1012,14 @@ body.rotation-270 #countdown {
   }
 }
 
+@media (max-width: 1000px) and (max-height: 1000px) {
+  body.rotation-90 #video, body.rotation-270 #video {
+    max-height: 42vh;
+  }
+}
+
 @media (max-width: 775px) {
+
   #style-buttons {
     /* grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); */
     /* gap: 10px; */

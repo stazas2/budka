@@ -14,7 +14,6 @@
 // INACTIVITY HANDLER MODULE
 // EVENT LISTENERS
 
-
 //* ================ IMPORTS AND REQUIREMENTS ================
 const { ipcRenderer } = require("electron")
 const fs = require("fs")
@@ -82,13 +81,25 @@ document.body.classList.add(
   `brandLogo-${config.brandLogoPath ? "true" : "false"}`
 )
 
-if (!fs.existsSync(brandLogo.src.replace(/^file:\/\/\//, ''))) {
+if (!fs.existsSync(brandLogo.src.replace(/^file:\/\/\//, ""))) {
   config.brandLogoPath = ""
 }
 
 config?.showResultQrBtn
   ? (showResultQrBtn.style.display = "block")
   : (showResultQrBtn.style.display = "none")
+
+//* ================ CANON MODULE ================
+
+let liveViewInterval
+let lastLiveViewUpdate = null
+let isFetchingLiveView = false
+
+const liveViewImage = document.getElementById("liveViewImage")
+const liveViewContainer = document.getElementById("liveViewContainer")
+const noResponseWarning = document.createElement("p")
+let cameraMode = config.cameraMode
+let isEvf = config.isEvf
 
 function applyRotationStyles() {
   try {
@@ -340,57 +351,59 @@ function flattenGenders(allowedGenders) {
 // === Управление камерой ===
 // Инициализирует и запускает камеру с оптимальным разрешением
 async function startCamera() {
-  try {
-    const videoContainer = document.querySelector(".video-container")
-    const cameraBackButton = document.querySelector(
-      "#camera-screen .back-button"
-    )
-    cameraBackButton.disabled = true
     try {
-      videoContainer.classList.add("loading")
-      const bestResolution = await findBestResolution()
-      console.log(
-        `Using resolution: ${bestResolution.width}x${bestResolution.height}`
+      liveViewContainer.style.display = "none"
+      const videoContainer = document.querySelector(".video-container")
+      const cameraBackButton = document.querySelector(
+        "#camera-screen .back-button"
       )
+      cameraBackButton.disabled = true
+      try {
+        // video
+        videoContainer.classList.add("loading")
+        const bestResolution = await findBestResolution()
+        console.log(
+          `Using resolution: ${bestResolution.width}x${bestResolution.height}`
+        )
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: bestResolution.width,
-          height: bestResolution.height,
-        },
-      })
-      videoStream = stream
-      video.srcObject = stream
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: bestResolution.width,
+            height: bestResolution.height,
+          },
+        })
+        videoStream = stream
+        video.srcObject = stream
 
-      await Promise.race([
-        new Promise((resolve) => {
-          video.onloadedmetadata = () => {
-            cameraInitialized = true
-            console.log("Camera metadata loaded successfully")
-            resolve()
-          }
-        }),
-        new Promise(
-          (_, reject) =>
-            setTimeout(() => {
-              reject(new Error("Camera initialization timed out"))
-            }, 3000) // Timeout in milliseconds
-        ),
-      ])
+        await Promise.race([
+          new Promise((resolve) => {
+            video.onloadedmetadata = () => {
+              cameraInitialized = true
+              console.log("Camera metadata loaded successfully")
+              resolve()
+            }
+          }),
+          new Promise(
+            (_, reject) =>
+              setTimeout(() => {
+                reject(new Error("Camera initialization timed out"))
+              }, 3000) // Timeout in milliseconds
+          ),
+        ])
 
-      videoContainer.classList.remove("loading")
-      console.log("Camera started successfully")
+        videoContainer.classList.remove("loading")
+        console.log("Camera started successfully")
+      } catch (error) {
+        console.error("Camera initialization failed:", error)
+        videoContainer.classList.remove("loading")
+        throw error
+      } finally {
+        cameraBackButton.disabled = false
+      }
     } catch (error) {
-      console.error("Camera initialization failed:", error)
-      videoContainer.classList.remove("loading")
+      console.error("Error in startCamera:", error)
       throw error
-    } finally {
-      cameraBackButton.disabled = false
     }
-  } catch (error) {
-    console.error("Error in startCamera:", error)
-    throw error
-  }
 }
 
 // Останавливает работу камеры и очищает ресурсы
@@ -410,56 +423,65 @@ function stopCamera() {
 
 // Делает снимок с камеры с учетом поворота
 async function takePicture() {
-  try {
-    const context = canvas.getContext("2d")
-    const rotationAngle = config.send_image_rotation || 0
-    if (rotationAngle === 90 || rotationAngle === 270) {
-      canvas.width = video.videoHeight
-      canvas.height = video.videoWidth
-    } else {
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-    }
+  let imageData = null
 
-    context.clearRect(0, 0, canvas.width, canvas.height)
-    context.save()
-    context.translate(canvas.width / 2, canvas.height / 2)
-    context.rotate((rotationAngle * Math.PI) / 180)
-    if (rotationAngle === 90 || rotationAngle === 270) {
-      context.drawImage(
-        video,
-        -video.videoWidth / 2,
-        -video.videoHeight / 2,
-        video.videoWidth,
-        video.videoHeight
-      )
-    } else {
-      context.drawImage(
-        video,
-        -canvas.width / 2,
-        -canvas.height / 2,
-        canvas.width,
-        canvas.height
-      )
-    }
-    context.restore()
-    stopCamera()
-
-    const imageData = canvas.toDataURL("image/jpeg", 1.0)
-    console.log("Picture taken successfully")
-
-    try {
-      await saveImageWithUtils("input", imageData)
-      console.log("Input image saved successfully")
-    } catch (error) {
-      console.error("Failed to save input image:", error)
-    }
-
+  if (cameraMode === "canon") {
+    await capture()
+    imageData = getLatestImage(imagesFolder)
     sendDateToServer(imageData)
-  } catch (error) {
-    console.error("Error in takePicture:", error)
-    alert("Failed to take picture.")
-    showScreen("style-screen")
+  } else {
+    try {
+      const context = canvas.getContext("2d")
+      const rotationAngle = config.send_image_rotation || 0
+      if (rotationAngle === 90 || rotationAngle === 270) {
+        canvas.width = video.videoHeight
+        canvas.height = video.videoWidth
+      } else {
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
+      }
+
+      context.clearRect(0, 0, canvas.width, canvas.height)
+      context.save()
+      context.translate(canvas.width / 2, canvas.height / 2)
+      context.rotate((rotationAngle * Math.PI) / 180)
+      if (rotationAngle === 90 || rotationAngle === 270) {
+        context.drawImage(
+          video,
+          -video.videoWidth / 2,
+          -video.videoHeight / 2,
+          video.videoWidth,
+          video.videoHeight
+        )
+      } else {
+        context.drawImage(
+          video,
+          -canvas.width / 2,
+          -canvas.height / 2,
+          canvas.width,
+          canvas.height
+        )
+      }
+
+      context.restore()
+      stopCamera()
+
+      imageData = canvas.toDataURL("image/jpeg", 1.0)
+      console.log("Picture taken successfully")
+
+      try {
+        await saveImageWithUtils("input", imageData)
+        console.log("Input image saved successfully")
+      } catch (error) {
+        console.error("Failed to save input image:", error)
+      }
+
+      sendDateToServer(imageData)
+    } catch (error) {
+      console.error("Error in takePicture:", error)
+      alert("Failed to take picture.")
+      showScreen("style-screen")
+    }
   }
 }
 
@@ -520,7 +542,7 @@ function beginCountdown() {
     let countdown = config.prePhotoTimer || 5
     const backButton = document.querySelector("#camera-screen .back-button")
     countdownElement.textContent = countdown
-    countdownInterval = setInterval(() => {
+    countdownInterval = setInterval(async () => {
       countdown--
       if (countdown > 0) {
         countdownElement.textContent = countdown
@@ -532,7 +554,7 @@ function beginCountdown() {
       } else {
         clearInterval(countdownInterval)
         countdownElement.textContent = ""
-        takePicture()
+        await takePicture()
       }
     }, 1000)
   } catch (error) {
@@ -547,7 +569,19 @@ function sendDateToServer(imageData) {
   try {
     console.log("sending image to server")
     showScreen("processing-screen")
-    const urlImage = imageData.split(",")[1]
+
+    let urlImage = null
+
+    if (cameraMode === "canon") {
+      if (imageData) {
+        urlImage = convertImageToBase64(imageData)
+      } else {
+        console.error('Изображение не найдено!')
+      }
+    } else {
+      urlImage = imageData.split(",")[1]
+    }
+
     const fonImage = getRandomImageFromStyleFolder(nameDisplay)
     const base64FonImage = fonImage ? fonImage.split(",")[1] : urlImage
 
@@ -572,8 +606,6 @@ function sendDateToServer(imageData) {
         Fon: base64FonImage,
       },
     }
-
-    console.log('' + data)
 
     const headers = {
       Accept: "application/json",
@@ -717,7 +749,6 @@ function getRandomImageFromStyleFolder(style) {
         return !isExcluded // Исключаем файл
       })
 
-
     if (files.length === 0) {
       console.warn(
         `\x1b[41m[Warning]\x1b[0m No images found for style "${style}"`
@@ -758,7 +789,7 @@ function getRandomImageFromStyleFolder(style) {
 //* ================ UI NAVIGATION MODULE ================
 // === Навигация по экранам ===
 // Переключает видимость экранов приложения
-function showScreen(screenId) {
+async function showScreen(screenId) {
   try {
     console.log(`Switching to screen: ${screenId}`)
     const currentActive = document.querySelector(".screen.active")
@@ -769,6 +800,10 @@ function showScreen(screenId) {
     const targetScreen = document.getElementById(screenId)
     if (targetScreen) {
       targetScreen.classList.add("active")
+      if (screenId === "gender-screen" && cameraMode === "canon") {
+        await startLiveView()
+      }
+
       if (screenId === "style-screen") {
         styleButtonsContainer.classList.add("hide-scrollbar")
         setTimeout(() => {
@@ -805,11 +840,16 @@ function showScreen(screenId) {
 
       if (screenId === "result-screen") {
         resultTitle.style.display = "block"
+        await endLiveView()
       } else {
         resultTitle.style.display = "none"
       }
 
       if (screenId === "camera-screen") {
+        if (cameraMode === "canon") {
+          video.style.display = "none"
+          startCountdown()
+        } else {
         // Запускаем камеру при отображении экрана camera-screen
         startCamera()
           .then(() => {
@@ -823,6 +863,7 @@ function showScreen(screenId) {
               ? showScreen("gender-screen")
               : showScreen("style-screen")
           })
+        }
       }
     } else {
       console.error(`Screen with ID "${screenId}" not found.`)
@@ -1363,3 +1404,155 @@ showResultQrBtn.addEventListener("click", () => {
   qrCodeImage.style.display = "initial"
   showModal()
 })
+
+//! CANON
+// noResponseWarning.style.color = 'red';
+// noResponseWarning.textContent = 'Давно не было ответа от Live View.';
+// noResponseWarning.style.display = 'none';
+// liveViewContainer.parentNode.insertBefore(noResponseWarning, liveViewContainer.nextSibling);
+
+async function startLiveView() {
+  config.isEvf = true
+  try {
+    await fetch("/api/post/evf/start", { method: "POST" })
+    liveViewInterval = setInterval(updateLiveView, 100)
+    lastLiveViewUpdate = Date.now()
+    noResponseWarning.style.display = "none"
+  } catch (error) {
+    console.error("Ошибка при включении Live View:", error)
+  }
+}
+
+async function endLiveView() {
+  config.isEvf = false
+  try {
+    await fetch("/api/post/evf/end", { method: "POST" })
+    clearInterval(liveViewInterval)
+    liveViewImage.style.display = "none"
+    noResponseWarning.style.display = "none"
+  } catch (error) {
+    console.error("Ошибка при выключении Live View:", error)
+  }
+}
+
+async function updateLiveView() {
+  if (isFetchingLiveView) {
+    return
+  }
+
+  isFetchingLiveView = true
+
+  try {
+    const response = await fetch("/api/get/live-view")
+    if (response.ok) {
+      const blob = await response.blob()
+      liveViewImage.src = URL.createObjectURL(blob)
+      liveViewImage.style.display = "block"
+      liveViewImage.onload = () => URL.revokeObjectURL(liveViewImage.src)
+      lastLiveViewUpdate = Date.now()
+      noResponseWarning.style.display = "none"
+    }
+  } catch (error) {
+    console.error("Ошибка live view:", error)
+  } finally {
+    isFetchingLiveView = false
+  }
+
+  if (lastLiveViewUpdate && Date.now() - lastLiveViewUpdate > 60000) {
+    noResponseWarning.style.display = "block"
+    clearInterval(liveViewInterval)
+  }
+}
+
+async function reconnect() {
+  const wasEvfActive = isEvf
+  try {
+    if (wasEvfActive) {
+      console.log("Выключаем EVF перед реконнектом...")
+      await endLiveView()
+      console.log("EVF выключен.")
+    }
+
+    console.log("Реконнект...")
+    await fetch("/api/post/reconnect", { method: "POST" })
+    console.log("Реконнект успешен.")
+
+    if (wasEvfActive) {
+      console.log("Ждем 3 секунды перед включением EVF...")
+      await new Promise((resolve) => setTimeout(resolve, 5000))
+      console.log("Включаем EVF после реконнекта...")
+      await startLiveView()
+      console.log("EVF включен.")
+    }
+  } catch (error) {
+    console.error("Ошибка реконнекта:", error)
+  }
+}
+
+async function capture() {
+  try {
+    const response = await fetch("/api/post/capture-image/capture", {
+      method: "POST",
+    })
+    // const responseDiv = document.getElementById('captureImageResponse');
+
+    const data = await response.json()
+
+    // if (response.ok) {
+    //     responseDiv.textContent = 'Снимок сделан успешно';
+    //     responseDiv.style.color = 'green';
+    // } else {
+    //     responseDiv.textContent = `Ошибка: ${data.error}`;
+    //     responseDiv.style.color = 'red';
+    // }
+    // responseDiv.style.display = 'block';
+  } catch (error) {
+    // const responseDiv = document.getElementById('captureImageResponse');
+    // responseDiv.textContent = `Ошибка при съемке: ${error.message}`;
+    // responseDiv.style.color = 'red';
+    // responseDiv.style.display = 'block';
+    console.error("Ошибка:", error)
+  }
+}
+
+//
+
+const imagesFolder = `${basePath}/canon/SavedPhotos` // Замените на путь к папке с изображениями
+
+// Получение последнего изображения
+function getLatestImage(folderPath) {
+  try {
+    // Читаем список файлов в папке
+    const files = fs
+      .readdirSync(folderPath)
+      .map((file) => ({
+        name: file,
+        time: fs.statSync(path.join(folderPath, file)).mtime.getTime(), // Получаем время модификации
+      }))
+      .sort((a, b) => b.time - a.time) // Сортируем по времени, от самого нового к старому
+
+    if (files.length === 0) {
+      console.error("Папка пуста.")
+      return null
+    }
+
+    return path.join(folderPath, files[0].name) // Возвращаем путь к последнему файлу
+  } catch (error) {
+    console.error("Ошибка при поиске файлов:", error)
+    return null
+  }
+}
+
+// Преобразование изображения в Base64
+function convertImageToBase64(imagePath) {
+  try {
+    const data = fs.readFileSync(imagePath) // Читаем файл
+    const base64Image = data.toString("base64") // Конвертируем в Base64
+    // console.log("Base64 изображение:", base64Image)
+    console.log("Base64 изображение готово!")
+    return base64Image
+  } catch (error) {
+    console.error("Ошибка при чтении файла:", error)
+    return null
+  }
+}
