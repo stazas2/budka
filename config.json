@@ -1,7 +1,7 @@
 {
   "authToken": "fc612550-06e8-4be3-9191-0f97336d9966",
   "mode": "style_sdxl",
-  "prePhotoTimer": 3,
+  "prePhotoTimer": 4,
   "inactivityTimeout": 60000,
   "language": {
     "current": "ru",
@@ -13,7 +13,7 @@
   "showResultQrBtn": false,
   "showStyleNames": true,
   "visibilityAgree": false,
-  "stylesDir": "{{basePath}}\\styles", 
+  "stylesDir": "{{basePath}}\\styles",
   "basePath": "C:\\MosPhotoBooth2",
   "logoPath": "logo.png",
   "logoPosition": "center",
@@ -41,16 +41,6 @@
   "send_image_rotation": 90,
   "cameraMode": "canon",
   "allowMultipleGenderSelection": false,
-  "allowedGenders": [
-    [
-      "man",
-      "woman"
-    ],
-    [
-      "boy",
-      "girl"
-    ],
-    []
-  ],
+  "allowedGenders": [["man", "woman"], ["boy", "girl"], []],
   "isEvf": false
 }

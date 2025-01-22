@@ -6,7 +6,7 @@ const PDFDocument = require("pdfkit")
 const { print, getDefaultPrinter } = require("pdf-to-printer")
 const { loadConfig } = require("./utils/configLoader")
 const si = require("systeminformation")
-const { exec } = require("child_process")
+const { exec, execSync } = require("child_process")
 
 // Загружаем конфигурацию после импорта необходимых модулей
 const config = loadConfig()
@@ -21,7 +21,7 @@ const mainStartupTimeStart = Date.now()
 function createWindow() {
   console.log("Creating main window...")
   try {
-    getDefaultPrinter().then(console.log);
+    // getDefaultPrinter().then(console.log);
 
     const win = new BrowserWindow({
       width: 1080,
@@ -177,8 +177,8 @@ async function createPdf(tempImagePath, tempPdfPath, isLandscape) {
   console.log("Adding logo to PDF...");
   return new Promise((resolve, reject) => {
     try {
-      const A6 = [100, 100]; // Размеры A6 в точках
-      const A6Landscape = [100, 100]; // Размеры A6 в точках (альбомная ориентация)
+      const A6 = [1000, 1400]; // Размеры A6 в точках
+      const A6Landscape = [1400, 1000]; // Размеры A6 в точках (альбомная ориентация)
 
       // Создаем новый документ PDF
       const doc = new PDFDocument({
@@ -198,8 +198,7 @@ async function createPdf(tempImagePath, tempPdfPath, isLandscape) {
         throw new Error(`Unsupported image format: ${extension}`);
       }
 
-      //todo
-      //? если рамки не нужны по дефолту, то убрать точные размеры и оставить масштабирование (fit)
+      // todo
       if (!borderPrintImage) {
         [width, height] = [
           ...doc.image(tempImagePath, 0, 0, {
@@ -241,6 +240,35 @@ async function createPdf(tempImagePath, tempPdfPath, isLandscape) {
   });
 }
 
+// Если приложение-canon запущено, то не запускаем его повторно
+// app.whenReady().then(() => {
+//   if (config.cameraMode === "canon") {
+//     // Проверка запущенных процессов
+//     exec("tasklist", (error, stdout, stderr) => {
+//       if (error) {
+//         console.error("Error executing tasklist:", error);
+//         return;
+//       }
+
+//       const processes = ["Api.exe", "CameraControl.exe"];
+//       const runningProcesses = processes.filter(process => stdout.includes(process));
+
+//       if (runningProcesses.length === processes.length) {
+//         console.log("All required processes are already running.");
+//       } else {
+//         exec("start.bat", { cwd: `${basePath}/canon` }, (error, stdout, stderr) => {
+//           if (error) {
+//             console.error("Could not start Canon camera:", error);
+//             return;
+//           }
+//           console.log(stdout || stderr);
+//         });
+//       }
+//     });
+//   }
+//   createWindow();
+// });
+
 app.whenReady().then(() => {
   if (config.cameraMode === "canon") {
     exec("start.bat", { cwd: `${basePath}/canon` }, (error, stdout, stderr) => {
@@ -252,6 +280,21 @@ app.whenReady().then(() => {
     });
   }
   createWindow();
+});
+
+
+// // //! Одновременное закрытие приложения и Canon camera application
+app.on("before-quit", () => {
+  try {
+    if (config.cameraMode === "canon") {
+      console.log("Закрытие Canon-приложения...");
+      execSync("taskkill /IM Api.exe /F");
+      execSync("taskkill /IM CameraControl.exe /F");
+      execSync("taskkill /IM CameraControllerClient.exe /F");
+    }
+  } catch (error) {
+    console.error("Failed to close Canon camera application:", error);
+  }
 });
 
 app.on("window-all-closed", () => {

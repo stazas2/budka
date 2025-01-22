@@ -72,11 +72,14 @@ const basePath = config.basePath
 const basePathName = path.basename(basePath)
 const baseDir = path.join(basePath, "SavedPhotos")
 const stylesDir = config.stylesDir.replace("{{basePath}}", basePath)
+// const localhost = config.localhost
+const localhost = "http://localhost:5000"
 
 const printLogo = config?.logoPath
 brandLogo.src = config?.brandLogoPath
 brandLogo.style.transform = `scale(${config.mainLogoScale})`
 document.body.classList.add(`rotation-${config.camera_rotation}`)
+document.body.classList.add(`camera-${config.cameraMode}`)
 document.body.classList.add(
   `brandLogo-${config.brandLogoPath ? "true" : "false"}`
 )
@@ -99,6 +102,9 @@ const liveViewImage = document.getElementById("liveViewImage")
 const liveViewContainer = document.getElementById("liveViewContainer")
 const noResponseWarning = document.createElement("p")
 let cameraMode = config.cameraMode
+if (!cameraMode) {
+  cameraMode = "pc"
+}
 let isEvf = config.isEvf
 
 function applyRotationStyles() {
@@ -351,59 +357,59 @@ function flattenGenders(allowedGenders) {
 // === Управление камерой ===
 // Инициализирует и запускает камеру с оптимальным разрешением
 async function startCamera() {
+  try {
+    liveViewContainer.style.display = "none"
+    const videoContainer = document.querySelector(".video-container")
+    const cameraBackButton = document.querySelector(
+      "#camera-screen .back-button"
+    )
+    cameraBackButton.disabled = true
     try {
-      liveViewContainer.style.display = "none"
-      const videoContainer = document.querySelector(".video-container")
-      const cameraBackButton = document.querySelector(
-        "#camera-screen .back-button"
+      // video
+      videoContainer.classList.add("loading")
+      const bestResolution = await findBestResolution()
+      console.log(
+        `Using resolution: ${bestResolution.width}x${bestResolution.height}`
       )
-      cameraBackButton.disabled = true
-      try {
-        // video
-        videoContainer.classList.add("loading")
-        const bestResolution = await findBestResolution()
-        console.log(
-          `Using resolution: ${bestResolution.width}x${bestResolution.height}`
-        )
 
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            width: bestResolution.width,
-            height: bestResolution.height,
-          },
-        })
-        videoStream = stream
-        video.srcObject = stream
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: bestResolution.width,
+          height: bestResolution.height,
+        },
+      })
+      videoStream = stream
+      video.srcObject = stream
 
-        await Promise.race([
-          new Promise((resolve) => {
-            video.onloadedmetadata = () => {
-              cameraInitialized = true
-              console.log("Camera metadata loaded successfully")
-              resolve()
-            }
-          }),
-          new Promise(
-            (_, reject) =>
-              setTimeout(() => {
-                reject(new Error("Camera initialization timed out"))
-              }, 3000) // Timeout in milliseconds
-          ),
-        ])
+      await Promise.race([
+        new Promise((resolve) => {
+          video.onloadedmetadata = () => {
+            cameraInitialized = true
+            console.log("Camera metadata loaded successfully")
+            resolve()
+          }
+        }),
+        new Promise(
+          (_, reject) =>
+            setTimeout(() => {
+              reject(new Error("Camera initialization timed out"))
+            }, 3000) // Timeout in milliseconds
+        ),
+      ])
 
-        videoContainer.classList.remove("loading")
-        console.log("Camera started successfully")
-      } catch (error) {
-        console.error("Camera initialization failed:", error)
-        videoContainer.classList.remove("loading")
-        throw error
-      } finally {
-        cameraBackButton.disabled = false
-      }
+      videoContainer.classList.remove("loading")
+      console.log("Camera started successfully")
     } catch (error) {
-      console.error("Error in startCamera:", error)
+      console.error("Camera initialization failed:", error)
+      videoContainer.classList.remove("loading")
       throw error
+    } finally {
+      cameraBackButton.disabled = false
     }
+  } catch (error) {
+    console.error("Error in startCamera:", error)
+    throw error
+  }
 }
 
 // Останавливает работу камеры и очищает ресурсы
@@ -425,12 +431,8 @@ function stopCamera() {
 async function takePicture() {
   let imageData = null
 
-  if (cameraMode === "canon") {
-    await capture()
-    imageData = getLatestImage(imagesFolder)
-    sendDateToServer(imageData)
-  } else {
-    try {
+  try {
+    if (cameraMode === "pc") {
       const context = canvas.getContext("2d")
       const rotationAngle = config.send_image_rotation || 0
       if (rotationAngle === 90 || rotationAngle === 270) {
@@ -476,12 +478,25 @@ async function takePicture() {
         console.error("Failed to save input image:", error)
       }
 
-      sendDateToServer(imageData)
-    } catch (error) {
-      console.error("Error in takePicture:", error)
-      alert("Failed to take picture.")
-      showScreen("style-screen")
+      await sendDateToServer(imageData)
+    } else {
+      try {
+        await capture()
+        // Добавление таймера для корректной обр-ки фото
+        setTimeout(async () => {
+          imageData = getLatestImage(imagesFolder)
+          await sendDateToServer(imageData)
+        }, 2000)
+      } catch (error) {
+        console.error("Error in takePicture:", error)
+        alert("Failed to take picture.")
+        showScreen("style-screen")
+      }
     }
+  } catch (error) {
+    console.error("Error in takePicture:", error)
+    alert("Failed to take picture.")
+    showScreen("style-screen")
   }
 }
 
@@ -518,7 +533,7 @@ async function findBestResolution() {
 // Запускает обратный отсчет перед съемкой
 function startCountdown() {
   try {
-    if (!cameraInitialized) {
+    if (!cameraInitialized && cameraMode === "pc") {
       console.log("Camera not ready, waiting for initialization...")
       // Ждем события onloadedmetadata, если камера еще не готова
       video.onloadedmetadata = () => {
@@ -565,18 +580,19 @@ function beginCountdown() {
 //* ================ IMAGE PROCESSING MODULE ================
 // === Обработка изображений ===
 // Отправляет фото на сервер для обработки
-function sendDateToServer(imageData) {
+async function sendDateToServer(imageData) {
   try {
     console.log("sending image to server")
     showScreen("processing-screen")
 
     let urlImage = null
 
+    //todo не видит фото с камеры
     if (cameraMode === "canon") {
       if (imageData) {
         urlImage = convertImageToBase64(imageData)
       } else {
-        console.error('Изображение не найдено!')
+        console.error("Изображение не найдено!")
       }
     } else {
       urlImage = imageData.split(",")[1]
@@ -590,6 +606,8 @@ function sendDateToServer(imageData) {
     const base64Logo = `data:image/png;base64,${logoData}`.split(",")[1]
 
     const genders = selectedGenders.join(", ")
+
+    //! console.log('photo data (url, image): \n' + urlImage + '\n\n' + imageData)
 
     const data = {
       mode: `${config?.mode}` || "Avatar",
@@ -606,6 +624,8 @@ function sendDateToServer(imageData) {
         Fon: base64FonImage,
       },
     }
+
+    console.log("Кукусики: \n" + data.params.Face)
 
     const headers = {
       Accept: "application/json",
@@ -635,7 +655,7 @@ function sendDateToServer(imageData) {
     progressBarFill.style.width = "100%"
     progressPercentage.style.display = "none"
 
-    fetch("http://90.156.158.209/api/handler/", fetchOptions)
+    fetch("http://85.95.186.114/api/handler/", fetchOptions)
       .then((response) => {
         console.log("HTTP response status:", response.status)
         if (!response.ok) throw new Error("Network error: " + response.status)
@@ -646,8 +666,9 @@ function sendDateToServer(imageData) {
         handleServerResponse(responseData)
       })
       .catch(() => {
-        fetch("http://85.95.186.114/api/handler/", fetchOptions)
+        fetch("http://90.156.158.209/api/handler/", fetchOptions)
           .then((response) => {
+            console.log("HTTP response status:", response.status)
             if (!response.ok)
               throw new Error("Network error: " + response.status)
             return response.json()
@@ -800,7 +821,7 @@ async function showScreen(screenId) {
     const targetScreen = document.getElementById(screenId)
     if (targetScreen) {
       targetScreen.classList.add("active")
-      if (screenId === "gender-screen" && cameraMode === "canon") {
+      if (screenId === "gender-screen" && cameraMode === "canon" && !isEvf) {
         await startLiveView()
       }
 
@@ -846,23 +867,25 @@ async function showScreen(screenId) {
       }
 
       if (screenId === "camera-screen") {
-        if (cameraMode === "canon") {
-          video.style.display = "none"
-          startCountdown()
+        if (cameraMode === "pc") {
+          // Запускаем камеру при отображении экрана camera-screen
+          startCamera()
+            .then(() => {
+              // Начинаем обратный отсчет после инициализации камеры
+              startCountdown()
+            })
+            .catch((err) => {
+              alert("Unable to access the webcam.")
+              console.log("Error: " + err)
+              amountOfStyles === 1
+                ? showScreen("gender-screen")
+                : showScreen("style-screen")
+            })
         } else {
-        // Запускаем камеру при отображении экрана camera-screen
-        startCamera()
-          .then(() => {
-            // Начинаем обратный отсчет после инициализации камеры
-            startCountdown()
-          })
-          .catch((err) => {
-            alert("Unable to access the webcam.")
-            console.log("Error: " + err)
-            amountOfStyles === 1
-              ? showScreen("gender-screen")
-              : showScreen("style-screen")
-          })
+          video.style.display = "none"
+          // todo ( обязательно ли это?)
+          liveViewContainer.style.display = "block"
+          startCountdown() // Убедитесь, что обратный отсчет запускается для режима canon
         }
       }
     } else {
@@ -940,8 +963,7 @@ if (printPhotoButton) {
       )
       ipcRenderer.send("print-photo", {
         imageData: imageData,
-        isLandscape: isLandscape,
-        // todo isLandscape: false,
+        isLandscape,
       })
     } else {
       console.error("Image not found for printing.")
@@ -1412,9 +1434,9 @@ showResultQrBtn.addEventListener("click", () => {
 // liveViewContainer.parentNode.insertBefore(noResponseWarning, liveViewContainer.nextSibling);
 
 async function startLiveView() {
-  config.isEvf = true
+  isEvf = true
   try {
-    await fetch("/api/post/evf/start", { method: "POST" })
+    await fetch(`${localhost}/api/post/evf/start`, { method: "POST" }) // Исправьте URL
     liveViewInterval = setInterval(updateLiveView, 100)
     lastLiveViewUpdate = Date.now()
     noResponseWarning.style.display = "none"
@@ -1424,9 +1446,9 @@ async function startLiveView() {
 }
 
 async function endLiveView() {
-  config.isEvf = false
+  isEvf = false
   try {
-    await fetch("/api/post/evf/end", { method: "POST" })
+    await fetch(`${localhost}/api/post/evf/end`, { method: "POST" }) // Исправьте URL
     clearInterval(liveViewInterval)
     liveViewImage.style.display = "none"
     noResponseWarning.style.display = "none"
@@ -1443,7 +1465,7 @@ async function updateLiveView() {
   isFetchingLiveView = true
 
   try {
-    const response = await fetch("/api/get/live-view")
+    const response = await fetch(`${localhost}/api/get/live-view`) // Исправьте URL
     if (response.ok) {
       const blob = await response.blob()
       liveViewImage.src = URL.createObjectURL(blob)
@@ -1474,7 +1496,7 @@ async function reconnect() {
     }
 
     console.log("Реконнект...")
-    await fetch("/api/post/reconnect", { method: "POST" })
+    await fetch(`${localhost}/api/post/reconnect`, { method: "POST" }) // Исправьте URL
     console.log("Реконнект успешен.")
 
     if (wasEvfActive) {
@@ -1491,9 +1513,12 @@ async function reconnect() {
 
 async function capture() {
   try {
-    const response = await fetch("/api/post/capture-image/capture", {
-      method: "POST",
-    })
+    const response = await fetch(
+      `${localhost}/api/post/capture-image/capture`,
+      {
+        method: "POST",
+      }
+    )
     // const responseDiv = document.getElementById('captureImageResponse');
 
     const data = await response.json()

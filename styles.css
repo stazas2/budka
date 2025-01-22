@@ -414,6 +414,7 @@ button:active {
 
 /* ! время движения */
 #progress-percentage {
+  display: none;
   margin-top: 5px;
   font-size: 2em;
   color: var(--text-color);
@@ -750,14 +751,28 @@ input:checked + .slider:before {
   transition: transform 0.3s ease;
 }
 
-body.rotation-90 #video,
-body.rotation-270 #video {
+.rotation-90 #video,
+.rotation-270 #video {
   max-height: 40vh;
 }
 
-body.rotation-90 #countdown,
-body.rotation-270 #countdown {
+.rotation-90 #countdown,
+.rotation-270 #countdown {
   bottom: -25%;
+}
+
+#liveViewImage {
+  max-width: 100%;
+}
+
+#liveViewContainer {
+  position: relative;
+}
+.rotation-90 #liveViewContainer {
+  transform: rotate(90deg);
+}
+.rotation-270 #liveViewContainer {
+  transform: rotate(270deg);
 }
 
 /* Адаптивность под разные экраны */
@@ -775,14 +790,14 @@ body.rotation-270 #countdown {
     max-width: 50vw;
   }
 
-  body.rotation-90 #countdown,
-  body.rotation-270 #countdown {
+  .rotation-90 #countdown,
+  .rotation-270 #countdown {
     bottom: -27%;
     /* -18 */
   }
 
-  body.rotation-90 #video,
-  body.rotation-270 #video {
+  .rotation-90 #video,
+  .rotation-270 #video {
     position: relative;
     top: -15%;
     max-height: 53vh;
@@ -797,8 +812,8 @@ body.rotation-270 #countdown {
     top: 20%;
   }
 
-  body.rotation-90 #camera-screen h1,
-  body.rotation-270 #camera-screen h1 {
+  .rotation-90 #camera-screen h1,
+  .rotation-270 #camera-screen h1 {
     top: -29%;
     /* -20 */
   }
@@ -854,31 +869,36 @@ body.rotation-270 #countdown {
     width: 375px;
   }
 
-  body.rotation-90 #result-image,
-  body.rotation-270 #result-image {
+  .rotation-90 #liveViewContainer,
+  .rotation-270 #liveViewContainer {
+    bottom: 12%;
+  }
+
+  .rotation-90 #result-image,
+  .rotation-270 #result-image {
     max-height: 85vh;
     /*? 40 */
   }
 
-  body.rotation-90 #result-screen > div,
-  body.rotation-270 #result-screen > div {
+  .rotation-90 #result-screen > div,
+  .rotation-270 #result-screen > div {
     margin-top: 30px;
   }
 
-  body.rotation-90 #result-screen h1,
-  body.rotation-270 #result-screen h1 {
+  .rotation-90 #result-screen h1,
+  .rotation-270 #result-screen h1 {
     margin-bottom: 0px;
   }
 
-  body.rotation-90 #selected-params-text {
+  .rotation-90 #selected-params-text {
     position: relative;
     top: 10%;
     /*? 40  */
   }
 
-  body.rotation-90 #start-over,
+  .rotation-90 #start-over,
   #print-photo,
-  body.rotation-270 #start-over,
+  .rotation-270 #start-over,
   #print-photo {
     margin-top: 0px;
     position: relative;
@@ -893,8 +913,31 @@ body.rotation-270 #countdown {
 
 /* Горизонтальная ориентация */
 @media (orientation: landscape) {
-  body.rotation-90 #countdown,
-  body.rotation-270 #countdown {
+
+  .rotation-90 #liveViewImage,
+  .rotation-270 #liveViewImage {
+    max-width: 65%;
+  }
+
+  .rotation-90 #liveViewContainer {
+    top: 58%;
+  }
+  .rotation-270 #liveViewContainer {
+    bottom: 61%;
+  }
+
+
+  /* todo */
+  .camera-canon #countdown {
+    bottom: 4%;
+  }
+
+  .camera-canon #countdown {
+    bottom: 0;
+  }
+
+  .rotation-90 #countdown,
+  .rotation-270 #countdown {
     bottom: -34%;
     /* -37 */
   }
@@ -918,8 +961,8 @@ body.rotation-270 #countdown {
     bottom: -4%;
   } */
 
-  body.rotation-90 #video,
-  body.rotation-270 #video {
+  .rotation-90 #video,
+  .rotation-270 #video {
     max-height: 46vh;
   }
 
@@ -986,20 +1029,20 @@ body.rotation-270 #countdown {
     height: 67vh;
   }
 
-  body.rotation-90 #result-image,
-  body.rotation-270 #result-image {
+  .rotation-90 #result-image,
+  .rotation-270 #result-image {
     max-height: 90vh;
   }
 
-  body.rotation-90 #result-screen h1,
-  body.rotation-270 #result-screen h1 {
+  .rotation-90 #result-screen h1,
+  .rotation-270 #result-screen h1 {
     position: relative;
     /* top: -2%; */
     /*? 5 */
   }
 
-  body.rotation-90 #selected-params-text,
-  body.rotation-270 #selected-params-text {
+  .rotation-90 #selected-params-text,
+  .rotation-270 #selected-params-text {
     position: relative;
     top: 0%;
     /*? 160 */
@@ -1013,7 +1056,7 @@ body.rotation-270 #countdown {
 }
 
 @media (max-width: 1000px) and (max-height: 1000px) {
-  body.rotation-90 #video, body.rotation-270 #video {
+  .rotation-90 #video, .rotation-270 #video {
     max-height: 42vh;
   }
 }
