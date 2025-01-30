@@ -256,7 +256,7 @@ async function createPdf(tempImagePath, tempPdfPath, isLandscape) {
 //       if (runningProcesses.length === processes.length) {
 //         console.log("All required processes are already running.");
 //       } else {
-//         exec("start.bat", { cwd: `${basePath}/canon` }, (error, stdout, stderr) => {
+//         exec("start.bat", { cwd: `./canon` }, (error, stdout, stderr) => {
 //           if (error) {
 //             console.error("Could not start Canon camera:", error);
 //             return;
@@ -271,13 +271,26 @@ async function createPdf(tempImagePath, tempPdfPath, isLandscape) {
 
 app.whenReady().then(() => {
   if (config.cameraMode === "canon") {
-    exec("start.bat", { cwd: `${basePath}/canon` }, (error, stdout, stderr) => {
+    exec("start.bat", { cwd: `./canon` }, (error, stdout, stderr) => {
       if (error) {
         console.error("Could not start Canon camera:", error);
         return;
       }
       console.log(stdout || stderr);
     });
+
+  //   exec(
+  //     `"${process.env.COMSPEC}" /c start.bat`, 
+  //     { cwd: `${basePath}/canon` }, 
+  //     (error, stdout, stderr) => {
+  //       if (error) {
+  //         console.error("Could not start Canon camera:", error);
+  //         return;
+  //       }
+  //       console.log(stdout || stderr);
+  //     }
+  //   );
+  // }
   }
   createWindow();
 });

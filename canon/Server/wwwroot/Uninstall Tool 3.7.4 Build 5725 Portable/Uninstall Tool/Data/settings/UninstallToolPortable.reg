@@ -1,0 +1,7 @@
+REGEDIT4
+
+[HKEY_CURRENT_USER\Software\CrystalIdea Software\Uninstall Tool]
+"DriverVersionNum"=dword:00000105
+"VH"="uok="
+"VL"="vok="
+"LastRunDate"=hex(b):4b,14,84,67,00,00,00,00
