@@ -13,6 +13,7 @@
 // THEME HANDLING MODULE
 // INACTIVITY HANDLER MODULE
 // EVENT LISTENERS
+// CANON MODULE
 
 //* ================ IMPORTS AND REQUIREMENTS ================
 const { ipcRenderer } = require("electron")
@@ -48,6 +49,7 @@ const languageSwitcher = document.getElementById("language-switcher")
 const genderButtons = document.querySelectorAll(
   "#gender-buttons .button-row_item"
 )
+const modal = document.getElementById("qr-modal")
 const showResultQrBtn = document.getElementById("show-qr-button")
 const qrCodeAgree = document.getElementById("qr-code-agree")
 const qrCodeImage = document.getElementById("qr-code-img")
@@ -74,6 +76,7 @@ const baseDir = path.join(basePath, "SavedPhotos")
 const stylesDir = config.stylesDir.replace("{{basePath}}", basePath)
 // const localhost = config.localhost
 const localhost = "http://localhost:5000"
+const imagesFolder = `./canon/SavedPhotos/` // Замените на путь к папке с изображениями
 
 const printLogo = config?.logoPath
 brandLogo.src = config?.brandLogoPath
@@ -125,7 +128,7 @@ function applyRotationStyles() {
     console.error("Error in applyRotationStyles:", error)
   }
 }
-applyRotationStyles()
+  applyRotationStyles()
 
 //* ================ STYLE HANDLING MODULE ================
 // === Управление стилями ===
@@ -432,7 +435,24 @@ async function takePicture() {
   let imageData = null
 
   try {
-    if (cameraMode === "pc") {
+    if (cameraMode === "canon") {
+      try {
+        // ! todo
+        imageData = getLatestImage(imagesFolder)
+        await capture()
+        // Добавление таймера для корректной обр-ки фото
+        // setTimeout(() => {
+        //   imageData = getLatestImage(imagesFolder)
+        // }, 2000)
+
+        // console.log("Фото: \n" + imageData)
+        await sendDateToServer(imageData)
+      } catch (error) {
+        console.error("Error in takePicture:", error)
+        alert("Failed to take picture.")
+        showScreen("style-screen")
+      }
+    } else {
       const context = canvas.getContext("2d")
       const rotationAngle = config.send_image_rotation || 0
       if (rotationAngle === 90 || rotationAngle === 270) {
@@ -479,19 +499,6 @@ async function takePicture() {
       }
 
       await sendDateToServer(imageData)
-    } else {
-      try {
-        await capture()
-        // Добавление таймера для корректной обр-ки фото
-        setTimeout(async () => {
-          imageData = getLatestImage(imagesFolder)
-          await sendDateToServer(imageData)
-        }, 2000)
-      } catch (error) {
-        console.error("Error in takePicture:", error)
-        alert("Failed to take picture.")
-        showScreen("style-screen")
-      }
     }
   } catch (error) {
     console.error("Error in takePicture:", error)
@@ -625,7 +632,8 @@ async function sendDateToServer(imageData) {
       },
     }
 
-    console.log("Кукусики: \n" + data.params.Face)
+    // todo
+    // console.log("Кукусики: \n" + data.params.Face)
 
     const headers = {
       Accept: "application/json",
@@ -813,6 +821,12 @@ function getRandomImageFromStyleFolder(style) {
 async function showScreen(screenId) {
   try {
     console.log(`Switching to screen: ${screenId}`)
+
+    // if (screenId === "loading-screen" && config.cameraMode !== "canon") {
+    //   console.log("Skipping loading-screen in canon mode.")
+    //   return
+    // }
+
     const currentActive = document.querySelector(".screen.active")
     if (currentActive) {
       currentActive.classList.remove("active")
@@ -820,10 +834,8 @@ async function showScreen(screenId) {
 
     const targetScreen = document.getElementById(screenId)
     if (targetScreen) {
+
       targetScreen.classList.add("active")
-      if (screenId === "gender-screen" && cameraMode === "canon" && !isEvf) {
-        await startLiveView()
-      }
 
       if (screenId === "style-screen") {
         styleButtonsContainer.classList.add("hide-scrollbar")
@@ -861,7 +873,7 @@ async function showScreen(screenId) {
 
       if (screenId === "result-screen") {
         resultTitle.style.display = "block"
-        await endLiveView()
+        // await endLiveView()
       } else {
         resultTitle.style.display = "none"
       }
@@ -1196,7 +1208,12 @@ resetInactivityTimer()
 
 //* ================ EVENT LISTENERS ================
 document.addEventListener("DOMContentLoaded", () => {
-  updateTexts()
+  if (config.cameraMode !== "canon") {
+    // loadingScreen.style.display = "none"
+    showScreen("splash-screen")
+  } 
+
+  updateTexts() 
   initGenderButtons()
   setGenderImages()
   // applyRotationStyles()
@@ -1255,6 +1272,7 @@ window.addEventListener("resize", handleOrientationChange)
 // Обработка изменения ориентации экрана
 function handleOrientationChange() {
   try {
+
     if (window.innerHeight > window.innerWidth) {
       console.log("Портретная ориентация")
       // Дополнительная логика для портретной ориентации, если необходимо
@@ -1397,8 +1415,6 @@ if (customCheckboxQr) {
   })
 }
 
-const modal = document.getElementById("qr-modal")
-
 // Показывает модальное окно
 function showModal() {
   if (modal) {
@@ -1427,7 +1443,8 @@ showResultQrBtn.addEventListener("click", () => {
   showModal()
 })
 
-//! CANON
+//* ================ CANON MODULE ================
+
 // noResponseWarning.style.color = 'red';
 // noResponseWarning.textContent = 'Давно не было ответа от Live View.';
 // noResponseWarning.style.display = 'none';
@@ -1540,10 +1557,6 @@ async function capture() {
   }
 }
 
-//
-
-const imagesFolder = `${basePath}/canon/SavedPhotos` // Замените на путь к папке с изображениями
-
 // Получение последнего изображения
 function getLatestImage(folderPath) {
   try {
@@ -1581,3 +1594,22 @@ function convertImageToBase64(imagePath) {
     return null
   }
 }
+
+ipcRenderer.on("camera-control-status", (event, isRunning) => {
+  console.log("CameraControl.exe running:", isRunning)
+  window.cameraControlActive = isRunning
+  // When true, trigger screen change (adjust 'target-screen-id' as needed)
+  if (isRunning) {
+    // targetScreen = "loading-screen"
+    // targetScreen.classList.remove("active")
+    setTimeout(async () => {
+      if (!isEvf) {
+        await startLiveView()
+      }
+      await showScreen("splash-screen")
+    }, 3000)
+    
+
+    // e.g., "result-screen" or "camera-screen"
+  }
+})

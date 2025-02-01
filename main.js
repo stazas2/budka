@@ -17,13 +17,16 @@ const borderPrintImage = config.borderPrintImage
 /** Начало измерения времени запуска main процесса */
 const mainStartupTimeStart = Date.now()
 
+let mainWindow // new global variable
+let cameraCheckInterval // New global variable for interval
+
 // Функция создания окна приложения
 function createWindow() {
   console.log("Creating main window...")
   try {
     // getDefaultPrinter().then(console.log);
 
-    const win = new BrowserWindow({
+    mainWindow = new BrowserWindow({
       width: 1080,
       height: 1440,
       webPreferences: {
@@ -33,13 +36,13 @@ function createWindow() {
       autoHideMenuBar: true,
     })
 
-    win.setMenuBarVisibility(false)
-    win.loadFile("index.html")
+    mainWindow.setMenuBarVisibility(false)
+    mainWindow.loadFile("index.html")
     // monitorSystemLoad(); // Запуск мониторинга при старте приложения
 
-    win.webContents.on("did-finish-load", () => {
+    mainWindow.webContents.on("did-finish-load", () => {
       console.log("Window loaded successfully")
-      win.webContents.setZoomFactor(1)
+      mainWindow.webContents.setZoomFactor(1)
 
       // Логирование времени запуска
       // const mainStartupTimeEnd = Date.now()
@@ -47,9 +50,9 @@ function createWindow() {
       // console.log(`Время запуска main процесса: ${startupDuration} мс`)
     })
     // Получение списка принтеров
-    // console.log(win.webContents.getPrinters());
+    // console.log(mainWindow.webContents.getPrinters());
 
-    win.on("error", (error) => {
+    mainWindow.on("error", (error) => {
       console.error("Window error:", error)
     })
   } catch (error) {
@@ -116,98 +119,106 @@ ipcMain.handle("get-styles", async (event, genders) => {
 // Обработчик печати фотографии
 ipcMain.on("print-photo", async (event, data) => {
   if (!data || !data.imageData) {
-    console.error("Error: imageData not provided or invalid.");
-    return;
+    console.error("Error: imageData not provided or invalid.")
+    return
   }
 
-  const { imageData, isLandscape } = data;
-  console.log(`Image orientation: ${isLandscape ? "landscape" : "portrait"}`);
+  const { imageData, isLandscape } = data
+  console.log(`Image orientation: ${isLandscape ? "landscape" : "portrait"}`)
 
   try {
     let orientation = ""
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "print-"));
-    const imageFileName = "image.jpg";
-    const pdfFileName = "print.pdf";
-    const tempImagePath = path.join(tempDir, imageFileName);
-    const tempPdfPath = path.join(tempDir, pdfFileName);
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "print-"))
+    const imageFileName = "image.jpg"
+    const pdfFileName = "print.pdf"
+    const tempImagePath = path.join(tempDir, imageFileName)
+    const tempPdfPath = path.join(tempDir, pdfFileName)
 
-    const response = await fetch(imageData);
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    const response = await fetch(imageData)
+    const arrayBuffer = await response.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
 
-    fs.writeFileSync(tempImagePath, buffer);
-    console.log(`Image saved: ${tempImagePath}`);
+    fs.writeFileSync(tempImagePath, buffer)
+    console.log(`Image saved: ${tempImagePath}`)
 
     // Генерация PDF
-    const generatedPdfPath = await createPdf(tempImagePath, tempPdfPath, isLandscape);
-    console.log(`Generated PDF path: ${generatedPdfPath}`);
-    
+    const generatedPdfPath = await createPdf(
+      tempImagePath,
+      tempPdfPath,
+      isLandscape
+    )
+    console.log(`Generated PDF path: ${generatedPdfPath}`)
+
     if (config.orientation === "landscape") {
-      orientation = "landscape";
-    } else if (config.orientation === "portrait" || config?.orientation.trim() === "") {
-      orientation = "portrait";
+      orientation = "landscape"
+    } else if (
+      config.orientation === "portrait" ||
+      config?.orientation.trim() === ""
+    ) {
+      orientation = "portrait"
     }
 
-
-  
     const printOptions = {
-      paperSize: 'A6',
+      paperSize: "A6",
       orientation,
       scale: "fit",
       silent: true,
-    };
+    }
 
     // Печать PDF
-    await print(generatedPdfPath, printOptions);
-    console.log("Print job started.");
+    await print(generatedPdfPath, printOptions)
+    console.log("Print job started.")
 
     // Удаление временных файлов
-    fs.unlinkSync(tempPdfPath);
-    fs.unlinkSync(tempImagePath);
-    fs.rmdirSync(tempDir);
-    console.log("Temporary files deleted.");
+    fs.unlinkSync(tempPdfPath)
+    fs.unlinkSync(tempImagePath)
+    fs.rmdirSync(tempDir)
+    console.log("Temporary files deleted.")
   } catch (error) {
-    console.error("Error during printing process:", error);
+    console.error("Error during printing process:", error)
   }
-});
-
+})
 
 // Создание PDF-файла с изображением
 async function createPdf(tempImagePath, tempPdfPath, isLandscape) {
-  console.log("Adding logo to PDF...");
+  console.log("Adding logo to PDF...")
   return new Promise((resolve, reject) => {
     try {
-      const A6 = [1000, 1400]; // Размеры A6 в точках
-      const A6Landscape = [1400, 1000]; // Размеры A6 в точках (альбомная ориентация)
+      const A6 = [1240, 1748] // Размеры A6 в точках
+      const A6Landscape = [1748, 1240] // Размеры A6 в точках (альбомная ориентация)
 
       // Создаем новый документ PDF
       const doc = new PDFDocument({
         size: isLandscape ? A6Landscape : A6,
         margins: { top: 0, bottom: 0, left: 0, right: 0 }, // Убираем отступы
-      });
+      })
 
       // Поток записи PDF-файла
-      const writeStream = fs.createWriteStream(tempPdfPath);
-      doc.pipe(writeStream);
+      const writeStream = fs.createWriteStream(tempPdfPath)
+      doc.pipe(writeStream)
 
-      console.log("Reading image file...");
-      const extension = path.extname(tempImagePath).toLowerCase();
+      console.log("Reading image file...")
+      const extension = path.extname(tempImagePath).toLowerCase()
 
       // Проверяем поддерживаемые форматы изображений
-      if (extension !== ".jpg" && extension !== ".jpeg" && extension !== ".png") {
-        throw new Error(`Unsupported image format: ${extension}`);
+      if (
+        extension !== ".jpg" &&
+        extension !== ".jpeg" &&
+        extension !== ".png"
+      ) {
+        throw new Error(`Unsupported image format: ${extension}`)
       }
 
       // todo
       if (!borderPrintImage) {
-        [width, height] = [
+        ;[width, height] = [
           ...doc.image(tempImagePath, 0, 0, {
             width: isLandscape ? A6Landscape[0] : A6[0], // Полная ширина страницы
             height: isLandscape ? A6[0] : A6Landscape[0], // Полная высота страницы
           }).options.size,
         ]
       } else {
-        [width, height] = [
+        ;[width, height] = [
           ...doc
             .image(tempImagePath, 0, 0, {
               fit: isLandscape ? A6Landscape : A6,
@@ -217,27 +228,27 @@ async function createPdf(tempImagePath, tempPdfPath, isLandscape) {
             .scale(1).options.size,
         ]
       }
-  
+
       console.log(`Image dimensions: ${width} x ${height}`)
 
-      console.log("Finishing PDF...");
-      doc.end();
+      console.log("Finishing PDF...")
+      doc.end()
 
       // Завершаем выполнение при завершении потока
       writeStream.on("finish", () => {
-        console.log(`PDF created successfully: ${tempPdfPath}`);
-        resolve(tempPdfPath); // Возвращаем путь к файлу
-      });
+        console.log(`PDF created successfully: ${tempPdfPath}`)
+        resolve(tempPdfPath) // Возвращаем путь к файлу
+      })
 
       writeStream.on("error", (err) => {
-        console.error("Error writing PDF:", err);
-        reject(err); // Отклоняем Promise при ошибке
-      });
+        console.error("Error writing PDF:", err)
+        reject(err) // Отклоняем Promise при ошибке
+      })
     } catch (error) {
-      console.error("Failed to create PDF:", error);
-      reject(error);
+      console.error("Failed to create PDF:", error)
+      reject(error)
     }
-  });
+  })
 }
 
 // Если приложение-canon запущено, то не запускаем его повторно
@@ -269,46 +280,74 @@ async function createPdf(tempImagePath, tempPdfPath, isLandscape) {
 //   createWindow();
 // });
 
+// !
 app.whenReady().then(() => {
   if (config.cameraMode === "canon") {
     exec("start.bat", { cwd: `./canon` }, (error, stdout, stderr) => {
       if (error) {
-        console.error("Could not start Canon camera:", error);
-        return;
+        console.error("Could not start Canon camera:", error)
+        return
       }
-      console.log(stdout || stderr);
-    });
+      console.log(stdout || stderr)
+    })
 
-  //   exec(
-  //     `"${process.env.COMSPEC}" /c start.bat`, 
-  //     { cwd: `${basePath}/canon` }, 
-  //     (error, stdout, stderr) => {
-  //       if (error) {
-  //         console.error("Could not start Canon camera:", error);
-  //         return;
-  //       }
-  //       console.log(stdout || stderr);
-  //     }
-  //   );
-  // }
+    //   exec(
+    //     `"${process.env.COMSPEC}" /c start.bat`,
+    //     { cwd: `${basePath}/canon` },
+    //     (error, stdout, stderr) => {
+    //       if (error) {
+    //         console.error("Could not start Canon camera:", error);
+    //         return;
+    //       }
+    //       console.log(stdout || stderr);
+    //     }
+    //   );
+    // }
   }
-  createWindow();
-});
+  createWindow()
 
+  if (config.cameraMode === "canon") {
+    // Start checking camera control process; stop when true
+    cameraCheckInterval = setInterval(checkCameraControlProcess, 1000)
+  }
+})
+
+// New function to check for CameraControl.exe process and send status to renderer
+function checkCameraControlProcess() {
+  exec(
+    'tasklist /FI "IMAGENAME eq CameraControl.exe"',
+    (error, stdout, stderr) => {
+      if (error) {
+        console.error("Error executing tasklist:", error)
+        return
+      }
+      const isRunning = stdout.includes("CameraControl.exe")
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send("camera-control-status", isRunning)
+      }
+      // If process is running, clear interval to stop further checks
+      if (isRunning && cameraCheckInterval) {
+        clearInterval(cameraCheckInterval)
+        console.log("CameraControl.exe detected; stopping further checks.")
+      }
+    }
+  )
+}
 
 // // //! Одновременное закрытие приложения и Canon camera application
 app.on("before-quit", () => {
   try {
     if (config.cameraMode === "canon") {
-      console.log("Закрытие Canon-приложения...");
-      execSync("taskkill /IM Api.exe /F");
-      execSync("taskkill /IM CameraControl.exe /F");
-      execSync("taskkill /IM CameraControllerClient.exe /F");
+      console.log("Закрытие Canon-приложения...")
+      execSync("taskkill /IM Api.exe /F")
+      execSync("taskkill /IM CameraControl.exe /F")
+      execSync("taskkill /IM CameraControllerClient.exe /F")
     }
   } catch (error) {
-    console.error("Failed to close Canon camera application:", error);
+    console.error("Failed to close Canon camera application:", error)
   }
-});
+})
+// !
 
 app.on("window-all-closed", () => {
   app.quit()
