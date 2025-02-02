@@ -86,6 +86,8 @@ document.body.classList.add(`camera-${config.cameraMode}`)
 document.body.classList.add(
   `brandLogo-${config.brandLogoPath ? "true" : "false"}`
 )
+const logo_pos_x = config.logo_pos_x
+const logo_pos_y = config.logo_pos_y
 
 if (!fs.existsSync(brandLogo.src.replace(/^file:\/\/\//, ""))) {
   config.brandLogoPath = ""
@@ -437,16 +439,72 @@ async function takePicture() {
   try {
     if (cameraMode === "canon") {
       try {
-        // ! todo
-        imageData = getLatestImage(imagesFolder)
-        await capture()
-        // Добавление таймера для корректной обр-ки фото
-        // setTimeout(() => {
-        //   imageData = getLatestImage(imagesFolder)
-        // }, 2000)
+        // // ! todo
+        // imageData = getLatestImage(imagesFolder)
+        // await capture()
+        // // Добавление таймера для корректной обр-ки фото
+        // // setTimeout(() => {
+        // //   imageData = getLatestImage(imagesFolder)
+        // // }, 2000)
 
-        // console.log("Фото: \n" + imageData)
-        await sendDateToServer(imageData)
+        // // console.log("Фото: \n" + imageData)
+        // await sendDateToServer(imageData)
+                // Получаем изображение с камеры Canon
+                imageData = getLatestImage(imagesFolder);
+                await capture();
+        
+                // Создаем элемент изображения и canvas для обработки
+                const img = new Image();
+                img.src = imageData;
+        
+                // Ожидаем загрузки изображения
+                await new Promise((resolve) => {
+                  img.onload = resolve;
+                });
+        
+                const canvas = document.createElement("canvas");
+                const context = canvas.getContext("2d");
+        
+                // Применяем поворот, если он задан в конфигурации
+                const rotationAngle = config.send_image_rotation || 0;
+                if (rotationAngle === 90 || rotationAngle === 270) {
+                  canvas.width = img.height;
+                  canvas.height = img.width;
+                } else {
+                  canvas.width = img.width;
+                  canvas.height = img.height;
+                }
+        
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                context.save();
+                context.translate(canvas.width / 2, canvas.height / 2);
+                context.rotate((rotationAngle * Math.PI) / 180);
+        
+                if (rotationAngle === 90 || rotationAngle === 270) {
+                  context.drawImage(
+                    img,
+                    -img.width / 2,
+                    -img.height / 2,
+                    img.width,
+                    img.height
+                  );
+                } else {
+                  context.drawImage(
+                    img,
+                    -canvas.width / 2,
+                    -canvas.height / 2,
+                    canvas.width,
+                    canvas.height
+                  );
+                }
+        
+                context.restore();
+        
+                // Получаем данные изображения с canvas
+                imageData = canvas.toDataURL("image/jpeg", 1.0);
+        
+                // Отправляем изображение на сервер
+                await sendDateToServer(imageData);
       } catch (error) {
         console.error("Error in takePicture:", error)
         alert("Failed to take picture.")
@@ -605,6 +663,8 @@ async function sendDateToServer(imageData) {
       urlImage = imageData.split(",")[1]
     }
 
+    console.log(urlImage)
+
     const fonImage = getRandomImageFromStyleFolder(nameDisplay)
     const base64FonImage = fonImage ? fonImage.split(",")[1] : urlImage
 
@@ -622,8 +682,8 @@ async function sendDateToServer(imageData) {
       return_s3_link: true,
       event: basePathName,
       logo_base64: base64Logo,
-      logo_pos_x: 0,
-      logo_pos_y: 0,
+      logo_pos_x,
+      logo_pos_y,
       logo_scale: 100,
       params: {
         Sex: genders,
@@ -1497,10 +1557,10 @@ async function updateLiveView() {
     isFetchingLiveView = false
   }
 
-  if (lastLiveViewUpdate && Date.now() - lastLiveViewUpdate > 60000) {
-    noResponseWarning.style.display = "block"
-    clearInterval(liveViewInterval)
-  }
+  // if (lastLiveViewUpdate && Date.now() - lastLiveViewUpdate > 60000) {
+  //   noResponseWarning.style.display = "block"
+  //   clearInterval(liveViewInterval)
+  // }
 }
 
 async function reconnect() {
