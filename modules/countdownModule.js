@@ -9,7 +9,7 @@ const imageProcessing = require("./imageProcessingModule");
 
 let countdownTimer;
 
-function startCountdown() {
+function startCountdown(onComplete) {
     console.log("Starting countdown");
     clearCountdown();
     let timeLeft = config.prePhotoTimer || 4;
@@ -24,8 +24,7 @@ function startCountdown() {
                 dom.countdownElement.textContent = timeLeft;
             } else {
                 clearCountdown();
-                // Делаем снимок после окончания отсчета
-                require("./cameraModule").takePhoto();
+                if (onComplete) onComplete();
             }
         }, 1000);
     }

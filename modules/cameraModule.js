@@ -1,6 +1,4 @@
 const dom = require("./domElements");
-const uiNavigation = require("./uiNavigationModule");
-const imageProcessing = require("./imageProcessingModule");
 
 async function initCamera() {
     console.log("Starting camera initialization");
@@ -39,25 +37,16 @@ function stopCamera() {
     }
 }
 
-async function takePhoto() {
+// Только захват фото, без обработки
+function takePhoto() {
     console.log("Taking photo");
     if (dom.video && dom.canvas) {
         const context = dom.canvas.getContext('2d');
         context.drawImage(dom.video, 0, 0, dom.canvas.width, dom.canvas.height);
-        
-        // Останавливаем камеру
         stopCamera();
-        
-        // Переходим к обработке фото
-        uiNavigation.showScreen("processing-screen");
-        
-        try {
-            // Запускаем обработку изображения
-            await imageProcessing.processImage(dom.canvas.toDataURL('image/jpeg'));
-        } catch (error) {
-            console.error("Error processing image:", error);
-        }
+        return dom.canvas.toDataURL('image/jpeg');
     }
+    return null;
 }
 
 module.exports = { initCamera, stopCamera, takePhoto };

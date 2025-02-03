@@ -3,7 +3,7 @@ const state = require("./state");
 const configModule = require("./config");
 const { config } = configModule;
 
-function showScreen(screenId) {
+async function showScreen(screenId) {  // Добавлено ключевое слово async
   try {
     console.log(`Switching to screen: ${screenId}`);
     // Скрываем все экраны
@@ -65,11 +65,41 @@ function showScreen(screenId) {
       }
 
       if (screenId === "camera-screen") {
-        // Автоматически запускаем отсчет при показе экрана камеры
-        setTimeout(() => {
-            const countdown = require("./countdownModule");
-            countdown.startCountdown();
-        }, 1000); // Даем секунду на инициализацию камеры
+        // Инициализируем камеру перед запуском отсчета
+        try {
+            if (config.cameraMode === "canon") {
+                const canonModule = require("./canonModule");
+                console.log("Initializing Canon camera...");
+                await canonModule.initLiveView();
+            } else {
+                const cameraModule = require("./cameraModule");
+                console.log("Initializing webcam...");
+                await cameraModule.initCamera();
+            }
+            
+            // Запускаем отсчет только после успешной инициализации камеры
+            setTimeout(() => {
+                const countdown = require("./countdownModule");
+                countdown.startCountdown(async () => {
+                    const camera = require("./cameraModule");
+                    const imageProcessing = require("./imageProcessingModule");
+                    const photoData = camera.takePhoto();
+                    if (photoData) {
+                        showScreen("processing-screen");
+                        try {
+                            // Используем sendDateToServer напрямую
+                            await imageProcessing.sendDateToServer(photoData);
+                        } catch (error) {
+                            console.error("Error processing image:", error);
+                            showScreen("style-screen");
+                        }
+                    }
+                });
+            }, 1000);
+        } catch (error) {
+            console.error("Camera initialization error:", error);
+            showScreen("style-screen");
+        }
       }
   
       const logoContainer = document.getElementById("logo-container");

@@ -1,6 +1,7 @@
 // modules/genderHandling.js
 const configModule = require("./config");
 const { config } = configModule;
+const state = require("./state");
 const uiNavigation = require("./uiNavigationModule");
 const styleHandling = require("./styleHandling");
 
@@ -41,7 +42,15 @@ function initGenderButtons() {
         button.appendChild(img);
         button.addEventListener("click", () => {
             console.log(`Selected gender: ${gender.id}`);
-            styleHandling.initStyleButtons(); // Инициализируем стили перед переходом
+            // Устанавливаем оба значения для совместимости
+            state.selectedGender = gender.id;
+            state.selectedGenders = [gender.id];
+            
+            // Сбрасываем предыдущий выбор стиля
+            state.selectedStyle = '';
+            state.nameDisplay = '';
+            
+            styleHandling.initStyleButtons();
             uiNavigation.showScreen("style-screen");
         });
         

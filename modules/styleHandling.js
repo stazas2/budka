@@ -2,7 +2,6 @@
 const fs = require("fs");
 const path = require("path");
 const state = require("./state");
-const dom = require("./domElements");
 const configModule = require("./config");
 const { config, stylesDir } = configModule;
 const uiNavigation = require("./uiNavigationModule");
@@ -19,26 +18,9 @@ function initStyleButtons() {
     
     container.innerHTML = "";
     
-    // Получаем список файлов из директории стилей
-    const styles = [];
-    try {
-        const files = fs.readdirSync(stylesDir);
-        console.log("Found style files:", files);
-        
-        files.forEach(file => {
-            if (file.endsWith('.png') || file.endsWith('.jpg')) {
-                styles.push({
-                    id: file.split('.')[0],
-                    label: file.split('.')[0],
-                    image: file
-                });
-            }
-        });
-    } catch (error) {
-        console.error("Error reading styles directory:", error);
-    }
-    
-    console.log("Styles to display:", styles);
+    // Получаем стили для выбранного гендера
+    const styles = getStylesForGender(state.selectedGender);
+    console.log(`Found styles for gender ${state.selectedGender}:`, styles);
     
     styles.forEach(style => {
         console.log(`Creating button for style: ${style.id}`);
@@ -46,35 +28,25 @@ function initStyleButtons() {
         button.className = "style-button";
         button.dataset.style = style.id;
         
-        const img = document.createElement("img");
-        img.src = `${stylesDir}/${style.image}`;
-        img.alt = style.label;
+        // Берем первое изображение из папки стиля для превью
+        const previewImage = getStylePreview(state.selectedGender, style.id);
+        if (previewImage) {
+            const img = document.createElement("img");
+            img.src = previewImage;
+            img.alt = style.label || style.id;
+            button.appendChild(img);
+        }
         
-        img.onerror = () => {
-            console.error(`Failed to load style image: ${img.src}`);
-            img.style.display = 'none';
-        };
+        if (config.showStyleNames) {
+            const label = document.createElement("span");
+            label.textContent = style.label || style.id;
+            button.appendChild(label);
+        }
         
-        button.appendChild(img);
-        button.addEventListener("click", async () => {
+        button.addEventListener("click", () => {
             console.log(`Selected style: ${style.id}`);
             state.selectedStyle = style.id;
-            
-            // Инициализируем камеру перед показом экрана
-            try {
-                if (config.cameraMode === "canon") {
-                    const canonModule = require("./canonModule");
-                    console.log("Initializing Canon camera...");
-                    await canonModule.initLiveView();
-                } else {
-                    const cameraModule = require("./cameraModule");
-                    console.log("Initializing webcam...");
-                    await cameraModule.initCamera();
-                }
-            } catch (error) {
-                console.error("Camera initialization error:", error);
-            }
-            
+            state.nameDisplay = style.id;
             uiNavigation.showScreen("camera-screen");
         });
         
@@ -82,6 +54,51 @@ function initStyleButtons() {
     });
     
     console.log("=== Style Initialization Complete ===");
+}
+
+function getStylesForGender(gender) {
+    if (!gender) {
+        console.error("Gender is undefined!");
+        return [];
+    }
+
+    const genderPath = path.join(stylesDir, gender);
+    console.log("Looking for styles in:", genderPath);
+    
+    if (!fs.existsSync(genderPath)) {
+        console.error(`Gender directory not found: ${genderPath}`);
+        return [];
+    }
+    
+    try {
+        return fs.readdirSync(genderPath)
+            .filter(file => fs.statSync(path.join(genderPath, file)).isDirectory())
+            .map(styleDir => ({
+                id: styleDir,
+                label: styleDir,
+                path: path.join(genderPath, styleDir)
+            }));
+    } catch (error) {
+        console.error("Error reading styles directory:", error);
+        return [];
+    }
+}
+
+function getStylePreview(gender, styleId) {
+    const stylePath = path.join(stylesDir, gender, styleId);
+    console.log("Getting preview from:", stylePath);
+    
+    try {
+        const files = fs.readdirSync(stylePath)
+            .filter(file => /\.(jpg|jpeg|png)$/i.test(file));
+        
+        if (files.length > 0) {
+            return `${stylesDir}/${gender}/${styleId}/${files[0]}`;
+        }
+    } catch (error) {
+        console.error(`Error getting preview for style ${styleId}:`, error);
+    }
+    return null;
 }
 
 module.exports = { initStyleButtons };

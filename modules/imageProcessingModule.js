@@ -12,24 +12,29 @@ const uiNavigation = require("./uiNavigationModule");
 async function sendDateToServer(imageData) {
   try {
     console.log("Sending image to server...");
-    uiNavigation.showScreen("processing-screen");
+    updateProgress(20);
 
-    // Формируем объект запроса
+    // Получаем фоновое изображение
+    const backgroundImage = getRandomImageFromStyleFolder(state.nameDisplay);
+    if (!backgroundImage) {
+      throw new Error("Failed to get background image");
+    }
+
     const data = {
-      mode: config.mode || "Avatar",
+      mode: config.mode || "style_sdxl",
       style: state.selectedStyle,
       return_s3_link: true,
       event: basePathName,
-      logo_base64: fs.readFileSync(printLogo, { encoding: "base64" }),
+      logo_base64: fs.existsSync(printLogo) ? fs.readFileSync(printLogo, { encoding: "base64" }) : null,
       logo_pos_x: config.logo_pos_x,
       logo_pos_y: config.logo_pos_y,
-      logo_scale: 100,
+      logo_scale: config.logoScale || 100,
       params: {
-        Sex: state.selectedGenders.join(", "),
+        Sex: Array.isArray(state.selectedGenders) && state.selectedGenders.length > 0 
+          ? state.selectedGenders.join(", ") 
+          : state.selectedGender,
         Face: imageData.split(",")[1],
-        Fon: getRandomImageFromStyleFolder(state.nameDisplay)
-          ? getRandomImageFromStyleFolder(state.nameDisplay).split(",")[1]
-          : imageData.split(",")[1]
+        Fon: backgroundImage.split(",")[1]
       }
     };
     const headers = {
@@ -52,7 +57,7 @@ async function sendDateToServer(imageData) {
     );
     console.log("Request log saved to:", logFilePath);
 
-    // Отправляем запрос (используйте ваш URL API)
+    // Отправляем запрос, используя URL из конфига
     const response = await fetch("http://your-server-address/api/handler/", fetchOptions)
       .catch(async () => {
         return await fetch("http://backup-server/api/handler/", fetchOptions);
@@ -63,6 +68,7 @@ async function sendDateToServer(imageData) {
     handleServerResponse(responseData);
   } catch (error) {
     console.error("Error in sendDateToServer:", error);
+    throw error; // Пробрасываем ошибку для обработки в processImage
   }
 }
 
@@ -105,111 +111,71 @@ async function handleServerResponse(responseData) {
 
 function getRandomImageFromStyleFolder(style) {
   try {
-    const gender = state.selectedGenders[0];
+    const gender = state.selectedGender;
     const styleFolderPath = path.join(stylesDir, gender, style);
+    console.log("Getting background from:", styleFolderPath);
+
     if (!fs.existsSync(styleFolderPath)) {
-      console.warn(`Папка для стиля "${style}" и пола "${gender}" не существует.`);
+      console.warn(`Style folder not found: ${styleFolderPath}`);
       return null;
     }
-    const files = fs
-      .readdirSync(styleFolderPath)
-      .filter((file) => /\.(jpg|jpeg|png)$/i.test(file));
+
+    // Получаем все файлы из папки стиля
+    const files = fs.readdirSync(styleFolderPath)
+      .filter(file => {
+        const isImage = /\.(jpg|jpeg|png)$/i.test(file);
+        // Исключаем превью (обычно первое изображение в папке)
+        const isPreview = file === fs.readdirSync(styleFolderPath)[0];
+        return isImage && !isPreview;
+      });
+
     if (files.length === 0) {
-      console.warn(`Не найдены изображения для стиля "${style}"`);
+      console.warn(`No background images found for style "${style}"`);
       return null;
     }
+
+    // Используем индекс для последовательного перебора фонов
     if (!state.styleImageIndices[style]) {
       state.styleImageIndices[style] = 0;
     }
+
     const currentIndex = state.styleImageIndices[style];
     const fileName = files[currentIndex];
+    // Обновляем индекс для следующего использования
     state.styleImageIndices[style] = (currentIndex + 1) % files.length;
+
+    console.log(`Using background: ${fileName} (${currentIndex + 1}/${files.length})`);
+
     const mimeType = fileName.endsWith(".png") ? "png" : "jpeg";
     const imageData = fs.readFileSync(path.join(styleFolderPath, fileName), { encoding: "base64" });
     return `data:image/${mimeType};base64,${imageData}`;
+
   } catch (error) {
-    console.error(`Error retrieving image for style "${style}":`, error);
+    console.error(`Error getting background for style "${style}":`, error);
     return null;
   }
 }
 
 async function processImage(imageData) {
-    console.log("Starting image processing...");
-    
-    try {
-        updateProgress(10);
-        
-        // Формируем данные в формате, который ожидает сервер
-        const data = {
-            mode: config.mode || "Avatar",
-            style: state.selectedStyle,
-            return_s3_link: true,
-            params: {
-                Sex: state.selectedGender,
-                Face: imageData.split(",")[1], // Убираем префикс data:image/jpeg;base64,
-            }
-        };
-
-        console.log("Sending request to server with data:", {
-            mode: data.mode,
-            style: data.style,
-            selectedGender: state.selectedGender
-        });
-
-        updateProgress(30);
-        
-        // Используем URL и токен из конфига
-        const response = await fetch("http://your-server-address/api/handler/", {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Authorization': `Bearer ${config.authToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Server response: ${response.status} - ${await response.text()}`);
-        }
-        
-        updateProgress(70);
-        const responseData = await response.json();
-        console.log("Server response:", responseData);
-
-        // Получаем URL изображения из ответа
-        const imagesArray = Object.values(responseData)[0];
-        if (imagesArray && imagesArray.length > 0) {
-            const imageUrl = imagesArray[0].replace("?image_url=", "").trim();
-            
-            if (dom.resultImage) {
-                dom.resultImage.src = imageUrl;
-                updateProgress(100);
-                
-                // Переходим на экран результата после загрузки изображения
-                dom.resultImage.onload = () => {
-                    uiNavigation.showScreen("result-screen");
-                    require("./printingModule").updatePrintButtonVisibility();
-                };
-            }
-        } else {
-            throw new Error("No image URL in response");
-        }
-    } catch (error) {
-        console.error("Image processing failed:", error);
-        alert("Произошла ошибка при обработке изображения. Попробуйте еще раз.");
-        uiNavigation.showScreen("style-screen");
-    }
+  console.log("Starting image processing...");
+  try {
+    updateProgress(10);
+    await sendDateToServer(imageData);
+  } catch (error) {
+    console.error("Image processing failed:", error);
+    alert("Произошла ошибка при обработке изображения. Попробуйте еще раз.");
+    uiNavigation.showScreen("style-screen");
+  }
 }
 
 function updateProgress(percent) {
-    console.log(`Processing progress: ${percent}%`);
-    if (dom.progressBarFill) {
-        dom.progressBarFill.style.width = `${percent}%`;
-    }
-    if (dom.progressPercentage) {
-        dom.progressPercentage.textContent = `${percent}%`;
-    }
+  console.log(`Processing progress: ${percent}%`);
+  if (dom.progressBarFill) {
+    dom.progressBarFill.style.width = `${percent}%`;
+  }
+  if (dom.progressPercentage) {
+    dom.progressPercentage.textContent = `${percent}%`;
+  }
 }
 
 module.exports = {
