@@ -133,9 +133,89 @@ function getRandomImageFromStyleFolder(style) {
   }
 }
 
+async function processImage(imageData) {
+    console.log("Starting image processing...");
+    
+    try {
+        updateProgress(10);
+        
+        // Формируем данные в формате, который ожидает сервер
+        const data = {
+            mode: config.mode || "Avatar",
+            style: state.selectedStyle,
+            return_s3_link: true,
+            params: {
+                Sex: state.selectedGender,
+                Face: imageData.split(",")[1], // Убираем префикс data:image/jpeg;base64,
+            }
+        };
+
+        console.log("Sending request to server with data:", {
+            mode: data.mode,
+            style: data.style,
+            selectedGender: state.selectedGender
+        });
+
+        updateProgress(30);
+        
+        // Используем URL и токен из конфига
+        const response = await fetch("http://your-server-address/api/handler/", {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${config.authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Server response: ${response.status} - ${await response.text()}`);
+        }
+        
+        updateProgress(70);
+        const responseData = await response.json();
+        console.log("Server response:", responseData);
+
+        // Получаем URL изображения из ответа
+        const imagesArray = Object.values(responseData)[0];
+        if (imagesArray && imagesArray.length > 0) {
+            const imageUrl = imagesArray[0].replace("?image_url=", "").trim();
+            
+            if (dom.resultImage) {
+                dom.resultImage.src = imageUrl;
+                updateProgress(100);
+                
+                // Переходим на экран результата после загрузки изображения
+                dom.resultImage.onload = () => {
+                    uiNavigation.showScreen("result-screen");
+                    require("./printingModule").updatePrintButtonVisibility();
+                };
+            }
+        } else {
+            throw new Error("No image URL in response");
+        }
+    } catch (error) {
+        console.error("Image processing failed:", error);
+        alert("Произошла ошибка при обработке изображения. Попробуйте еще раз.");
+        uiNavigation.showScreen("style-screen");
+    }
+}
+
+function updateProgress(percent) {
+    console.log(`Processing progress: ${percent}%`);
+    if (dom.progressBarFill) {
+        dom.progressBarFill.style.width = `${percent}%`;
+    }
+    if (dom.progressPercentage) {
+        dom.progressPercentage.textContent = `${percent}%`;
+    }
+}
+
 module.exports = {
   sendDateToServer,
   generateQrCodeFromURL,
   handleServerResponse,
-  getRandomImageFromStyleFolder
+  getRandomImageFromStyleFolder,
+  processImage
 };

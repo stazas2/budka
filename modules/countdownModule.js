@@ -5,45 +5,40 @@ const { config } = configModule;
 const state = require("./state");
 const cameraModule = require("./cameraModule");
 const uiNavigation = require("./uiNavigationModule");
+const imageProcessing = require("./imageProcessingModule");
 
-let countdownInterval;
+let countdownTimer;
+
 function startCountdown() {
-  try {
-    if (!state.cameraInitialized && config.cameraMode === "pc") {
-      dom.video.onloadedmetadata = () => {
-        state.cameraInitialized = true;
-        beginCountdown();
-      };
-    } else {
-      beginCountdown();
+    console.log("Starting countdown");
+    clearCountdown();
+    let timeLeft = config.prePhotoTimer || 4;
+    
+    if (dom.countdownElement) {
+        dom.countdownElement.style.display = 'block';
+        dom.countdownElement.textContent = timeLeft;
+        
+        countdownTimer = setInterval(() => {
+            timeLeft--;
+            if (timeLeft > 0) {
+                dom.countdownElement.textContent = timeLeft;
+            } else {
+                clearCountdown();
+                // Делаем снимок после окончания отсчета
+                require("./cameraModule").takePhoto();
+            }
+        }, 1000);
     }
-  } catch (error) {
-    console.error("Error in startCountdown:", error);
-  }
 }
-function beginCountdown() {
-  try {
-    let countdown = config.prePhotoTimer || 5;
-    dom.countdownElement.textContent = countdown;
-    countdownInterval = setInterval(() => {
-      countdown--;
-      if (countdown > 0) {
-        dom.countdownElement.textContent = countdown;
-      } else {
-        clearInterval(countdownInterval);
-        dom.countdownElement.textContent = "";
-        cameraModule.takePicture();
-      }
-    }, 1000);
-  } catch (error) {
-    console.error("Error in beginCountdown:", error);
-  }
-}
+
 function clearCountdown() {
-  if (countdownInterval) {
-    clearInterval(countdownInterval);
-    countdownInterval = null;
-    dom.countdownElement.textContent = "";
-  }
+    if (countdownTimer) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+    }
+    if (dom.countdownElement) {
+        dom.countdownElement.style.display = 'none';
+    }
 }
-module.exports = { startCountdown, beginCountdown, clearCountdown };
+
+module.exports = { startCountdown, clearCountdown };

@@ -63,6 +63,14 @@ function showScreen(screenId) {
         const countdownModule = require("./countdownModule");
         countdownModule.clearCountdown();
       }
+
+      if (screenId === "camera-screen") {
+        // Автоматически запускаем отсчет при показе экрана камеры
+        setTimeout(() => {
+            const countdown = require("./countdownModule");
+            countdown.startCountdown();
+        }, 1000); // Даем секунду на инициализацию камеры
+      }
   
       const logoContainer = document.getElementById("logo-container");
       if (logoContainer) {
