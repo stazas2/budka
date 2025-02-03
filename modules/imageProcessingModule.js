@@ -58,9 +58,9 @@ async function sendDateToServer(imageData) {
     console.log("Request log saved to:", logFilePath);
 
     // Отправляем запрос, используя URL из конфига
-    const response = await fetch("http://your-server-address/api/handler/", fetchOptions)
+    const response = await fetch("http://90.156.158.209/api/handler/", fetchOptions)
       .catch(async () => {
-        return await fetch("http://backup-server/api/handler/", fetchOptions);
+        return await fetch("http://90.156.158.209/api/handler/", fetchOptions);
       });
     if (!response.ok) throw new Error("Network error: " + response.status);
     const responseData = await response.json();
@@ -86,26 +86,22 @@ async function handleServerResponse(responseData) {
     const imagesArray = Object.values(responseData)[0];
     if (imagesArray && imagesArray.length > 0) {
       const cleanedURL = imagesArray[0].replace("?image_url=", "").trim();
-      dom.resultImage.src = cleanedURL;
-      // Опционально: сохраняем полученное изображение с помощью saveUtils
-      const saveUtils = require("../utils/saveUtils");
-      await saveUtils.saveImageWithUtils("output", dom.resultImage.src);
-      dom.resultImage.onload = () => {
-        uiNavigation.showScreen("result-screen");
-        require("./printingModule").updatePrintButtonVisibility();
-      };
-      try {
-        const qrCodeData = await generateQrCodeFromURL(imagesArray[0]);
-        dom.qrCodeImage.src = qrCodeData;
-      } catch (error) {
-        console.error("Error generating QR data:", error);
+      
+      if (dom.resultImage) {
+        dom.resultImage.src = cleanedURL;
+        dom.resultImage.onload = () => {
+          uiNavigation.showScreen("result-screen");
+          const printing = require("./printingModule");
+          printing.updatePrintButtonVisibility(); // Убедимся, что это вызывается
+        };
       }
     } else {
-      alert("Не удалось получить обработанное изображение.");
-      uiNavigation.showScreen("style-screen");
+      throw new Error("No image URL in response");
     }
   } catch (error) {
     console.error("Error in handleServerResponse:", error);
+    alert("Не удалось получить обработанное изображение.");
+    uiNavigation.showScreen("style-screen");
   }
 }
 

@@ -6,12 +6,46 @@ const { config, translations } = configModule;
 const state = require("./state");
 
 function updatePrintButtonVisibility() {
-  const printButton = require("./domElements").printPhotoButton;
-  if (printButton) {
-    printButton.style.display = "block";
-  } else {
-    console.warn("Print photo button not found");
-  }
+    const printButton = dom.printPhotoButton;
+    if (printButton) {
+        console.log("Setting print button visibility");
+        printButton.style.display = config.printButtonVisible ? "block" : "none";
+        
+        // Добавляем обработчик события только при первом показе кнопки
+        if (!printButton.hasClickListener) {
+            printButton.hasClickListener = true;
+            printButton.addEventListener("click", handlePrintClick);
+        }
+    } else {
+        console.warn("Print photo button not found");
+    }
+}
+
+function handlePrintClick() {
+    console.log("Print button clicked");
+    const printButton = dom.printPhotoButton;
+    
+    if (printButton) {
+        // Блокируем кнопку и меняем текст
+        printButton.disabled = true;
+        printButton.textContent = translations[config.language.current].printButtonTextWaiting;
+        
+        // Отправляем изображение на печать
+        if (dom.resultImage && dom.resultImage.src) {
+            console.log("Sending image to print");
+            const imageData = dom.resultImage.src;
+            const isLandscape = dom.resultImage.width > dom.resultImage.height;
+            ipcRenderer.send("print-photo", { imageData, isLandscape });
+        } else {
+            console.error("No image found for printing");
+        }
+        
+        // Восстанавливаем кнопку через 4 секунды
+        setTimeout(() => {
+            printButton.disabled = false;
+            printButton.textContent = translations[config.language.current].printButtonText;
+        }, 4000);
+    }
 }
 
 if (dom.startOverButton) {
@@ -27,30 +61,15 @@ if (dom.startOverButton) {
   });
 }
 
-if (dom.printPhotoButton) {
-  dom.printPhotoButton.addEventListener("click", () => {
-    dom.printPhotoButton.disabled = true;
-    dom.printPhotoButton.textContent = translations[config.language.current].printButtonTextWaiting;
-    setTimeout(() => {
-      dom.printPhotoButton.disabled = false;
-      dom.printPhotoButton.textContent = translations[config.language.current].printButtonText;
-    }, 4000);
-    if (dom.resultImage && dom.resultImage.src) {
-      const imageData = dom.resultImage.src;
-      const isLandscape = dom.resultImage.width > dom.resultImage.height;
-      ipcRenderer.send("print-photo", { imageData, isLandscape });
-    } else {
-      console.error("Изображение для печати не найдено.");
-    }
-  });
-}
-
+// Обработчик ответа от main процесса
 ipcRenderer.on("print-photo-response", (event, success) => {
-  if (success) {
-    console.log("Печать выполнена успешно.");
-  } else {
-    console.error("Ошибка печати.");
-  }
+    console.log("Received print response:", success);
+    if (success) {
+        console.log("Printing completed successfully");
+    } else {
+        console.error("Printing failed");
+        alert("Ошибка печати. Пожалуйста, проверьте принтер.");
+    }
 });
 
 module.exports = { updatePrintButtonVisibility };
