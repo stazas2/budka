@@ -19,8 +19,8 @@ function applyTheme(theme) {
       document.documentElement.style.setProperty(
         "--background-image",
         theme === "light"
-          ? `url("${config.lightTheme.backgroundImage.replace(/\\\\/g, "/")}")`
-          : `url("${config.darkTheme.backgroundImage.replace(/\\\\/g, "/")}")`
+          ? `url("${path.join(config.basePath, config.lightTheme.backgroundImage).replace(/\\/g, "/")}")`
+          : `url("${path.join(config.basePath, config.darkTheme.backgroundImage).replace(/\\/g, "/")}")`
       );
 
       if (

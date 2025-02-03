@@ -1,4 +1,3 @@
-// -*- coding: utf-8 -*-
 const dom = require("./domElements");
 const configModule = require("./config");
 const { config } = configModule;
@@ -8,6 +7,7 @@ const uiNavigationModule = require("./uiNavigationModule");
 const canonModule = require("./canonModule");
 
 async function startCamera() {
+  console.log('Starting camera...');
   try {
     const liveViewContainer = document.getElementById("liveViewContainer");
     liveViewContainer.style.display = "none";
@@ -20,28 +20,37 @@ async function startCamera() {
       console.log(`Using resolution: ${bestResolution.width}x${bestResolution.height}`);
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          width: bestResolution.width,
-          height: bestResolution.height,
+          width: { ideal: bestResolution.width },
+          height: { ideal: bestResolution.height },
         },
       });
       state.videoStream = stream;
       dom.video.srcObject = stream;
-      await Promise.race([
-        new Promise((resolve) => {
-          dom.video.onloadedmetadata = () => {
+      const metadataPromise = new Promise((resolve) => {
+        if (dom.video.readyState >= 1) {
+          state.cameraInitialized = true;
+          console.log("Camera metadata already available");
+          resolve();
+        } else {
+          dom.video.addEventListener('loadedmetadata', () => {
             state.cameraInitialized = true;
             console.log("Camera metadata loaded successfully");
             resolve();
-          };
-        }),
+          });
+        }
+      });
+      await Promise.race([
+        metadataPromise,
         new Promise((_, reject) =>
           setTimeout(() => {
             reject(new Error("Camera initialization timed out"));
-          }, 3000)
-        ),
+          }, 5000)
+        )
       ]);
       videoContainer.classList.remove("loading");
       console.log("Camera started successfully");
+      await loadFiles();
+      console.log('Files have been loaded');
     } catch (error) {
       console.error("Camera initialization failed:", error);
       videoContainer.classList.remove("loading");
@@ -49,10 +58,17 @@ async function startCamera() {
     } finally {
       cameraBackButton.disabled = false;
     }
-  } catch (error) {
-    console.error("Error in startCamera:", error);
-    throw error;
+  } catch (err) {
+    console.error('Error starting camera:', err);
+    throw err;
   }
+}
+
+function loadFiles() {
+  return new Promise((resolve, reject) => {
+    console.log('Loading files...');
+    resolve();
+  });
 }
 
 function stopCamera() {
@@ -148,7 +164,7 @@ async function takePicture() {
 
 const resolutions = [
   { width: 1920, height: 1280 },
-  { width: 1080, height: 720 },
+  { width: 1280, height: 720 },
   { width: 640, height: 480 },
 ];
 
@@ -156,15 +172,16 @@ async function findBestResolution() {
   try {
     for (let resolution of resolutions) {
       try {
+        // Используем "ideal", чтобы не требовать точного совпадения
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            width: { exact: resolution.width },
-            height: { exact: resolution.height },
+            width: { ideal: resolution.width },
+            height: { ideal: resolution.height },
           },
         });
         stream.getTracks().forEach((track) => track.stop());
         return resolution;
-      } catch {}
+      } catch { }
     }
     throw new Error("No supported resolutions found.");
   } catch (error) {

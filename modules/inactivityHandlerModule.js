@@ -21,11 +21,15 @@ function resetInactivityTimer() {
     console.error("Error in resetInactivityTimer:", error);
   }
 }
+function startInactivityTimer() {
+  // Логика обработки неактивности
+  resetInactivityTimer();
+}
 ["click", "mousemove", "keypress", "touchstart"].forEach((event) => {
   document.addEventListener(event, resetInactivityTimer);
 });
 resetInactivityTimer();
 
 module.exports = {
-  resetInactivityTimer
+  startInactivityTimer
 };

@@ -6,12 +6,13 @@ const state = require("./state");
 async function showScreen(screenId) {
   try {
     console.log(`Switching to screen: ${screenId}`);
-    const currentActive = document.querySelector(".screen.active");
-    if (currentActive) currentActive.classList.remove("active");
-
+    // Hide all screens
+    document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+    // Find and show target screen by id
     const targetScreen = document.getElementById(screenId);
     if (targetScreen) {
-      targetScreen.classList.add("active");
+      targetScreen.classList.add('active');
+      console.log(`Screen ${screenId} is now active`);
 
       if (screenId === "style-screen") {
         dom.styleButtonsContainer.classList.add("hide-scrollbar");

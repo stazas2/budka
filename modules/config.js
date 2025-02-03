@@ -23,7 +23,7 @@ const localhost = "http://localhost:5000";
 const printLogo = config?.logoPath;
 
 module.exports = {
-  config,
+  config: require('../config.json'),
   translations,
   basePath,
   basePathName,

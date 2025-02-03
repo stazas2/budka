@@ -17,43 +17,65 @@ document.addEventListener("DOMContentLoaded", () => {
   genderHandling.setGenderImages();
 });
 
-dom.backButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const currentScreen = document.querySelector(".screen.active");
-    switch (currentScreen.id) {
-      case "style-screen":
-        state.selectedGenders = [];
-        document.querySelectorAll("#gender-buttons .button-row_item").forEach((item) => {
-          item.classList.remove("selected");
-        });
-        uiNavigationModule.showScreen("gender-screen");
-        break;
-      case "gender-screen":
-        state.selectedGenders = [];
-        document.querySelectorAll("#gender-buttons .button-row_item").forEach((item) => {
-          item.classList.remove("selected");
-        });
-        uiNavigationModule.showScreen("splash-screen");
-        break;
-      case "camera-screen":
-        if (!button.disabled && state.amountOfStyles > 1) {
-          const countdownModule = require("./countdownModule");
-          countdownModule.clearCountdown();
-          dom.countdownElement.textContent = "";
-          const cameraModule = require("./cameraModule");
-          cameraModule.stopCamera();
-          uiNavigationModule.showScreen("style-screen");
-        } else if (state.amountOfStyles === 1) {
+if (dom.backButtons && dom.backButtons.forEach) {
+  dom.backButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const currentScreen = document.querySelector(".screen.active");
+      switch (currentScreen.id) {
+        case "style-screen":
           state.selectedGenders = [];
           document.querySelectorAll("#gender-buttons .button-row_item").forEach((item) => {
             item.classList.remove("selected");
           });
           uiNavigationModule.showScreen("gender-screen");
-        }
-        break;
-    }
+          break;
+        case "gender-screen":
+          state.selectedGenders = [];
+          document.querySelectorAll("#gender-buttons .button-row_item").forEach((item) => {
+            item.classList.remove("selected");
+          });
+          uiNavigationModule.showScreen("splash-screen");
+          break;
+        case "camera-screen":
+          if (!button.disabled && state.amountOfStyles > 1) {
+            const countdownModule = require("./countdownModule");
+            countdownModule.clearCountdown();
+            dom.countdownElement.textContent = "";
+            const cameraModule = require("./cameraModule");
+            cameraModule.stopCamera();
+            uiNavigationModule.showScreen("style-screen");
+          } else if (state.amountOfStyles === 1) {
+            state.selectedGenders = [];
+            document.querySelectorAll("#gender-buttons .button-row_item").forEach((item) => {
+              item.classList.remove("selected");
+            });
+            uiNavigationModule.showScreen("gender-screen");
+          }
+          break;
+      }
+    });
   });
-});
+} else {
+  console.warn("dom.backButtons is undefined");
+}
+
+if (dom.genderButtons && dom.genderButtons.forEach) {
+  dom.genderButtons.forEach((button) => {
+    button.addEventListener("click", (event) => {
+      const gender = button.getAttribute("data-gender");
+      if (button.classList.contains("selected")) {
+        button.classList.remove("selected");
+        state.selectedGenders = state.selectedGenders.filter(g => g !== gender);
+      } else {
+        button.classList.add("selected");
+        state.selectedGenders.push(gender);
+      }
+      console.log("Selected genders:", state.selectedGenders);
+    });
+  });
+} else {
+  console.warn("dom.genderButtons is undefined");
+}
 
 window.addEventListener("resize", handleOrientationChange);
 function handleOrientationChange() {
@@ -126,30 +148,34 @@ if (dom.showResultQrBtn) {
   });
 }
 const fullscreenToggleButton = document.getElementById("fullscreen-toggle");
-let clickCount = 0;
-let clickTimer;
-fullscreenToggleButton.addEventListener("click", function () {
-  clickCount++;
-  if (clickCount === 3) {
-    clickCount = 0;
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch((err) => {
-        console.error(`Full-screen error: ${err.message}`);
-      });
-      clearTimeout(clickTimer);
-    } else {
-      document.exitFullscreen();
-      clearTimeout(clickTimer);
+if (fullscreenToggleButton) {
+  let clickCount = 0;
+  let clickTimer;
+  fullscreenToggleButton.addEventListener("click", function () {
+    clickCount++;
+    if (clickCount === 3) {
+      clickCount = 0;
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch((err) => {
+          console.error(`Full-screen error: ${err.message}`);
+        });
+        clearTimeout(clickTimer);
+      } else {
+        document.exitFullscreen();
+        clearTimeout(clickTimer);
+      }
     }
-  }
-  if (!clickTimer) {
-    clickTimer = setTimeout(() => {
-      clickCount = 0;
-    }, 500);
-  } else {
-    clearTimeout(clickTimer);
-    clickTimer = setTimeout(() => {
-      clickCount = 0;
-    }, 500);
-  }
-});
+    if (!clickTimer) {
+      clickTimer = setTimeout(() => {
+        clickCount = 0;
+      }, 500);
+    } else {
+      clearTimeout(clickTimer);
+      clickTimer = setTimeout(() => {
+        clickCount = 0;
+      }, 500);
+    }
+  });
+} else {
+  console.warn("fullscreenToggleButton is null");
+}

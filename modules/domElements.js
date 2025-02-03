@@ -1,4 +1,3 @@
-// -*- coding: utf-8 -*-
 const fs = require("fs");
 const configModule = require("./config");
 const { config } = configModule;

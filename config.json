@@ -5,7 +5,7 @@
   "brandLogoPath": "./brandLogo.png",
   "mainLogoScale": 1,
   "camera_rotation": 0,
-  "cameraMode": "pc",
+  "cameraMode": "canon",
   "isEvf": false,
   "showResultQrBtn": true,
   "allowMultipleGenderSelection": false,
@@ -33,5 +33,7 @@
   "animatedBackground": "",
   "backdropBlur": "0px",
   "allowedGenders": ["man", "woman", "boy", "girl", "group"],
-  "visibilityAgree": true
+  "visibilityAgree": true,
+  "theme": "default",
+  "otherOption": true
 }
