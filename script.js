@@ -730,7 +730,7 @@ async function sendDateToServer(imageData) {
     progressBarFill.style.width = "100%"
     progressPercentage.style.display = "none"
 
-    fetch("http://85.95.186.114/api/handler/", fetchOptions)
+    fetch("http://90.156.158.209/api/handler/", fetchOptions)
       .then((response) => {
         console.log("HTTP response status:", response.status)
         if (!response.ok) throw new Error("Network error: " + response.status)
@@ -741,7 +741,7 @@ async function sendDateToServer(imageData) {
         handleServerResponse(responseData)
       })
       .catch(() => {
-        fetch("http://90.156.158.209/api/handler/", fetchOptions)
+        fetch("http://85.95.186.114/api/handler/", fetchOptions)
           .then((response) => {
             console.log("HTTP response status:", response.status)
             if (!response.ok)
