@@ -1,35 +1,45 @@
-// -*- coding: utf-8 -*-
+// modules/inactivityHandlerModule.js
+const uiNavigation = require("./uiNavigationModule");
+const dom = require("./domElements");
 const configModule = require("./config");
 const { config } = configModule;
-const uiNavigationModule = require("./uiNavigationModule");
-const state = require("./state");
-const dom = require("./domElements");
 
-const inactivityTimeout = config.inactivityTimeout || 60000;
 let inactivityTimer;
-function resetInactivityTimer() {
-  try {
-    clearTimeout(inactivityTimer);
-    inactivityTimer = setTimeout(() => {
-      uiNavigationModule.showScreen("splash-screen");
-      state.selectedStyle = "";
-      dom.resultImage.src = "";
-      const cameraModule = require("./cameraModule");
-      cameraModule.stopCamera();
-    }, inactivityTimeout);
-  } catch (error) {
-    console.error("Error in resetInactivityTimer:", error);
-  }
-}
-function startInactivityTimer() {
-  // Логика обработки неактивности
-  resetInactivityTimer();
-}
-["click", "mousemove", "keypress", "touchstart"].forEach((event) => {
-  document.addEventListener(event, resetInactivityTimer);
-});
-resetInactivityTimer();
 
-module.exports = {
-  startInactivityTimer
-};
+function resetInactivityTimer() {
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(() => {
+    const currentScreen = document.querySelector(".screen.active");
+    if (currentScreen && currentScreen.id !== "splash-screen") {
+      // Очищаем состояние
+      if (config.cameraMode === "canon") {
+        const canonModule = require("./canonModule");
+        if (typeof canonModule.endLiveView === "function") {
+          canonModule.endLiveView();
+        }
+      } else {
+        const cameraModule = require("./cameraModule");
+        if (typeof cameraModule.stopCamera === "function") {
+          cameraModule.stopCamera();
+        }
+      }
+      
+      // Возвращаемся на начальный экран
+      uiNavigation.showScreen("splash-screen");
+      
+      // Сброс модального окна если оно открыто
+      if (dom.modal) dom.modal.style.display = "none";
+      if (dom.qrCodeImage) dom.qrCodeImage.style.display = "none";
+      if (dom.qrCodeAgree) dom.qrCodeAgree.style.display = "initial";
+    }
+  }, config.inactivityTimeout);
+}
+
+function startInactivityTimer() {
+  resetInactivityTimer();
+  ["click", "mousemove", "keypress", "touchstart"].forEach((event) => {
+    document.addEventListener(event, resetInactivityTimer);
+  });
+}
+
+module.exports = { startInactivityTimer };

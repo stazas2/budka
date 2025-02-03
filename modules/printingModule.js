@@ -1,4 +1,4 @@
-// -*- coding: utf-8 -*-
+// modules/printingModule.js
 const { ipcRenderer } = require("electron");
 const dom = require("./domElements");
 const configModule = require("./config");
@@ -6,21 +6,22 @@ const { config, translations } = configModule;
 const state = require("./state");
 
 function updatePrintButtonVisibility() {
-  if (config.printButtonVisible) {
-    dom.printPhotoButton.style.display = "block";
+  const printButton = require("./domElements").printPhotoButton;
+  if (printButton) {
+    printButton.style.display = "block";
   } else {
-    dom.printPhotoButton.style.display = "none";
+    console.warn("Print photo button not found");
   }
 }
 
 if (dom.startOverButton) {
   dom.startOverButton.addEventListener("click", () => {
-    const uiNavigationModule = require("./uiNavigationModule");
+    const uiNavigation = require("./uiNavigationModule");
     state.selectedStyle = "";
     dom.resultImage.src = "";
     const cameraModule = require("./cameraModule");
     cameraModule.stopCamera();
-    uiNavigationModule.showScreen("splash-screen");
+    uiNavigation.showScreen("splash-screen");
     dom.qrCodeImage.style.display = "none";
     dom.qrCodeAgree.style.display = "initial";
   });
@@ -29,36 +30,27 @@ if (dom.startOverButton) {
 if (dom.printPhotoButton) {
   dom.printPhotoButton.addEventListener("click", () => {
     dom.printPhotoButton.disabled = true;
-    dom.printPhotoButton.textContent =
-      translations[config.language.current].printButtonTextWaiting;
+    dom.printPhotoButton.textContent = translations[config.language.current].printButtonTextWaiting;
     setTimeout(() => {
       dom.printPhotoButton.disabled = false;
-      dom.printPhotoButton.textContent =
-        translations[config.language.current].printButtonText;
+      dom.printPhotoButton.textContent = translations[config.language.current].printButtonText;
     }, 4000);
-
     if (dom.resultImage && dom.resultImage.src) {
       const imageData = dom.resultImage.src;
       const isLandscape = dom.resultImage.width > dom.resultImage.height;
-      console.log(`isLandscape: ${isLandscape}: ${dom.resultImage.width}x${dom.resultImage.height}`);
-      ipcRenderer.send("print-photo", {
-        imageData: imageData,
-        isLandscape,
-      });
+      ipcRenderer.send("print-photo", { imageData, isLandscape });
     } else {
-      console.error("Image not found for printing.");
+      console.error("Изображение для печати не найдено.");
     }
   });
 }
 
 ipcRenderer.on("print-photo-response", (event, success) => {
   if (success) {
-    console.log("Print job completed successfully.");
+    console.log("Печать выполнена успешно.");
   } else {
-    console.error("Print job failed.");
+    console.error("Ошибка печати.");
   }
 });
 
-module.exports = {
-  updatePrintButtonVisibility
-};
+module.exports = { updatePrintButtonVisibility };

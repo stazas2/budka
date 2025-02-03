@@ -3,9 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'"> -->
     <title>Фотобудка</title>
-    <!-- Подключаем шрифт Google Fonts -->
     <link rel="stylesheet" href="./styles.css" />
     <link
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
@@ -18,21 +16,18 @@
       <img src="" alt="Логотип" id="logo" />
     </div>
     <div id="fullscreen-toggle"></div>
-    
-    <div id="loading-screen" class="screen active">
-      <h1>Loading camera...</h1>
-    </div>
-    <!-- Экраны -->
-    <div id="splash-screen" class="screen">
+
+    <!-- Экран заставки / сплэш -->
+    <div id="splash-screen" class="screen active">
       <h1></h1>
-      <button id="start-button"></button>
+      <button id="start-button">Начать</button>
       <label class="start-text">
         <input type="checkbox" id="agreement-checkbox" checked />
         <span class="custom-checkbox"></span>
         <span class="custom-checkbox-text">
-          Нажимая на кнопку «Начать» <br />вы даете
-          <span class="custom-checkbox-qr">согласиe</span> на использование
-          вашего фото в коммерческих целях
+          Нажимая на кнопку «Начать» <br />
+          вы даёте <span class="custom-checkbox-qr">согласие</span> на использование
+          вашего фото в коммерческих целях
         </span>
       </label>
       <label class="theme-switcher">
@@ -41,40 +36,17 @@
       </label>
     </div>
 
+    <!-- Экран выбора пола -->
     <div id="gender-screen" class="screen">
       <button class="back-button"></button>
       <h1></h1>
       <div id="gender-buttons">
-        <div class="button-row">
-          <div class="button-row_block">
-            <div class="button-row_item">
-              <img id="gender-man" data-gender="man" class="invert-image" alt="Мужчина" />
-              <div class="button" data-gender="man">Мужчина</div>
-            </div>
-            <div class="button-row_item">
-              <img id="gender-woman" data-gender="woman" class="invert-image" alt="Женщина" />
-              <div class="button" data-gender="woman">Женщина</div>
-            </div>
-          </div>
-          <div class="button-row_block">
-            <div class="button-row_item">
-              <img id="gender-boy" data-gender="boy" class="invert-image" alt="Мальчик" />
-              <div class="button" data-gender="boy">Мальчик</div>
-            </div>
-            <div class="button-row_item">
-              <img id="gender-girl" data-gender="girl" class="invert-image" alt="Девочка" />
-              <div class="button" data-gender="girl">Девочка</div>
-            </div>
-          </div>
-          <div class="button-row_item button-row_item-last">
-            <img id="gender-group" data-gender="group" class="invert-image" alt="Групповое фото" />
-            <div class="button" data-gender="group">Групповое фото</div>
-          </div>
-        </div>
-        <button id="gender-continue"></button>
+        <!-- Кнопки гендеров будут созданы динамически -->
       </div>
+      <button id="gender-continue"></button>
     </div>
 
+    <!-- Экран выбора стиля -->
     <div id="style-screen" class="screen">
       <button class="back-button"></button>
       <div class="style-block">
@@ -85,6 +57,7 @@
       </div>
     </div>
 
+    <!-- Экран камеры -->
     <div id="camera-screen" class="screen">
       <button class="back-button" disabled></button>
       <h1></h1>
@@ -101,6 +74,7 @@
       </div>
     </div>
 
+    <!-- Экран обработки -->
     <div id="processing-screen" class="screen">
       <h1></h1>
       <div id="progress-bar">
@@ -110,6 +84,7 @@
       <div id="progress-percentage">0%</div>
     </div>
 
+    <!-- Экран результата -->
     <div id="result-screen" class="screen">
       <h1></h1>
       <div class="content-container">
@@ -125,6 +100,7 @@
       </div>
     </div>
 
+    <!-- Модальное окно для QR -->
     <div id="qr-modal" class="modal">
       <div class="modal-content">
         <span class="close-modal">&times;</span>
@@ -136,61 +112,6 @@
     <button id="language-switcher" style="display: none">KK</button>
     <canvas id="canvas" width="1280" height="720" style="display: none"></canvas>
 
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        console.log('DOMContentLoaded fired');
-        try {
-          const { ipcRenderer } = require("electron");
-          const fs = require("fs");
-          const path = require("path");
-
-          // Импорт модулей
-          const configModule = require("./modules/config");
-          const { config } = configModule;
-          const domElements = require("./modules/domElements");
-          const state = require("./modules/state");
-          const styleHandling = require("./modules/styleHandling");
-          const genderHandling = require("./modules/genderHandling");
-          const cameraModule = require("./modules/cameraModule");
-          const countdownModule = require("./modules/countdownModule");
-          const imageProcessingModule = require("./modules/imageProcessingModule");
-          const uiNavigationModule = require("./modules/uiNavigationModule");
-          const printingModule = require("./modules/printingModule");
-          const localizationModule = require("./modules/localizationModule");
-          const themeHandling = require("./modules/themeHandlingModule");
-          const inactivityHandlerModule = require("./modules/inactivityHandlerModule");
-          const canonModule = require("./modules/canonModule");
-          const eventListeners = require("./modules/eventListeners");
-
-          const { loadConfig } = require("./utils/configLoader");
-          const { saveImageWithUtils } = require("./utils/saveUtils");
-          const QRCode = require("qrcode");
-          const { showScreen } = uiNavigationModule;
-
-          // Применяем тему и настройки
-          themeHandling.applyTheme(config.theme || "light");
-          themeHandling.applySettings();
-          inactivityHandlerModule.startInactivityTimer();
-          showScreen('splash-screen');
-
-          // Инициализация камеры и переход на экран камеры при успехе
-          cameraModule.startCamera()
-            .then(() => {
-              console.log('Camera initialization succeeded');
-              uiNavigationModule.showScreen('camera-screen');
-            })
-            .catch(err => console.error('Camera initialization error:', err));
-
-            // инициализация модуля камеры
-            // выбор пол
-            // отправка на сервер
-            // показ фотки
-            // печать
-            // возврат на начало
-        } catch (error) {
-          console.error("Error during initialization:", error);
-        }
-      });
-    </script>
+    <script src="./script.js" defer></script>
   </body>
 </html>

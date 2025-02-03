@@ -1,4 +1,4 @@
-// -*- coding: utf-8 -*-
+// modules/localizationModule.js
 const dom = require("./domElements");
 const configModule = require("./config");
 const { config, translations } = configModule;
@@ -8,16 +8,14 @@ function updateTexts() {
   try {
     const texts = translations[config.language.current];
     if (!texts) return;
-
     const screenTitles = {
       "splash-screen": texts.welcomeMessage,
       "style-screen": texts.styleScreenTitle,
       "gender-screen": texts.genderScreenTitle,
       "camera-screen": texts.cameraScreenTitle,
       "processing-screen": texts.processingScreenTitle,
-      "result-screen": texts.resultScreenTitle,
+      "result-screen": texts.resultScreenTitle
     };
-
     for (const [screenId, titleText] of Object.entries(screenTitles)) {
       const screen = document.getElementById(screenId);
       if (screen) {
@@ -27,54 +25,39 @@ function updateTexts() {
         }
       }
     }
-
     if (dom.startButton) {
       dom.startButton.textContent = texts.startButtonText;
     }
-
-    if (dom.continueButton) {
-      dom.continueButton.textContent = texts.continueButtonText;
+    const continueButton = document.getElementById("gender-continue");
+    if (continueButton) {
+      continueButton.textContent = texts.continueButtonText;
     }
-
     if (dom.showResultQrBtn) {
       dom.showResultQrBtn.textContent = texts.showResultQrBtn;
     }
-
-    const backButtons = document.querySelectorAll(".back-button");
-    backButtons.forEach((button) => {
-      button.textContent = texts.backButtonText;
-    });
-
     if (dom.printPhotoButton) {
       dom.printPhotoButton.textContent = texts.printButtonText;
     }
-
     if (dom.startOverButton) {
       dom.startOverButton.textContent = texts.startOverButtonText;
     }
-
-    const loaderText = document.getElementsByClassName("loader-text");
-    if (loaderText) {
-      [...loaderText].forEach((el) => (el.textContent = texts.loaderText));
+    const loaderTexts = document.getElementsByClassName("loader-text");
+    if (loaderTexts) {
+      [...loaderTexts].forEach((el) => (el.textContent = texts.loaderText));
     }
-
     const genderButtons = document.querySelectorAll("#gender-buttons .button");
     genderButtons.forEach((button) => {
       const genderKey = button.getAttribute("data-gender");
       button.textContent = texts.genders[genderKey];
     });
-
     if (dom.languageSwitcher) {
       dom.languageSwitcher.textContent = config.language.current === "ru" ? "KK" : "RU";
-      dom.languageSwitcher.style.display = config.language?.showSwitcher ? "block" : "none";
+      dom.languageSwitcher.style.display = config.language.showSwitcher ? "block" : "none";
     }
-
     printingModule.updatePrintButtonVisibility();
   } catch (error) {
     console.error("Error in updateTexts:", error);
   }
 }
 
-module.exports = {
-  updateTexts
-};
+module.exports = { updateTexts };

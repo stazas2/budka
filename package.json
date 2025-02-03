@@ -1,63 +1,26 @@
 {
-  "name": "photobooth-electron",
-  "version": "1.0.0",
-  "description": "Photobooth application using Electron",
-  "main": "main.js",
-  "scripts": {
-    "start": "electron .",
-    "build": "electron-builder"
-  },
-  "author": "MosPhotoBooth",
-  "license": "MIT",
-  "dependencies": {
-    "child_process": "^1.0.2",
-    "iconv-lite": "^0.6.3",
-    "pdf-lib": "^1.17.1",
-    "pdf-to-printer": "^5.6.0",
-    "pdfkit": "^0.16.0",
-    "qrcode": "^1.5.4",
-    "systeminformation": "^5.23.5"
-  },
-  "devDependencies": {
-    "electron": "^25.9.8",
-    "electron-builder": "^24.13.3"
-  },
-  "build": {
-    "appId": "com.yourcompany.photobooth",
-    "productName": "PhotoBooth",
-    "files": [
-      "**/*",
-      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
-      "!**/node_modules/.bin",
-      "!**/*.{o,hprof,orig,pyc,pyo,rbc}",
-      "!**/._*",
-      "!**/electron-builder.{yaml,yml,json,json5,toml}",
-      "!**/node_modules/electron*",
-      "!**/node_modules/@types",
-      "!**/node_modules/.bin",
-      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
-      "!**/test{,s}/**",
-      "!**/tests/**",
-      "!**/*.map",
-      "!**/src/**/*.ts",
-      "!**/typings/**/*.d.ts",
-      "!**/typings"
-    ],
-    "win": {
-      "target": [
-        "nsis",
-        "portable"
-      ],
-      "icon": "build/icon.ico",
-      "signAndEditExecutable": false,
-      "certificateFile": null
-    },
-    "directories": {
-      "buildResources": "build"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true
-    }
-  }
-}
+   "name": "photobooth-electron",
+   "version": "1.0.0",
+   "description": "Photobooth application using Electron",
+   "main": "main.js",
+   "scripts": {
+     "start": "electron .",
+     "build": "electron-builder"
+   },
+   "author": "MosPhotoBooth",
+   "license": "MIT",
+   "dependencies": {
+     "child_process": "^1.0.2",
+     "iconv-lite": "^0.6.3",
+     "pdf-lib": "^1.17.1",
+     "pdf-to-printer": "^5.6.0",
+     "pdfkit": "^0.16.0",
+     "qrcode": "^1.5.4",
+     "systeminformation": "^5.23.5"
+   },
+   "devDependencies": {
+     "electron": "^25.9.8",
+     "electron-builder": "^24.13.3"
+   }
+ }
+ 

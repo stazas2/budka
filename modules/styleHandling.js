@@ -1,116 +1,53 @@
+// modules/styleHandling.js
 const fs = require("fs");
 const path = require("path");
-const { ipcRenderer } = require("electron");
-const configModule = require("./config");
-const { config, stylesDir } = configModule;
-const dom = require("./domElements");
 const state = require("./state");
+const dom = require("./domElements");
+const configModule = require("./config");
+const { config } = configModule;
+const uiNavigation = require("./uiNavigationModule");
 
-function initStyleButtons(parsedStyles) {
-  try {
-    const uniqueStyles = parsedStyles.filter(
-      (style, index, self) =>
-        index === self.findIndex((s) => s.originalName === style.originalName)
-    );
-    console.log("Отфильтрованные стили: ", uniqueStyles);
-    state.amountOfStyles = uniqueStyles.length;
-
-    if (!dom.styleButtonsContainer) {
-      console.error("Element style-buttons not found.");
-      return;
+function initStyleButtons() {
+    console.log("=== Style Initialization Start ===");
+    
+    const container = document.getElementById("style-buttons");
+    if (!container) {
+        console.error("Style buttons container not found!");
+        return;
     }
-    dom.styleButtonsContainer.innerHTML = "";
-
-    if (state.amountOfStyles > 1) {
-      uniqueStyles.forEach((style, index) => {
-        const button = document.createElement("div");
-        button.classList.add("button");
-        button.setAttribute("data-style", style.originalName);
-
+    
+    container.innerHTML = "";
+    
+    if (!config.styles || !Array.isArray(config.styles)) {
+        console.error("Invalid styles configuration:", config.styles);
+        return;
+    }
+    
+    config.styles.forEach(style => {
+        console.log(`Creating button for style: ${style.id}`);
+        const button = document.createElement("button");
+        button.className = "style-button";
+        button.dataset.style = style.id;
+        
         const img = document.createElement("img");
-        const sanitizedDisplayName = style.displayName
-          .replace(/\s*\(.*?\)/g, "")
-          .replace(/\s+/g, "_")
-          .replace(/[^\w\-]+/g, "");
-
-        let imagePath = null;
-        for (const gender of state.selectedGenders) {
-          const styleFolderPath = path.join(stylesDir, gender, style.originalName);
-          const imageFileNamePrefix = `1${sanitizedDisplayName}`;
-          const extensions = [".jpg", ".png", ".jpeg"];
-          for (const ext of extensions) {
-            const possiblePath = path.join(styleFolderPath, imageFileNamePrefix + ext);
-            if (fs.existsSync(possiblePath)) {
-              imagePath = possiblePath;
-              break;
-            }
-          }
-          if (imagePath) break;
-        }
-
-        if (imagePath) {
-          img.src = imagePath;
-        } else {
-          console.error(`Image not found for style: ${style.originalName}`);
-          img.src = `${stylesDir}/default.png`;
-        }
-        img.alt = style.displayName;
-        const label = document.createElement("div");
-        const match = style.displayName.match(/\(([^)]+)\)/);
-
-        if (config.showStyleNames) {
-          label.textContent = match ? match[1] : style.displayName;
-        } else {
-          label.textContent = "";
-        }
-
+        img.src = `./styles/${style.image}`;
+        img.alt = style.label;
+        
+        img.onerror = () => {
+            console.error(`Failed to load style image: ${img.src}`);
+            img.style.display = 'none';
+        };
+        
         button.appendChild(img);
-        button.appendChild(label);
-        console.log(`Style button created: ${style}`);
-
         button.addEventListener("click", () => {
-          state.selectedStyle = style.originalName.replace(/\s*\(.*?\)/g, "");
-          state.nameDisplay = style.originalName;
-          require("./uiNavigationModule").showScreen("camera-screen");
-          console.log(`Style selected: ${state.selectedStyle}`);
+            console.log(`Selected style: ${style.id}`);
+            uiNavigation.showScreen("camera-screen");
         });
-
-        button.style.animationDelay = `${index * 0.3}s`;
-        dom.styleButtonsContainer.appendChild(button);
-      });
-    } else if (state.amountOfStyles === 0) {
-      alert(`No styles found for the ${state.selectedGenders}`);
-      require("./uiNavigationModule").showScreen("gender-screen");
-    } else {
-      state.selectedStyle = uniqueStyles[0].originalName.replace(/\s*\(.*?\)/g, "");
-      state.nameDisplay = uniqueStyles[0].originalName;
-      require("./uiNavigationModule").showScreen("camera-screen");
-      console.log(`Style selected: ${state.selectedStyle}`);
-    }
-  } catch (error) {
-    console.error("Error in initStyleButtons:", error);
-  }
+        
+        container.appendChild(button);
+    });
+    
+    console.log("=== Style Initialization Complete ===");
 }
 
-function fetchStyles() {
-  try {
-    const { ipcRenderer } = require("electron");
-    ipcRenderer
-      .invoke("get-styles", state.selectedGenders)
-      .then((styles) => {
-        console.log("Показаны стили:", styles);
-        initStyleButtons(styles);
-      })
-      .catch((error) => {
-        console.error("Ошибка при загрузке стилей:", error);
-        alert("Не удалось загрузить стили. Попробуйте позже.");
-      });
-  } catch (error) {
-    console.error("Ошибка в fetchStyles:", error);
-  }
-}
-
-module.exports = {
-  initStyleButtons,
-  fetchStyles
-};
+module.exports = { initStyleButtons };

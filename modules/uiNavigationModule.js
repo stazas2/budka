@@ -1,18 +1,17 @@
 const dom = require("./domElements");
+const state = require("./state");
 const configModule = require("./config");
 const { config } = configModule;
-const state = require("./state");
 
-async function showScreen(screenId) {
+function showScreen(screenId) {
   try {
     console.log(`Switching to screen: ${screenId}`);
-    // Hide all screens
-    document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
-    // Find and show target screen by id
+    // Скрываем все экраны
+    document.querySelectorAll(".screen").forEach((screen) => screen.classList.remove("active"));
+    // Находим и показываем целевой экран по id
     const targetScreen = document.getElementById(screenId);
     if (targetScreen) {
-      targetScreen.classList.add('active');
-      console.log(`Screen ${screenId} is now active`);
+      targetScreen.classList.add("active");
 
       if (screenId === "style-screen") {
         dom.styleButtonsContainer.classList.add("hide-scrollbar");
@@ -25,14 +24,28 @@ async function showScreen(screenId) {
 
       if (screenId === "splash-screen") {
         state.selectedStyle = "";
-        dom.resultImage.src = "";
-        const cameraModule = require("./cameraModule");
-        cameraModule.stopCamera();
-        dom.modal.style.display = "none";
-        dom.qrCodeImage.style.display = "none";
-        dom.qrCodeAgree.style.display = "initial";
+        if (dom.resultImage) {
+          dom.resultImage.src = "";
+        } else {
+          console.warn("resultImage element not found");
+        }
+        if (config.cameraMode === "canon") {
+          const canonModule = require("./canonModule");
+          if (typeof canonModule.endLiveView === "function") {
+            canonModule.endLiveView();
+          }
+        } else {
+          const cameraModule = require("./cameraModule");
+          if (typeof cameraModule.stopCamera === "function") {
+            cameraModule.stopCamera();
+          }
+        }
+        if (dom.modal) dom.modal.style.display = "none";
+        if (dom.qrCodeImage) dom.qrCodeImage.style.display = "none";
+        if (dom.qrCodeAgree) dom.qrCodeAgree.style.display = "initial";
       }
-
+  
+      // Настройка кнопки "Назад"
       const backButton = targetScreen.querySelector(".back-button");
       if (backButton) {
         if (screenId === "splash-screen" || screenId === "processing-screen") {
@@ -45,58 +58,30 @@ async function showScreen(screenId) {
           backButton.style.display = "block";
         }
       }
-
-      if (screenId === "result-screen") {
-        dom.resultTitle.style.display = "block";
-      } else {
-        dom.resultTitle.style.display = "none";
+  
+      if (screenId !== "camera-screen") {
+        const countdownModule = require("./countdownModule");
+        countdownModule.clearCountdown();
       }
-
-      if (screenId === "camera-screen") {
-        if (config.cameraMode === "canon") {
-          dom.video.style.display = "none";
-          const liveViewContainer = document.getElementById("liveViewContainer");
-          liveViewContainer.style.display = "block";
-          const countdownModule = require("./countdownModule");
-          countdownModule.startCountdown();
+  
+      const logoContainer = document.getElementById("logo-container");
+      if (logoContainer) {
+        if (screenId === "camera-screen" || screenId === "result-screen") {
+          logoContainer.style.display = "none";
         } else {
-          const cameraModule = require("./cameraModule");
-          cameraModule.startCamera()
-            .then(() => {
-              const countdownModule = require("./countdownModule");
-              countdownModule.startCountdown();
-            })
-            .catch((err) => {
-              alert("Unable to access the webcam.");
-              console.log("Error: " + err);
-              state.amountOfStyles === 1
-                ? showScreen("gender-screen")
-                : showScreen("style-screen");
-            });
+          logoContainer.style.display = config.brandLogoPath ? "block" : "none";
         }
+      } else {
+        console.warn("Logo container not found");
       }
     } else {
       console.error(`Screen with ID "${screenId}" not found.`);
-    }
-
-    if (screenId !== "camera-screen") {
-      const countdownModule = require("./countdownModule");
-      countdownModule.clearCountdown();
-    }
-
-    const logoContainer = document.getElementById("logo-container");
-    if (screenId === "camera-screen" || screenId === "result-screen") {
-      logoContainer.style.display = "none";
-    } else {
-      if (config.brandLogoPath) {
-        logoContainer.style.display = "block";
-      }
     }
   } catch (error) {
     console.error(`Error in showScreen (${screenId}):`, error);
   }
 }
 
-module.exports = {
-  showScreen
-};
+// Удалён дублирующий код showScreen
+
+module.exports = { showScreen };

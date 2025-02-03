@@ -1,156 +1,113 @@
-// -*- coding: utf-8 -*-
-const configModule = require("./config");
-const { config, localhost } = configModule;
+// modules/cameraModule.js
+const state = require("./state");
 const dom = require("./domElements");
-const fs = require("fs");
-const path = require("path");
+const configModule = require("./config");
+const { config } = configModule;
+const imageProcessing = require("./imageProcessingModule");
+const uiNavigation = require("./uiNavigationModule");
+const canonModule = require("./canonModule");
 
-let liveViewInterval;
-let lastLiveViewUpdate = null;
-let isFetchingLiveView = false;
-
-const noResponseWarning = document.createElement("p");
-noResponseWarning.style.color = "red";
-noResponseWarning.textContent = "Давно не было ответа от Live View.";
-noResponseWarning.style.display = "none";
-
-const liveViewImage = document.getElementById("liveViewImage");
-const liveViewContainer = document.getElementById("liveViewContainer");
-
-let cameraMode = config.cameraMode;
-if (!cameraMode) {
-  cameraMode = "pc";
-}
-let isEvf = config.isEvf;
-
-function applyRotationStyles() {
+async function startCamera() {
+  console.log("Starting camera...");
   try {
-    const videoElement = document.getElementById("video");
-    const resultImage = document.getElementById("result-image");
-    if (videoElement) {
-      videoElement.style.transform = `rotate(${config.camera_rotation}deg)`;
-      console.log(`Camera rotation set to ${config.camera_rotation} degrees.`);
-    }
-    if (resultImage) {
-      const finalRotation = (config.final_image_rotation !== undefined) ? config.final_image_rotation : 0;
-      resultImage.style.transform = `rotate(${finalRotation}deg)`;
-      console.log(`Final image rotation set to ${finalRotation} degrees.`);
-    }
-  } catch (error) {
-    console.error("Error in applyRotationStyles:", error);
-  }
-}
-applyRotationStyles();
-
-async function startLiveView() {
-  isEvf = true;
-  try {
-    await fetch(`${localhost}/api/post/evf/start`, { method: "POST" });
-    liveViewInterval = setInterval(updateLiveView, 100);
-    lastLiveViewUpdate = Date.now();
-    noResponseWarning.style.display = "none";
-  } catch (error) {
-    console.error("Ошибка при включении Live View:", error);
-  }
-}
-
-async function endLiveView() {
-  isEvf = false;
-  try {
-    await fetch(`${localhost}/api/post/evf/end`, { method: "POST" });
-    clearInterval(liveViewInterval);
-    liveViewImage.style.display = "none";
-    noResponseWarning.style.display = "none";
-  } catch (error) {
-    console.error("Ошибка при выключении Live View:", error);
-  }
-}
-
-async function updateLiveView() {
-  if (isFetchingLiveView) return;
-  isFetchingLiveView = true;
-  try {
-    const response = await fetch(`${localhost}/api/get/live-view`);
-    if (response.ok) {
-      const blob = await response.blob();
-      liveViewImage.src = URL.createObjectURL(blob);
-      liveViewImage.style.display = "block";
-      liveViewImage.onload = () => URL.revokeObjectURL(liveViewImage.src);
-      lastLiveViewUpdate = Date.now();
-      noResponseWarning.style.display = "none";
-      window.lastCapturedBlob = blob;
-    }
-  } catch (error) {
-    console.error("Ошибка live view:", error);
-  } finally {
-    isFetchingLiveView = false;
-  }
-}
-
-async function reconnect() {
-  const wasEvfActive = isEvf;
-  try {
-    if (wasEvfActive) {
-      console.log("Выключаем EVF перед реконнектом...");
-      await endLiveView();
-      console.log("EVF выключен.");
-    }
-    console.log("Реконнект...");
-    await fetch(`${localhost}/api/post/reconnect`, { method: "POST" });
-    console.log("Реконнект успешен.");
-    if (wasEvfActive) {
-      console.log("Ждем 3 секунд перед включением EVF...");
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-      console.log("Включаем EVF после реконнекта...");
-      await startLiveView();
-      console.log("EVF включен.");
-    }
-  } catch (error) {
-    console.error("Ошибка реконнекта:", error);
-  }
-}
-
-async function capture() {
-  try {
-    const response = await fetch(`${localhost}/api/post/capture-image/capture`, {
-      method: "POST",
-    });
-    const data = await response.json();
-    if (response.ok) {
-      console.log("Снимок сделан успешно");
+    const videoContainer = document.querySelector(".video-container");
+    videoContainer.classList.add("loading");
+    if (config.cameraMode === "canon") {
+      await canonModule.startLiveView();
     } else {
-      console.log(`Ошибка: ${data.error}`);
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      state.videoStream = stream;
+      dom.video.srcObject = stream;
+      await new Promise((resolve, reject) => {
+        if (dom.video.readyState >= 1) {
+          state.cameraInitialized = true;
+          resolve();
+        } else {
+          dom.video.addEventListener("loadedmetadata", () => {
+            state.cameraInitialized = true;
+            resolve();
+          });
+          setTimeout(() => reject(new Error("Camera initialization timeout")), 5000);
+        }
+      });
     }
+    videoContainer.classList.remove("loading");
+    console.log("Camera started successfully");
   } catch (error) {
-    console.error("Ошибка:", error);
+    console.error("Camera initialization failed:", error);
+    throw error;
   }
 }
 
-function getLatestImage(folderPath) {
+function stopCamera() {
   try {
-    const files = fs
-      .readdirSync(folderPath)
-      .map((file) => ({
-        name: file,
-        time: fs.statSync(path.join(folderPath, file)).mtime.getTime(),
-      }))
-      .sort((a, b) => b.time - a.time);
-    if (files.length === 0) {
-      console.error("Папка пуста.");
-      return null;
+    if (state.videoStream) {
+      state.videoStream.getTracks().forEach((track) => track.stop());
+      dom.video.srcObject = null;
+      state.videoStream = null;
+      state.cameraInitialized = false;
+      console.log("Camera stopped");
     }
-    return path.join(folderPath, files[0].name);
   } catch (error) {
-    console.error("Ошибка при поиске файлов:", error);
-    return null;
+    console.error("Error stopping camera:", error);
   }
 }
 
-module.exports = {
-  startLiveView,
-  endLiveView,
-  updateLiveView,
-  reconnect,
-  capture,
-  getLatestImage
-};
+async function takePicture() {
+  try {
+    if (config.cameraMode === "canon") {
+      await canonModule.capture();
+      if (!window.lastCapturedBlob) {
+        console.warn("Нет доступного изображения от камеры Canon");
+        return;
+      }
+      const imageUrl = URL.createObjectURL(window.lastCapturedBlob);
+      const img = new Image();
+      img.src = imageUrl;
+      await new Promise((resolve) => (img.onload = resolve));
+      const canvasElem = document.createElement("canvas");
+      const ctx = canvasElem.getContext("2d");
+      const rotationAngle = config.send_image_rotation || 0;
+      if (rotationAngle === 90 || rotationAngle === 270) {
+        canvasElem.width = img.height;
+        canvasElem.height = img.width;
+      } else {
+        canvasElem.width = img.width;
+        canvasElem.height = img.height;
+      }
+      ctx.save();
+      ctx.translate(canvasElem.width / 2, canvasElem.height / 2);
+      ctx.rotate((rotationAngle * Math.PI) / 180);
+      ctx.drawImage(img, -img.width / 2, -img.height / 2, img.width, img.height);
+      ctx.restore();
+      const rotatedData = canvasElem.toDataURL("image/png");
+      URL.revokeObjectURL(imageUrl);
+      await imageProcessing.sendDateToServer(rotatedData);
+    } else {
+      const ctx = dom.canvas.getContext("2d");
+      const rotationAngle = config.send_image_rotation || 0;
+      if (rotationAngle === 90 || rotationAngle === 270) {
+        dom.canvas.width = dom.video.videoHeight;
+        dom.canvas.height = dom.video.videoWidth;
+      } else {
+        dom.canvas.width = dom.video.videoWidth;
+        dom.canvas.height = dom.video.videoHeight;
+      }
+      ctx.clearRect(0, 0, dom.canvas.width, dom.canvas.height);
+      ctx.save();
+      ctx.translate(dom.canvas.width / 2, dom.canvas.height / 2);
+      ctx.rotate((rotationAngle * Math.PI) / 180);
+      ctx.drawImage(dom.video, -dom.video.videoWidth / 2, -dom.video.videoHeight / 2, dom.video.videoWidth, dom.video.videoHeight);
+      ctx.restore();
+      stopCamera();
+      const imageData = dom.canvas.toDataURL("image/jpeg", 1.0);
+      await imageProcessing.sendDateToServer(imageData);
+    }
+  } catch (error) {
+    console.error("Error taking picture:", error);
+    alert("Не удалось сделать снимок.");
+    uiNavigation.showScreen("style-screen");
+  }
+}
+
+module.exports = { startCamera, stopCamera, takePicture };

@@ -1,19 +1,17 @@
-// -*- coding: utf-8 -*-
+// modules/countdownModule.js
 const dom = require("./domElements");
 const configModule = require("./config");
 const { config } = configModule;
+const state = require("./state");
 const cameraModule = require("./cameraModule");
-const uiNavigationModule = require("./uiNavigationModule");
-let countdownInterval;
+const uiNavigation = require("./uiNavigationModule");
 
+let countdownInterval;
 function startCountdown() {
   try {
-    const state = require("./state");
     if (!state.cameraInitialized && config.cameraMode === "pc") {
-      console.log("Camera not ready, waiting for initialization...");
       dom.video.onloadedmetadata = () => {
         state.cameraInitialized = true;
-        console.log("Camera initialized, starting countdown");
         beginCountdown();
       };
     } else {
@@ -23,32 +21,24 @@ function startCountdown() {
     console.error("Error in startCountdown:", error);
   }
 }
-
 function beginCountdown() {
   try {
     let countdown = config.prePhotoTimer || 5;
-    const backButton = document.querySelector("#camera-screen .back-button");
     dom.countdownElement.textContent = countdown;
-    countdownInterval = setInterval(async () => {
+    countdownInterval = setInterval(() => {
       countdown--;
       if (countdown > 0) {
         dom.countdownElement.textContent = countdown;
-        backButton.style.opacity = "1";
-        if (countdown <= 2 && backButton) {
-          backButton.disabled = true;
-          backButton.style.opacity = "0.5";
-        }
       } else {
         clearInterval(countdownInterval);
         dom.countdownElement.textContent = "";
-        await cameraModule.takePicture();
+        cameraModule.takePicture();
       }
     }, 1000);
   } catch (error) {
     console.error("Error in beginCountdown:", error);
   }
 }
-
 function clearCountdown() {
   if (countdownInterval) {
     clearInterval(countdownInterval);
@@ -56,9 +46,4 @@ function clearCountdown() {
     dom.countdownElement.textContent = "";
   }
 }
-
-module.exports = {
-  startCountdown,
-  beginCountdown,
-  clearCountdown
-};
+module.exports = { startCountdown, beginCountdown, clearCountdown };

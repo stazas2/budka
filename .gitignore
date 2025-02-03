@@ -16,3 +16,5 @@ canon/SavedPhotos
 canon/Server/pathExe.txt
 canon/Camera/camera_log.txt
 canon/Camera/image.jpg
+
+styles/**
