@@ -11,3 +11,8 @@ node_modules
 dist
 dist-ssr
 *.local
+canon/SavedPhotos
+# не игнорируются
+canon/Server/pathExe.txt
+canon/Camera/camera_log.txt
+canon/Camera/image.jpg

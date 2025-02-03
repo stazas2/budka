@@ -130,7 +130,7 @@ function applyRotationStyles() {
     console.error("Error in applyRotationStyles:", error)
   }
 }
-  applyRotationStyles()
+applyRotationStyles()
 
 //* ================ STYLE HANDLING MODULE ================
 // === Управление стилями ===
@@ -437,74 +437,76 @@ async function takePicture() {
   let imageData = null
 
   try {
+    // if (cameraMode === "canon") {
     if (cameraMode === "canon") {
       try {
-        // // ! todo
-        // imageData = getLatestImage(imagesFolder)
-        // await capture()
-        // // Добавление таймера для корректной обр-ки фото
-        // // setTimeout(() => {
-        // //   imageData = getLatestImage(imagesFolder)
-        // // }, 2000)
+        await capture();
 
-        // // console.log("Фото: \n" + imageData)
+        if (!window.lastCapturedBlob) {
+          console.warn("No captured blob available; falling back to SavedPhotos.");
+          return;
+        }
+      
+        // console.log("Object URL: \n", window.lastCapturedBlob);
+      
+        // 1. Преобразуем Blob в Image
+        const imageUrl = URL.createObjectURL(window.lastCapturedBlob);
+        const img = new Image();
+        img.src = imageUrl;
+        await new Promise((resolve) => (img.onload = resolve));
+      
+        // 2. Поворачиваем изображение на canvas
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        const rotationAngle = config.send_image_rotation || 0;
+      
+        // Настраиваем размеры canvas в зависимости от угла поворота
+        if (rotationAngle === 90 || rotationAngle === 270) {
+          canvas.width = img.height;
+          canvas.height = img.width;
+        } else {
+          canvas.width = img.width;
+          canvas.height = img.height;
+        }
+      
+        // Применяем поворот
+        context.save();
+        context.translate(canvas.width / 2, canvas.height / 2);
+        context.rotate((rotationAngle * Math.PI) / 180);
+        context.drawImage(
+          img,
+          -img.width / 2,
+          -img.height / 2,
+          img.width,
+          img.height
+        );
+        context.restore();
+      
+        // 3. Сохраняем в формате без потерь (PNG)
+        const rotatedImageData = canvas.toDataURL("image/png"); // PNG сохраняет качество
+        // const rotatedImageData = canvas.toDataURL("image/jpeg", 1.0)
+
+        // 4. Освобождаем ресурсы
+        URL.revokeObjectURL(imageUrl);
+      
+        // 5. Отправляем на сервер
+        await sendDateToServer(rotatedImageData);
+        console.log("Canon photo captured and processed.");
+
+        // ! 2
+        // await capture()
+        // // NEW: use the stored live view blob rather than reading a file from disk
+        // if (window.lastCapturedBlob) {
+        //   console.log("object URL: \n", window.lastCapturedBlob)
+        //   imageData = await convertBlobToBase64(window.lastCapturedBlob)
+        //   console.log("Canon photo captured from live view blob.")
+        // } else {
+        //   console.warn(
+        //     "No captured blob available; falling back to SavedPhotos."
+        //   )
+        // }
         // await sendDateToServer(imageData)
-                // Получаем изображение с камеры Canon
-                imageData = getLatestImage(imagesFolder);
-                await capture();
-        
-                // Создаем элемент изображения и canvas для обработки
-                const img = new Image();
-                img.src = imageData;
-        
-                // Ожидаем загрузки изображения
-                await new Promise((resolve) => {
-                  img.onload = resolve;
-                });
-        
-                const canvas = document.createElement("canvas");
-                const context = canvas.getContext("2d");
-        
-                // Применяем поворот, если он задан в конфигурации
-                const rotationAngle = config.send_image_rotation || 0;
-                if (rotationAngle === 90 || rotationAngle === 270) {
-                  canvas.width = img.height;
-                  canvas.height = img.width;
-                } else {
-                  canvas.width = img.width;
-                  canvas.height = img.height;
-                }
-        
-                context.clearRect(0, 0, canvas.width, canvas.height);
-                context.save();
-                context.translate(canvas.width / 2, canvas.height / 2);
-                context.rotate((rotationAngle * Math.PI) / 180);
-        
-                if (rotationAngle === 90 || rotationAngle === 270) {
-                  context.drawImage(
-                    img,
-                    -img.width / 2,
-                    -img.height / 2,
-                    img.width,
-                    img.height
-                  );
-                } else {
-                  context.drawImage(
-                    img,
-                    -canvas.width / 2,
-                    -canvas.height / 2,
-                    canvas.width,
-                    canvas.height
-                  );
-                }
-        
-                context.restore();
-        
-                // Получаем данные изображения с canvas
-                imageData = canvas.toDataURL("image/jpeg", 1.0);
-        
-                // Отправляем изображение на сервер
-                await sendDateToServer(imageData);
+        // !
       } catch (error) {
         console.error("Error in takePicture:", error)
         alert("Failed to take picture.")
@@ -655,15 +657,21 @@ async function sendDateToServer(imageData) {
     //todo не видит фото с камеры
     if (cameraMode === "canon") {
       if (imageData) {
-        urlImage = convertImageToBase64(imageData)
+        // // Проверяем, является ли imageData уже base64-строкой
+        // if (typeof imageData === "string" && imageData.startsWith("data:image")) {
+        //   urlImage = imageData.split(",")[1]; // Извлекаем base64 без префикса
+        // } else {
+        //   // Если imageData не является base64, конвертируем его
+        //   urlImage = convertImageToBase64(imageData);
+        // }
+        urlImage = imageData.split(",")[1]
       } else {
         console.error("Изображение не найдено!")
+        urlImage = null // Явно указываем, что urlImage равен null
       }
-    } else {
-      urlImage = imageData.split(",")[1]
-    }
+    } else urlImage = imageData.split(",")[1]
 
-    console.log(urlImage)
+    console.log('\n\n' + urlImage)
 
     const fonImage = getRandomImageFromStyleFolder(nameDisplay)
     const base64FonImage = fonImage ? fonImage.split(",")[1] : urlImage
@@ -674,7 +682,6 @@ async function sendDateToServer(imageData) {
 
     const genders = selectedGenders.join(", ")
 
-    //! console.log('photo data (url, image): \n' + urlImage + '\n\n' + imageData)
 
     const data = {
       mode: `${config?.mode}` || "Avatar",
@@ -894,7 +901,6 @@ async function showScreen(screenId) {
 
     const targetScreen = document.getElementById(screenId)
     if (targetScreen) {
-
       targetScreen.classList.add("active")
 
       if (screenId === "style-screen") {
@@ -939,7 +945,12 @@ async function showScreen(screenId) {
       }
 
       if (screenId === "camera-screen") {
-        if (cameraMode === "pc") {
+        if (cameraMode === "canon") {
+          video.style.display = "none"
+          // todo ( обязательно ли это?)
+          liveViewContainer.style.display = "block"
+          startCountdown() // Убедитесь, что обратный отсчет запускается для режима canon
+        } else {
           // Запускаем камеру при отображении экрана camera-screen
           startCamera()
             .then(() => {
@@ -953,11 +964,6 @@ async function showScreen(screenId) {
                 ? showScreen("gender-screen")
                 : showScreen("style-screen")
             })
-        } else {
-          video.style.display = "none"
-          // todo ( обязательно ли это?)
-          liveViewContainer.style.display = "block"
-          startCountdown() // Убедитесь, что обратный отсчет запускается для режима canon
         }
       }
     } else {
@@ -1271,9 +1277,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (config.cameraMode !== "canon") {
     // loadingScreen.style.display = "none"
     showScreen("splash-screen")
-  } 
+  }
 
-  updateTexts() 
+  updateTexts()
   initGenderButtons()
   setGenderImages()
   // applyRotationStyles()
@@ -1332,7 +1338,6 @@ window.addEventListener("resize", handleOrientationChange)
 // Обработка изменения ориентации экрана
 function handleOrientationChange() {
   try {
-
     if (window.innerHeight > window.innerWidth) {
       console.log("Портретная ориентация")
       // Дополнительная логика для портретной ориентации, если необходимо
@@ -1550,6 +1555,7 @@ async function updateLiveView() {
       liveViewImage.onload = () => URL.revokeObjectURL(liveViewImage.src)
       lastLiveViewUpdate = Date.now()
       noResponseWarning.style.display = "none"
+      window.lastCapturedBlob = blob // NEW: store the current live view blob
     }
   } catch (error) {
     console.error("Ошибка live view:", error)
@@ -1600,14 +1606,11 @@ async function capture() {
 
     const data = await response.json()
 
-    // if (response.ok) {
-    //     responseDiv.textContent = 'Снимок сделан успешно';
-    //     responseDiv.style.color = 'green';
-    // } else {
-    //     responseDiv.textContent = `Ошибка: ${data.error}`;
-    //     responseDiv.style.color = 'red';
-    // }
-    // responseDiv.style.display = 'block';
+    if (response.ok) {
+      console.log("Снимок сделан успешно")
+    } else {
+      console.log(`Ошибка: ${data.error}`)
+    }
   } catch (error) {
     // const responseDiv = document.getElementById('captureImageResponse');
     // responseDiv.textContent = `Ошибка при съемке: ${error.message}`;
@@ -1641,19 +1644,35 @@ function getLatestImage(folderPath) {
   }
 }
 
+// ! convertImageToBase64
 // Преобразование изображения в Base64
-function convertImageToBase64(imagePath) {
-  try {
-    const data = fs.readFileSync(imagePath) // Читаем файл
-    const base64Image = data.toString("base64") // Конвертируем в Base64
-    // console.log("Base64 изображение:", base64Image)
-    console.log("Base64 изображение готово!")
-    return base64Image
-  } catch (error) {
-    console.error("Ошибка при чтении файла:", error)
-    return null
-  }
-}
+// function convertImageToBase64(imagePath) {
+//   if (imagePath.startsWith("data:")) {
+//     // Already a Base64 data URL; extract and return the base64 part.
+//     return imagePath.split(",")[1]
+//   }
+//   try {
+//     const data = fs.readFileSync(imagePath) // Читаем файл
+//     const base64Image = data.toString("base64") // Конвертируем в Base64
+//     // console.log("Base64 изображение:", base64Image)
+//     console.log("Base64 изображение готово!")
+//     return base64Image
+//   } catch (error) {
+//     console.error("Ошибка при чтении файла:", error)
+//     return null
+//   }
+// }
+
+// ! convertBlobToBase64
+// New helper function to convert a Blob to Base64 string
+// function convertBlobToBase64(blob) {
+//   return new Promise((resolve, reject) => {
+//     const reader = new FileReader()
+//     reader.onloadend = () => resolve(reader.result.split(",")[1])
+//     reader.onerror = reject
+//     reader.readAsDataURL(blob)
+//   })
+// }
 
 ipcRenderer.on("camera-control-status", (event, isRunning) => {
   console.log("CameraControl.exe running:", isRunning)
@@ -1668,7 +1687,6 @@ ipcRenderer.on("camera-control-status", (event, isRunning) => {
       }
       await showScreen("splash-screen")
     }, 3000)
-    
 
     // e.g., "result-screen" or "camera-screen"
   }
