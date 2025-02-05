@@ -24,7 +24,7 @@ let cameraCheckInterval // New global variable for interval
 function createWindow() {
   console.log("Creating main window...")
   try {
-    // getDefaultPrinter().then(console.log);
+    getDefaultPrinter().then(console.log);
 
     mainWindow = new BrowserWindow({
       width: 1080,

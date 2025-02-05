@@ -1,3 +1,6 @@
+const { loadConfig } = require("./configLoader")
+let config = loadConfig()
+
 function createDateFolders() {
   try {
     const dateFolder = path.join(
@@ -39,8 +42,13 @@ async function saveImageWithUtils(folderType, urlImage) {
 
     if (folderType === "input") {
       // Обработка base64
-      const imageData = urlImage.replace(/^data:image\/\w+;base64,/, "");
-      fs.writeFileSync(filePath, imageData, "base64");
+      if (config.cameraMode === "canon") {
+        const imageData = urlImage.replace(/^data:image\/\w+;base64,/, "");
+        fs.writeFileSync(filePath, imageData, "base64");
+      } else {
+        const imageData = urlImage.replace(/^data:image\/\w+;base64,/, "");
+        fs.writeFileSync(filePath, imageData, "base64");
+      }
       console.log("Image saved (input):", filePath);
     } else if (folderType === "output") {
       if (/^https?:\/\//.test(urlImage)) {

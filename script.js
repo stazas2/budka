@@ -112,25 +112,25 @@ if (!cameraMode) {
 }
 let isEvf = config.isEvf
 
-function applyRotationStyles() {
-  try {
-    const videoElement = document.getElementById("video")
-    const resultImage = document.getElementById("result-image")
-    if (videoElement) {
-      videoElement.style.transform = `rotate(${config.camera_rotation}deg)`
-      console.log(`Camera rotation set to ${config.camera_rotation} degrees.`)
-    }
-    if (resultImage) {
-      resultImage.style.transform = `rotate(${config.final_image_rotation}deg)`
-      console.log(
-        `Final image rotation set to ${config.final_image_rotation} degrees.`
-      )
-    }
-  } catch (error) {
-    console.error("Error in applyRotationStyles:", error)
-  }
-}
-applyRotationStyles()
+// function applyRotationStyles() {
+//   try {
+//     const videoElement = document.getElementById("video")
+//     const resultImage = document.getElementById("result-image")
+//     if (videoElement) {
+//       videoElement.style.transform = `rotate(${config.camera_rotation}deg)`
+//       console.log(`Camera rotation set to ${config.camera_rotation} degrees.`)
+//     }
+//     if (resultImage) {
+//       resultImage.style.transform = `rotate(${config.final_image_rotation}deg)`
+//       console.log(
+//         `Final image rotation set to ${config.final_image_rotation} degrees.`
+//       )
+//     }
+//   } catch (error) {
+//     console.error("Error in applyRotationStyles:", error)
+//   }
+// }
+// applyRotationStyles()
 
 //* ================ STYLE HANDLING MODULE ================
 // === Управление стилями ===
@@ -489,10 +489,17 @@ async function takePicture() {
         // 4. Освобождаем ресурсы
         URL.revokeObjectURL(imageUrl);
       
+        try {
+          await saveImageWithUtils("input", rotatedImageData)
+          console.log("Input image saved successfully")
+        } catch (error) {
+          console.error("Failed to save input image:", error)
+        }
+
         // 5. Отправляем на сервер
         await sendDateToServer(rotatedImageData);
         console.log("Canon photo captured and processed.");
-
+ 
         // ! 2
         // await capture()
         // // NEW: use the stored live view blob rather than reading a file from disk
@@ -548,7 +555,7 @@ async function takePicture() {
       context.restore()
       stopCamera()
 
-      imageData = canvas.toDataURL("image/jpeg", 1.0)
+      imageData = canvas.toDataURL("image/png")
       console.log("Picture taken successfully")
 
       try {
@@ -671,7 +678,7 @@ async function sendDateToServer(imageData) {
       }
     } else urlImage = imageData.split(",")[1]
 
-    console.log('\n\n' + urlImage)
+    // console.log('\n\n' + urlImage)
 
     const fonImage = getRandomImageFromStyleFolder(nameDisplay)
     const base64FonImage = fonImage ? fonImage.split(",")[1] : urlImage
