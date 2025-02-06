@@ -112,25 +112,25 @@ if (!cameraMode) {
 }
 let isEvf = config.isEvf
 
-// function applyRotationStyles() {
-//   try {
-//     const videoElement = document.getElementById("video")
-//     const resultImage = document.getElementById("result-image")
-//     if (videoElement) {
-//       videoElement.style.transform = `rotate(${config.camera_rotation}deg)`
-//       console.log(`Camera rotation set to ${config.camera_rotation} degrees.`)
-//     }
-//     if (resultImage) {
-//       resultImage.style.transform = `rotate(${config.final_image_rotation}deg)`
-//       console.log(
-//         `Final image rotation set to ${config.final_image_rotation} degrees.`
-//       )
-//     }
-//   } catch (error) {
-//     console.error("Error in applyRotationStyles:", error)
-//   }
-// }
-// applyRotationStyles()
+function applyRotationStyles() {
+  try {
+    const videoElement = document.getElementById("video")
+    // const resultImage = document.getElementById("result-image")
+    if (videoElement) {
+      videoElement.style.transform = `rotate(${config.camera_rotation}deg)`
+      console.log(`Camera rotation set to ${config.camera_rotation} degrees.`)
+    }
+    // if (resultImage) {
+    //   resultImage.style.transform = `rotate(${config.final_image_rotation}deg)`
+    //   console.log(
+    //     `Final image rotation set to ${config.final_image_rotation} degrees.`
+    //   )
+    // }
+  } catch (error) {
+    console.error("Error in applyRotationStyles:", error)
+  }
+}
+applyRotationStyles()
 
 //* ================ STYLE HANDLING MODULE ================
 // === Управление стилями ===
