@@ -771,6 +771,9 @@ input:checked + .slider:before {
 .rotation-90 #liveViewContainer {
   transform: rotate(90deg);
 }
+.rotation-180 #liveViewContainer {
+  transform: rotate(180deg);
+}
 .rotation-270 #liveViewContainer {
   transform: rotate(270deg);
 }

@@ -440,66 +440,78 @@ async function takePicture() {
     // if (cameraMode === "canon") {
     if (cameraMode === "canon") {
       try {
-        await capture();
+        const captureAnswer = await capture()
+
+        // if (captureAnswer) {
+        //   imageData = getLatestImage(imagesFolder)
+        // } else {
+        //   console.error("Failed to capture image from Canon camera.")
+        //   alert("Failed to capture image.")
+        //   showScreen("style-screen")
+        // }
+
+        imageData = window.lastCapturedBlob
 
         if (!window.lastCapturedBlob) {
           console.warn("No captured blob available; falling back to SavedPhotos.");
           return;
         }
-      
-        // console.log("Object URL: \n", window.lastCapturedBlob);
-      
+
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!
+        console.log("Object URL: \n", window.lastCapturedBlob);
+
         // 1. Преобразуем Blob в Image
-        const imageUrl = URL.createObjectURL(window.lastCapturedBlob);
-        const img = new Image();
-        img.src = imageUrl;
-        await new Promise((resolve) => (img.onload = resolve));
-      
+        const imageUrl = URL.createObjectURL(imageData)
+        const img = new Image()
+        img.src = imageUrl
+        await new Promise((resolve) => (img.onload = resolve))
+
         // 2. Поворачиваем изображение на canvas
-        const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d");
-        const rotationAngle = config.send_image_rotation || 0;
-      
+        const canvas = document.createElement("canvas")
+        const context = canvas.getContext("2d")
+        const rotationAngle = config.send_image_rotation || 0
+
         // Настраиваем размеры canvas в зависимости от угла поворота
         if (rotationAngle === 90 || rotationAngle === 270) {
-          canvas.width = img.height;
-          canvas.height = img.width;
+          canvas.width = img.height
+          canvas.height = img.width
         } else {
-          canvas.width = img.width;
-          canvas.height = img.height;
+          canvas.width = img.width
+          canvas.height = img.height
         }
-      
+
         // Применяем поворот
-        context.save();
-        context.translate(canvas.width / 2, canvas.height / 2);
-        context.rotate((rotationAngle * Math.PI) / 180);
+        context.save()
+        context.translate(canvas.width / 2, canvas.height / 2)
+        context.rotate((rotationAngle * Math.PI) / 180)
         context.drawImage(
           img,
           -img.width / 2,
           -img.height / 2,
           img.width,
           img.height
-        );
-        context.restore();
-      
+        )
+        context.restore()
+
         // 3. Сохраняем в формате без потерь (PNG)
-        const rotatedImageData = canvas.toDataURL("image/png"); // PNG сохраняет качество
+        const rotatedImageData = canvas.toDataURL("image/png") // PNG сохраняет качество
         // const rotatedImageData = canvas.toDataURL("image/jpeg", 1.0)
 
         // 4. Освобождаем ресурсы
-        URL.revokeObjectURL(imageUrl);
-      
+        URL.revokeObjectURL(imageUrl)
+
         try {
           await saveImageWithUtils("input", rotatedImageData)
           console.log("Input image saved successfully")
         } catch (error) {
           console.error("Failed to save input image:", error)
         }
-
+// !
+        // await sendDateToServer(imageData)
         // 5. Отправляем на сервер
-        await sendDateToServer(rotatedImageData);
-        console.log("Canon photo captured and processed.");
- 
+        await sendDateToServer(rotatedImageData)
+        console.log("Canon photo captured and processed.")
+
         // ! 2
         // await capture()
         // // NEW: use the stored live view blob rather than reading a file from disk
@@ -664,6 +676,9 @@ async function sendDateToServer(imageData) {
     //todo не видит фото с камеры
     if (cameraMode === "canon") {
       if (imageData) {
+        // urlImage = convertImageToBase64(imageData)
+        // console.log("urlImage: \n", urlImage)
+        // !
         // // Проверяем, является ли imageData уже base64-строкой
         // if (typeof imageData === "string" && imageData.startsWith("data:image")) {
         //   urlImage = imageData.split(",")[1]; // Извлекаем base64 без префикса
@@ -671,6 +686,7 @@ async function sendDateToServer(imageData) {
         //   // Если imageData не является base64, конвертируем его
         //   urlImage = convertImageToBase64(imageData);
         // }
+        // !
         urlImage = imageData.split(",")[1]
       } else {
         console.error("Изображение не найдено!")
@@ -688,7 +704,6 @@ async function sendDateToServer(imageData) {
     const base64Logo = `data:image/png;base64,${logoData}`.split(",")[1]
 
     const genders = selectedGenders.join(", ")
-
 
     const data = {
       mode: `${config?.mode}` || "Avatar",
@@ -1615,8 +1630,10 @@ async function capture() {
 
     if (response.ok) {
       console.log("Снимок сделан успешно")
+      return true
     } else {
-      console.log(`Ошибка: ${data.error}`)
+      console.error(`Ошибка: ${data.error}`)
+      return false
     }
   } catch (error) {
     // const responseDiv = document.getElementById('captureImageResponse');
@@ -1684,17 +1701,59 @@ function getLatestImage(folderPath) {
 ipcRenderer.on("camera-control-status", (event, isRunning) => {
   console.log("CameraControl.exe running:", isRunning)
   window.cameraControlActive = isRunning
-  // When true, trigger screen change (adjust 'target-screen-id' as needed)
   if (isRunning) {
-    // targetScreen = "loading-screen"
-    // targetScreen.classList.remove("active")
     setTimeout(async () => {
-      if (!isEvf) {
-        await startLiveView()
+      if (config.cameraMode === "canon") {
+        try {
+          console.log("Checking Canon live view...")
+          const response = await fetch(`${localhost}/api/get/live-view`)
+          if (!response.ok) {
+            throw new Error("Canon live view check failed")
+          }
+          console.log("Canon live view is active.")
+          showScreen("splash-screen")
+        } catch (error) {
+          console.error("Error in Canon mode:", error)
+          console.log("Attempting to restart Canon live view...")
+          await startLiveView()
+          setTimeout(async () => {
+            try {
+              console.log("Verifying Canon live view after restart...")
+              const checkResponse = await fetch(
+                `${localhost}/api/get/live-view`
+              )
+              if (!checkResponse.ok) {
+                throw new Error("Canon live view check failed after restart")
+              }
+              console.log("Canon live view restarted successfully.")
+              showScreen("splash-screen")
+            } catch (err) {
+              console.error("Canon live view still inactive:", err)
+              alert(
+                "Canon camera did not start. Please check the connection or try another mode."
+              )
+              // Optionally fallback to PC camera:
+              // await startCamera();
+              showScreen("splash-screen")
+              cameraMode = "pc"
+            }
+          }, 2000)
+        }
+      } else {
+        try {
+          const response = await fetch(`${localhost}/api/get/live-view`)
+          if (!response.ok) throw new Error("Live view not responding")
+          console.log("Live view check successful.")
+          showScreen("splash-screen")
+        } catch (error) {
+          console.error("Live view check failed:", error)
+          if (!videoStream) {
+            console.log("Restarting camera...")
+            await startCamera()
+          }
+          showScreen("splash-screen")
+        }
       }
-      await showScreen("splash-screen")
     }, 3000)
-
-    // e.g., "result-screen" or "camera-screen"
   }
 })
