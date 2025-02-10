@@ -9,12 +9,12 @@ if exist "Server\pathExe.txt" (
     start /B "" "Client/CameraControllerClient.exe"
     if %errorlevel% neq 0 (
         echo Ошибка при отправке запроса. Запускаю приложения как обычно.
-        start "" "Server/Api.exe"
+        start /B "" "Server/Api.exe"
         @REM start /B "" "Server/Api.exe"
         timeout /t 2 /nobreak > nul
-        start "" "Camera/CameraControl.exe"
+        start /B "" "Camera/CameraControl.exe"
         timeout /t 2 /nobreak > nul
-        start "" "Client/CameraControllerClient.exe"
+        start /B "" "Client/CameraControllerClient.exe"
         @REM start /B "" "Client/CameraControllerClient.exe"
     )
 ) else (

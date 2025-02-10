@@ -6,7 +6,7 @@ const PDFDocument = require("pdfkit")
 const { print, getDefaultPrinter } = require("pdf-to-printer")
 const { loadConfig } = require("./utils/configLoader")
 const si = require("systeminformation")
-const { exec, execSync } = require("child_process")
+const { exec, execSync } = require("child_process") 
 
 // Загружаем конфигурацию после импорта необходимых модулей
 const config = loadConfig()
@@ -24,7 +24,7 @@ let cameraCheckInterval // New global variable for interval
 function createWindow() {
   console.log("Creating main window...")
   try {
-    getDefaultPrinter().then(console.log);
+    getDefaultPrinter().then(console.log)
 
     mainWindow = new BrowserWindow({
       width: 1080,
@@ -38,6 +38,9 @@ function createWindow() {
 
     mainWindow.setMenuBarVisibility(false)
     mainWindow.loadFile("index.html")
+    // const url = `file://${__dirname}/index.html?cache_bust=${Date.now()}`
+    // mainWindow.loadURL(url)
+
     // monitorSystemLoad(); // Запуск мониторинга при старте приложения
 
     mainWindow.webContents.on("did-finish-load", () => {

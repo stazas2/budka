@@ -440,76 +440,77 @@ async function takePicture() {
     // if (cameraMode === "canon") {
     if (cameraMode === "canon") {
       try {
-        const captureAnswer = await capture()
+        const captureAnswer = capture()
 
-        // if (captureAnswer) {
-        //   imageData = getLatestImage(imagesFolder)
-        // } else {
-        //   console.error("Failed to capture image from Canon camera.")
-        //   alert("Failed to capture image.")
-        //   showScreen("style-screen")
+        if (captureAnswer) {
+          imageData = getLatestImage(imagesFolder)
+        } else {
+          console.error("Failed to capture image from Canon camera.")
+          alert("Failed to capture image.")
+          showScreen("style-screen")
+        }
+
+        // !
+        // imageData = window.lastCapturedBlob
+
+        // if (!window.lastCapturedBlob) {
+        //   console.warn("No captured blob available; falling back to SavedPhotos.");
+        //   return;
         // }
 
-        imageData = window.lastCapturedBlob
+        // // !!!!!!!!!!!!!!!!!!!!!!!!!!
+        // console.log("Object URL: \n", window.lastCapturedBlob);
 
-        if (!window.lastCapturedBlob) {
-          console.warn("No captured blob available; falling back to SavedPhotos.");
-          return;
-        }
+        // // 1. Преобразуем Blob в Image
+        // const imageUrl = URL.createObjectURL(imageData)
+        // const img = new Image()
+        // img.src = imageUrl
+        // await new Promise((resolve) => (img.onload = resolve))
 
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!
-        console.log("Object URL: \n", window.lastCapturedBlob);
+        // // 2. Поворачиваем изображение на canvas
+        // const canvas = document.createElement("canvas")
+        // const context = canvas.getContext("2d")
+        // const rotationAngle = config.send_image_rotation || 0
 
-        // 1. Преобразуем Blob в Image
-        const imageUrl = URL.createObjectURL(imageData)
-        const img = new Image()
-        img.src = imageUrl
-        await new Promise((resolve) => (img.onload = resolve))
+        // // Настраиваем размеры canvas в зависимости от угла поворота
+        // if (rotationAngle === 90 || rotationAngle === 270) {
+        //   canvas.width = img.height
+        //   canvas.height = img.width
+        // } else {
+        //   canvas.width = img.width
+        //   canvas.height = img.height
+        // }
 
-        // 2. Поворачиваем изображение на canvas
-        const canvas = document.createElement("canvas")
-        const context = canvas.getContext("2d")
-        const rotationAngle = config.send_image_rotation || 0
+        // // Применяем поворот
+        // context.save()
+        // context.translate(canvas.width / 2, canvas.height / 2)
+        // context.rotate((rotationAngle * Math.PI) / 180)
+        // context.drawImage(
+        //   img,
+        //   -img.width / 2,
+        //   -img.height / 2,
+        //   img.width,
+        //   img.height
+        // )
+        // context.restore()
 
-        // Настраиваем размеры canvas в зависимости от угла поворота
-        if (rotationAngle === 90 || rotationAngle === 270) {
-          canvas.width = img.height
-          canvas.height = img.width
-        } else {
-          canvas.width = img.width
-          canvas.height = img.height
-        }
+        // // 3. Сохраняем в формате без потерь (PNG)
+        // const rotatedImageData = canvas.toDataURL("image/png") // PNG сохраняет качество
+        // // const rotatedImageData = canvas.toDataURL("image/jpeg", 1.0)
 
-        // Применяем поворот
-        context.save()
-        context.translate(canvas.width / 2, canvas.height / 2)
-        context.rotate((rotationAngle * Math.PI) / 180)
-        context.drawImage(
-          img,
-          -img.width / 2,
-          -img.height / 2,
-          img.width,
-          img.height
-        )
-        context.restore()
+        // // 4. Освобождаем ресурсы
+        // URL.revokeObjectURL(imageUrl)
 
-        // 3. Сохраняем в формате без потерь (PNG)
-        const rotatedImageData = canvas.toDataURL("image/png") // PNG сохраняет качество
-        // const rotatedImageData = canvas.toDataURL("image/jpeg", 1.0)
-
-        // 4. Освобождаем ресурсы
-        URL.revokeObjectURL(imageUrl)
-
-        try {
-          await saveImageWithUtils("input", rotatedImageData)
-          console.log("Input image saved successfully")
-        } catch (error) {
-          console.error("Failed to save input image:", error)
-        }
+        // try {
+        //   await saveImageWithUtils("input", rotatedImageData)
+        //   console.log("Input image saved successfully")
+        // } catch (error) {
+        //   console.error("Failed to save input image:", error)
+        // }
 // !
-        // await sendDateToServer(imageData)
+        await sendDateToServer(imageData)
         // 5. Отправляем на сервер
-        await sendDateToServer(rotatedImageData)
+        // await sendDateToServer(rotatedImageData)
         console.log("Canon photo captured and processed.")
 
         // ! 2
@@ -676,8 +677,8 @@ async function sendDateToServer(imageData) {
     //todo не видит фото с камеры
     if (cameraMode === "canon") {
       if (imageData) {
-        // urlImage = convertImageToBase64(imageData)
-        // console.log("urlImage: \n", urlImage)
+        urlImage = convertImageToBase64(imageData)
+        console.log("urlImage: \n", urlImage)
         // !
         // // Проверяем, является ли imageData уже base64-строкой
         // if (typeof imageData === "string" && imageData.startsWith("data:image")) {
@@ -687,7 +688,7 @@ async function sendDateToServer(imageData) {
         //   urlImage = convertImageToBase64(imageData);
         // }
         // !
-        urlImage = imageData.split(",")[1]
+        // urlImage = imageData.split(",")[1]
       } else {
         console.error("Изображение не найдено!")
         urlImage = null // Явно указываем, что urlImage равен null
@@ -1577,7 +1578,7 @@ async function updateLiveView() {
       liveViewImage.onload = () => URL.revokeObjectURL(liveViewImage.src)
       lastLiveViewUpdate = Date.now()
       noResponseWarning.style.display = "none"
-      window.lastCapturedBlob = blob // NEW: store the current live view blob
+      // window.lastCapturedBlob = blob // NEW: store the current live view blob
     }
   } catch (error) {
     console.error("Ошибка live view:", error)
@@ -1616,9 +1617,10 @@ async function reconnect() {
   }
 }
 
-async function capture() {
+function capture() {
   try {
-    const response = await fetch(
+    // const response = await fetch(
+    const response = fetch(
       `${localhost}/api/post/capture-image/capture`,
       {
         method: "POST",
@@ -1626,7 +1628,8 @@ async function capture() {
     )
     // const responseDiv = document.getElementById('captureImageResponse');
 
-    const data = await response.json()
+    // const data = await response.json()
+    const data = response.json()
 
     if (response.ok) {
       console.log("Снимок сделан успешно")
@@ -1670,22 +1673,22 @@ function getLatestImage(folderPath) {
 
 // ! convertImageToBase64
 // Преобразование изображения в Base64
-// function convertImageToBase64(imagePath) {
-//   if (imagePath.startsWith("data:")) {
-//     // Already a Base64 data URL; extract and return the base64 part.
-//     return imagePath.split(",")[1]
-//   }
-//   try {
-//     const data = fs.readFileSync(imagePath) // Читаем файл
-//     const base64Image = data.toString("base64") // Конвертируем в Base64
-//     // console.log("Base64 изображение:", base64Image)
-//     console.log("Base64 изображение готово!")
-//     return base64Image
-//   } catch (error) {
-//     console.error("Ошибка при чтении файла:", error)
-//     return null
-//   }
-// }
+function convertImageToBase64(imagePath) {
+  if (imagePath.startsWith("data:")) {
+    // Already a Base64 data URL; extract and return the base64 part.
+    return imagePath.split(",")[1]
+  }
+  try {
+    const data = fs.readFileSync(imagePath) // Читаем файл
+    const base64Image = data.toString("base64") // Конвертируем в Base64
+    // console.log("Base64 изображение:", base64Image)
+    console.log("Base64 изображение готово!")
+    return base64Image
+  } catch (error) {
+    console.error("Ошибка при чтении файла:", error)
+    return null
+  }
+}
 
 // ! convertBlobToBase64
 // New helper function to convert a Blob to Base64 string
