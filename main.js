@@ -22,7 +22,7 @@ let cameraCheckInterval // New global variable for interval
 
 // Функция создания окна приложения
 function createWindow() {
-  console.log("Creating main window...")
+  console.log("Создание главного окна...")
   try {
     getDefaultPrinter().then(console.log)
 
@@ -44,7 +44,7 @@ function createWindow() {
     // monitorSystemLoad(); // Запуск мониторинга при старте приложения
 
     mainWindow.webContents.on("did-finish-load", () => {
-      console.log("Window loaded successfully")
+      console.log("Окно успешно загружено")
       mainWindow.webContents.setZoomFactor(1)
 
       // Логирование времени запуска
@@ -56,10 +56,10 @@ function createWindow() {
     // console.log(mainWindow.webContents.getPrinters());
 
     mainWindow.on("error", (error) => {
-      console.error("Window error:", error)
+      console.error("Ошибка окна:", error)
     })
   } catch (error) {
-    console.error("Failed to create window:", error)
+    console.error("Не удалось создать окно:", error)
     app.quit()
   }
 }
@@ -67,13 +67,13 @@ function createWindow() {
 // Обработчик запроса стилей
 ipcMain.handle("get-styles", async (event, genders) => {
   console.log(
-    `Loading styles for genders "${(genders || []).join(
+    `Загрузка стилей для гендеров "${(genders || []).join(
       ", "
-    )}" from directory: ${stylesDir}`
+    )}" из директории: ${stylesDir}`
   )
   try {
     if (!genders || genders.length === 0) {
-      console.warn("Genders not provided. Returning empty styles list.")
+      console.warn("Гендеры не указаны. Возвращаю пустой список стилей.")
       return []
     }
 
@@ -82,7 +82,7 @@ ipcMain.handle("get-styles", async (event, genders) => {
     for (const gender of genders) {
       const genderDir = path.join(stylesDir, gender)
       if (!fs.existsSync(genderDir)) {
-        console.warn(`Gender directory does not exist: ${genderDir}`)
+        console.warn(`Директория для гендера не существует: ${genderDir}`)
         continue
       }
 
@@ -108,13 +108,13 @@ ipcMain.handle("get-styles", async (event, genders) => {
     }
 
     if (styles.size === 0) {
-      console.warn("No style images found for the provided genders")
+      console.warn("Не найдено стилей для указанных гендеров")
       return []
     }
 
     return Array.from(styles)
   } catch (error) {
-    console.error("Error reading styles directory:", error)
+    console.error("Ошибка чтения директории стилей:", error)
     return []
   }
 })
@@ -122,12 +122,12 @@ ipcMain.handle("get-styles", async (event, genders) => {
 // Обработчик печати фотографии
 ipcMain.on("print-photo", async (event, data) => {
   if (!data || !data.imageData) {
-    console.error("Error: imageData not provided or invalid.")
+    console.error("Ошибка: imageData не предоставлен или неверный.")
     return
   }
 
   const { imageData, isLandscape } = data
-  console.log(`Image orientation: ${isLandscape ? "landscape" : "portrait"}`)
+  console.log(`Ориентация изображения: ${isLandscape ? "landscape" : "portrait"}`)
 
   try {
     let orientation = ""
@@ -142,7 +142,7 @@ ipcMain.on("print-photo", async (event, data) => {
     const buffer = Buffer.from(arrayBuffer)
 
     fs.writeFileSync(tempImagePath, buffer)
-    console.log(`Image saved: ${tempImagePath}`)
+    console.log(`Изображение сохранено: ${tempImagePath}`)
 
     // Генерация PDF
     const generatedPdfPath = await createPdf(
@@ -150,7 +150,7 @@ ipcMain.on("print-photo", async (event, data) => {
       tempPdfPath,
       isLandscape
     )
-    console.log(`Generated PDF path: ${generatedPdfPath}`)
+    console.log(`Путь сгенерированного PDF: ${generatedPdfPath}`)
 
     if (config.orientation === "landscape") {
       orientation = "landscape"
@@ -170,21 +170,21 @@ ipcMain.on("print-photo", async (event, data) => {
 
     // Печать PDF
     await print(generatedPdfPath, printOptions)
-    console.log("Print job started.")
+    console.log("Печать началась.")
 
     // Удаление временных файлов
     fs.unlinkSync(tempPdfPath)
     fs.unlinkSync(tempImagePath)
     fs.rmdirSync(tempDir)
-    console.log("Temporary files deleted.")
+    console.log("Временные файлы удалены.")
   } catch (error) {
-    console.error("Error during printing process:", error)
+    console.error("Ошибка в процессе печати:", error)
   }
 })
 
 // Создание PDF-файла с изображением
 async function createPdf(tempImagePath, tempPdfPath, isLandscape) {
-  console.log("Adding logo to PDF...")
+  console.log("Добавление логотипа в PDF...")
   return new Promise((resolve, reject) => {
     try {
       const A6 = [1240, 1748] // Размеры A6 в точках
@@ -200,7 +200,7 @@ async function createPdf(tempImagePath, tempPdfPath, isLandscape) {
       const writeStream = fs.createWriteStream(tempPdfPath)
       doc.pipe(writeStream)
 
-      console.log("Reading image file...")
+      console.log("Чтение файла изображения...")
       const extension = path.extname(tempImagePath).toLowerCase()
 
       // Проверяем поддерживаемые форматы изображений
@@ -209,7 +209,7 @@ async function createPdf(tempImagePath, tempPdfPath, isLandscape) {
         extension !== ".jpeg" &&
         extension !== ".png"
       ) {
-        throw new Error(`Unsupported image format: ${extension}`)
+        throw new Error(`Неподдерживаемый формат изображения: ${extension}`)
       }
 
       // todo
@@ -232,23 +232,23 @@ async function createPdf(tempImagePath, tempPdfPath, isLandscape) {
         ]
       }
 
-      console.log(`Image dimensions: ${width} x ${height}`)
+      console.log(`Размеры изображения: ${width} x ${height}`)
 
-      console.log("Finishing PDF...")
+      console.log("Завершаю создание PDF...")
       doc.end()
 
       // Завершаем выполнение при завершении потока
       writeStream.on("finish", () => {
-        console.log(`PDF created successfully: ${tempPdfPath}`)
+        console.log(`PDF успешно создан: ${tempPdfPath}`)
         resolve(tempPdfPath) // Возвращаем путь к файлу
       })
 
       writeStream.on("error", (err) => {
-        console.error("Error writing PDF:", err)
+        console.error("Ошибка при записи PDF:", err)
         reject(err) // Отклоняем Promise при ошибке
       })
     } catch (error) {
-      console.error("Failed to create PDF:", error)
+      console.error("Не удалось создать PDF:", error)
       reject(error)
     }
   })
@@ -288,7 +288,7 @@ app.whenReady().then(() => {
   if (config.cameraMode === "canon") {
     exec("start.bat", { cwd: `./canon` }, (error, stdout, stderr) => {
       if (error) {
-        console.error("Could not start Canon camera:", error)
+        console.error("Не удалось запустить Canon камеру:", error)
         return
       }
       console.log(stdout || stderr)
@@ -321,7 +321,7 @@ function checkCameraControlProcess() {
     'tasklist /FI "IMAGENAME eq CameraControl.exe"',
     (error, stdout, stderr) => {
       if (error) {
-        console.error("Error executing tasklist:", error)
+        console.error("Ошибка выполнения tasklist:", error)
         return
       }
       const isRunning = stdout.includes("CameraControl.exe")
@@ -331,7 +331,7 @@ function checkCameraControlProcess() {
       // If process is running, clear interval to stop further checks
       if (isRunning && cameraCheckInterval) {
         clearInterval(cameraCheckInterval)
-        console.log("CameraControl.exe detected; stopping further checks.")
+        console.log("CameraControl.exe обнаружен; дальнейшие проверки остановлены.")
       }
     }
   )
@@ -347,7 +347,7 @@ app.on("before-quit", () => {
       execSync("taskkill /IM CameraControllerClient.exe /F")
     }
   } catch (error) {
-    console.error("Failed to close Canon camera application:", error)
+    console.error("Не удалось закрыть приложение Canon камеры:", error)
   }
 })
 // !
@@ -358,15 +358,15 @@ app.on("window-all-closed", () => {
 
 // Обработчик ошибок приложения
 app.on("error", (error) => {
-  console.error("Application error:", error)
+  console.error("Ошибка приложения:", error)
 })
 
 process.on("uncaughtException", (error) => {
-  console.error("Uncaught exception:", error)
+  console.error("Неперехваченное исключение:", error)
 })
 
 process.on("unhandledRejection", (error) => {
-  console.error("Unhandled rejection:", error)
+  console.error("Необработанное отклонение:", error)
 })
 
 // TEST
@@ -376,9 +376,9 @@ function monitorSystemLoad() {
   setInterval(async () => {
     try {
       const cpuLoad = await si.currentLoad()
-      console.log(`CPU Load: ${cpuLoad.currentLoad.toFixed(2)}%`)
+      console.log(`Загрузка CPU: ${cpuLoad.currentLoad.toFixed(2)}%`)
     } catch (error) {
-      console.error("Error getting CPU load:", error)
+      console.error("Ошибка при получении загрузки CPU:", error)
     }
 
     // Мониторинг GPU через nvidia-smi
@@ -386,10 +386,10 @@ function monitorSystemLoad() {
       "nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits",
       (error, stdout, stderr) => {
         if (error) {
-          console.error("Error getting GPU load:", error)
+          console.error("Ошибка при получении загрузки GPU:", error)
           return
         }
-        console.log(`GPU Load: ${stdout.trim()}%`)
+        console.log(`Загрузка GPU: ${stdout.trim()}%`)
       }
     )
   }, 5000) // Обновление каждые 5 секунд

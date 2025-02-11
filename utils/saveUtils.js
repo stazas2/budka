@@ -81,8 +81,7 @@ async function saveImageWithUtils(folderType, urlImage) {
 async function copyPhotoToDateFolder(imagesFolder, filepath) {
   try {
     // Берём имя файла из пути и создаём папку в случае отсут-я
-    const arrayPath = filepath.split("\\")
-    const filename = arrayPath[arrayPath.length - 1]
+    const filename = filepath.split("\\")[2]
     const filePath = path.join(imagesFolder, filename);
     const { inputDir } = createDateFolders();
 

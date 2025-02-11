@@ -32,7 +32,7 @@ function loadConfig() {
         // console.log(`Формированный путь (logo):`, logoPath)
         config.logoPath = logoPath
       } else {
-        console.error("Logo path is not defined in config.json")
+        console.error("Путь к логотипу не задан в config.json")
       }
 
       //Логика для лого на экране
@@ -44,45 +44,13 @@ function loadConfig() {
         config.brandLogoPath = logoPath
       }
     } else {
-      console.error("Config is undefined or null. Unable to process themes.")
+      console.error("Конфигурация не определена или равна null. Невозможно обработать темы.")
     }
 
     return config
   } catch (error) {
-      console.error("Error loading config file:", error)
-      return {}
-
-    // console.log("Loading EXTRA config file:", error)
-    // const fallbackConfigPath = path.join(__dirname, "..", "config.json")
-    // console.log("Fallback config path:", fallbackConfigPath)
-    // try {
-    //   const fallbackData = fs.readFileSync(fallbackConfigPath, "utf8")
-    //   const config = JSON.parse(fallbackData)
-    //   config.basePath = path.dirname(fallbackConfigPath)
-
-    //   // Обновляем пути в Theme
-    //   if (config) {
-    //     ;["lightTheme", "darkTheme"].forEach((theme) => {
-    //       if (config[theme] && config[theme].backgroundImage) {
-    //         let backgroundImagePath = path.join(
-    //           config.basePath,
-    //           config[theme].backgroundImage
-    //         )
-
-    //         backgroundImagePath = backgroundImagePath.replace(/\\/g, "/")
-    //         // console.log(`Формированный путь (${theme}):`, backgroundImagePath)
-    //         config[theme].backgroundImage = backgroundImagePath
-    //       }
-    //     })
-    //   } else {
-    //     console.error("Config is undefined or null. Unable to process themes.")
-    //   }
-
-    //   return config
-    // } catch (fallbackError) {
-    //   console.error("Error loading fallback config file:", fallbackError)
-    //   return {}
-    // }
+    console.error("Ошибка загрузки файла конфигурации:", error)
+    return {}
   }
 }
 

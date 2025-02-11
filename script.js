@@ -138,7 +138,7 @@ function applyRotationStyles() {
     //   )
     // }
   } catch (error) {
-    console.error("Error in applyRotationStyles:", error)
+    console.error("Ошибка в applyRotationStyles:", error)
   }
 }
 applyRotationStyles()
@@ -246,7 +246,7 @@ function initStyleButtons(parsedStyles) {
       console.log(`Style selected: ${selectedStyle}`)
     }
   } catch (error) {
-    console.error("Error in initStyleButtons:", error)
+    console.error("Ошибка в initStyleButtons:", error)
   }
 }
 
@@ -322,37 +322,41 @@ function initGenderButtons() {
       }
     })
   } catch (error) {
-    console.error("Error in initGenderButtons:", error)
+    console.error("Ошибка в initGenderButtons:", error)
   }
 }
 
 // Устанавливает изображения для кнопок выбора пола
 function setGenderImages() {
-  const allowedGenders = config.allowedGenders || [
-    "man",
-    "woman",
-    "boy",
-    "girl",
-    "group",
-  ]
-  const arrGenders = flattenGenders(allowedGenders)
-  arrGenders.forEach((gender) => {
-    const imgElement = document.getElementById(`gender-${gender}`)
-    if (imgElement) {
-      imgElement.src = `./gender/${gender}.png`
-    }
-  })
-  const allGenders = ["man", "woman", "boy", "girl", "group"]
-  allGenders.forEach((gender) => {
-    if (!arrGenders.includes(gender)) {
-      const buttonElement = document.querySelector(
-        `.button[data-gender="${gender}"]`
-      )
-      if (buttonElement && buttonElement.parentElement) {
-        buttonElement.parentElement.style.display = "none"
+  try {
+    const allowedGenders = config.allowedGenders || [
+      "man",
+      "woman",
+      "boy",
+      "girl",
+      "group",
+    ]
+    const arrGenders = flattenGenders(allowedGenders)
+    arrGenders.forEach((gender) => {
+      const imgElement = document.getElementById(`gender-${gender}`)
+      if (imgElement) {
+        imgElement.src = `./gender/${gender}.png`
       }
-    }
-  })
+    })
+    const allGenders = ["man", "woman", "boy", "girl", "group"]
+    allGenders.forEach((gender) => {
+      if (!arrGenders.includes(gender)) {
+        const buttonElement = document.querySelector(
+          `.button[data-gender="${gender}"]`
+        )
+        if (buttonElement && buttonElement.parentElement) {
+          buttonElement.parentElement.style.display = "none"
+        }
+      }
+    })
+  } catch (error) {
+    console.error("Ошибка в setGenderImages:", error)
+  }
 }
 
 // Преобразует массив разрешенных полов в плоский список
@@ -416,14 +420,14 @@ async function startCamera() {
       videoContainer.classList.remove("loading")
       console.log("Camera started successfully")
     } catch (error) {
-      console.error("Camera initialization failed:", error)
+      console.error("Ошибка в startCamera:", error)
       videoContainer.classList.remove("loading")
       throw error
     } finally {
       cameraBackButton.disabled = false
     }
   } catch (error) {
-    console.error("Error in startCamera:", error)
+    console.error("Ошибка в startCamera:", error)
     throw error
   }
 }
@@ -439,7 +443,7 @@ function stopCamera() {
       console.log("Camera stopped")
     }
   } catch (error) {
-    console.error("Error in stopCamera:", error)
+    console.error("Ошибка в stopCamera:", error)
   }
 }
 
@@ -468,16 +472,16 @@ async function takePicture() {
           )
           console.log("Первые 20 байт изображения: \n" + imageData.slice(0, 20))
         } catch (error) {
-          console.error("Error in takePicture:", error)
-          alert("Failed to take picture.")
+          console.error("Ошибка в takePicture:", error)
+          alert("Не удалось сделать снимок.")
           showScreen("style-screen")
         }
 
         await sendDateToServer(imageData)
         console.log("Canon photo captured and processed.")
       } catch (error) {
-        console.error("Error in takePicture:", error)
-        alert("Failed to take picture.")
+        console.error("Ошибка в takePicture:", error)
+        alert("Не удалось сделать снимок.")
         showScreen("style-screen")
       }
     } else {
@@ -529,8 +533,8 @@ async function takePicture() {
       await sendDateToServer(imageData)
     }
   } catch (error) {
-    console.error("Error in takePicture:", error)
-    alert("Failed to take picture.")
+    console.error("Ошибка в takePicture:", error)
+    alert("Не удалось сделать снимок.")
     showScreen("style-screen")
   }
 }
@@ -558,7 +562,7 @@ async function findBestResolution() {
     }
     throw new Error("No supported resolutions found.")
   } catch (error) {
-    console.error("Error in findBestResolution:", error)
+    console.error("Ошибка в findBestResolution:", error)
     throw error
   }
 }
@@ -580,7 +584,7 @@ function startCountdown() {
       beginCountdown()
     }
   } catch (error) {
-    console.error("Error in startCountdown:", error)
+    console.error("Ошибка в startCountdown:", error)
   }
 }
 
@@ -608,7 +612,7 @@ function beginCountdown() {
       }
     }, 1000)
   } catch (error) {
-    console.error("Error in beginCountdown:", error)
+    console.error("Ошибка в beginCountdown:", error)
   }
 }
 
@@ -617,7 +621,7 @@ function beginCountdown() {
 // Отправляет фото на сервер для обработки
 async function sendDateToServer(imageData) {
   try {
-    console.log("sending image to server")
+    console.log("Отправка изображения на сервер")
     showScreen("processing-screen")
 
     let urlImage = null
@@ -682,7 +686,7 @@ async function sendDateToServer(imageData) {
       )}`,
       "utf-8"
     )
-    console.log("request log saved to:", logFilePath)
+    console.log("Лог запроса сохранён по пути:", logFilePath)
 
     progressBar.style.display = "block"
     progressBarFill.style.width = "100%"
@@ -710,13 +714,13 @@ async function sendDateToServer(imageData) {
             handleServerResponse(responseData)
           })
           .catch((error) => {
-            console.error("Error sending data to backup server:", error)
-            alert("Error sending the image to the server.")
+            console.error("Ошибка при отправке данных на резервный сервер:", error)
+            alert("Ошибка при отправке изображения на сервер.")
             showScreen("style-screen")
           })
       })
   } catch (error) {
-    console.error("Error in sendDateToServer:", error)
+    console.error("Ошибка в sendDateToServer:", error)
   }
 }
 
@@ -726,7 +730,7 @@ async function generateQrCodeFromURL(url) {
     const qrCodeData = await QRCode.toDataURL(url) // Генерация QR-кода в формате Base64
     return qrCodeData
   } catch (err) {
-    console.error("Ошибка при генерации QR-кода:", err)
+    console.error("Ошибка в generateQrCodeFromURL:", err)
     throw err
   }
 }
@@ -758,14 +762,14 @@ async function handleServerResponse(responseData) {
         const qrCodeData = await generateQrCodeFromURL(imagesArray[0])
         qrCodeImage.src = qrCodeData
       } catch (error) {
-        console.error("Error in getQrDate:", error)
+        console.error("Ошибка в getQrDate:", error)
       }
     } else {
-      alert("Failed to retrieve processed image.")
+      alert("Не удалось получить обработанное изображение.")
       showScreen("style-screen")
     }
   } catch (error) {
-    console.error("Error in handleServerResponse:", error)
+    console.error("Ошибка в handleServerResponse:", error)
   }
 }
 
@@ -832,10 +836,7 @@ function getRandomImageFromStyleFolder(style) {
 
     return `data:${mimeType};base64,${imageData}`
   } catch (error) {
-    console.error(
-      `\x1b[41m[Error]\x1b[0m Error retrieving image for style "${style}"`,
-      error
-    )
+    console.error(`Ошибка в getRandomImageFromStyleFolder для стиля "${style}":`, error)
     return null
   }
 }
@@ -845,7 +846,7 @@ function getRandomImageFromStyleFolder(style) {
 // Переключает видимость экранов приложения
 async function showScreen(screenId) {
   try {
-    console.log(`Switching to screen: ${screenId}`)
+    console.log(`Переключение на экран: ${screenId}`)
 
     // if (screenId === "loading-screen" && config.cameraMode !== "canon") {
     //   console.log("Skipping loading-screen in canon mode.")
@@ -943,7 +944,7 @@ async function showScreen(screenId) {
       }
     }
   } catch (error) {
-    console.error(`Error in showScreen (${screenId}):`, error)
+    console.error(`Ошибка в showScreen (${screenId}):`, error)
   }
 }
 
@@ -1113,7 +1114,7 @@ function updateTexts() {
     loaderMessages = translations[currentLanguage].loaderMessages || []
     currentMessageIndex = 0
   } catch (error) {
-    console.error("Error in updateTexts:", error)
+    console.error("Ошибка в updateTexts:", error)
   }
 }
 
@@ -1169,7 +1170,7 @@ function applyTheme(theme) {
       )
     }
   } catch (error) {
-    console.error("Error in applyTheme:", error)
+    console.error("Ошибка в applyTheme:", error)
   }
 }
 
@@ -1197,7 +1198,7 @@ function applySettings() {
       config.backdropBlur
     )
   } catch (error) {
-    console.error("Error in applySettings:", error)
+    console.error("Ошибка в applySettings:", error)
   }
 }
 
@@ -1222,7 +1223,7 @@ function resetInactivityTimer() {
       stopCamera()
     }, inactivityTimeout)
   } catch (error) {
-    console.error("Error in resetInactivityTimer:", error)
+    console.error("Ошибка в resetInactivityTimer:", error)
   }
 }
 ;["click", "mousemove", "keypress", "touchstart"].forEach((event) => {
@@ -1304,7 +1305,7 @@ function handleOrientationChange() {
       // Дополнительная логика для ландшафтной ориентации, если необходимо
     }
   } catch (error) {
-    console.error("Error in handleOrientationChange:", error)
+    console.error("Ошибка в handleOrientationChange:", error)
   }
 }
 handleOrientationChange()
@@ -1598,13 +1599,24 @@ async function getUniquePhotoBase64(apiResponse, folderPath, error_images) {
 
     // 🏷 Формируем полный путь к файлу
     const uniqueFilePath = path.join(folderPath, uniqueFiles[0])
-    console.log(`📂 Файл найден: ${uniqueFilePath}`)
+    console.log(`📂 Файл найден: ${uniqueFiles[0]}`)
 
     // ⏳ Ждём, пока файл запишется полностью
     await waitForFileReady(uniqueFilePath)
+    const base64Image = await getBase64Image(uniqueFilePath)
+
+    // remove image from uniqueFilePath
+    if (base64Image) {
+      try {
+        await fs.promises.unlink(uniqueFilePath)
+        console.log(`File successfully removed.\n\n\n`)
+      } catch (err) {
+        console.error(`Failed to remove file ${uniqueFilePath}:`, err)
+      }
+    }
 
     // 🖼 Преобразуем в base64
-    return await getBase64Image(uniqueFilePath)
+    return base64Image
   } catch (error) {
     console.error("❌ Ошибка в getUniquePhotoBase64:", error)
     return null
@@ -1621,16 +1633,12 @@ async function waitForFileReady(filePath) {
       // Проверяем размер файла
       const stats = await fs.promises.stat(filePath)
       if (stats.size > 0) {
-        console.log(
-          `✅ Файл ${filePath} размером ${stats.size} байт найден. Проверяем доступность...`
-        )
+        console.log(`✅ Файл размером ${stats.size} байт найден.`)
 
         // Пробуем открыть файл для чтения (гарантия, что он записан полностью)
         try {
           await fs.promises.readFile(filePath)
-          console.log(
-            `📥 Файл ${filePath} доступен для чтения, обработка продолжается.`
-          )
+          console.log(`📥 Файл доступен для чтения.`)
           return
         } catch (readError) {
           console.log(
@@ -1649,14 +1657,13 @@ async function waitForFileReady(filePath) {
   throw new Error(`❌ Файл ${filePath} не готов после 5 попыток`)
 }
 
-
 async function getBase64Image(filePath) {
   let attempts = 0
   while (attempts < 5) {
     try {
       // ⏳ Гарантированно ждём, пока файл будет доступен для чтения
       await waitForFileReady(filePath)
-      
+
       // 📥 Читаем файл как Buffer
       const inputBuffer = await fs.promises.readFile(filePath)
 
@@ -1671,7 +1678,9 @@ async function getBase64Image(filePath) {
       const copyPath = await copyPhotoToDateFolder(canonPhotosPath, filePath)
 
       if (copyPath) {
-        console.log(`✅ Файл ${filePath} скопирован в ${copyPath}`)
+        console.log(
+          `✅ Файл ${filePath.split("\\")[2]} скопирован в ${copyPath}`
+        )
       } else {
         console.error(`❌ Ошибка копирования файла ${filePath}`)
       }
@@ -1713,7 +1722,7 @@ ipcRenderer.on("camera-control-status", (event, isRunning) => {
           console.log("Canon live view is active.")
           showScreen("splash-screen")
         } catch (error) {
-          console.error("Error in Canon mode:", error)
+          console.error("Ошибка в Canon mode:", error)
           console.log("Attempting to restart Canon live view...")
           await startLiveView()
           setTimeout(async () => {
@@ -1746,7 +1755,7 @@ ipcRenderer.on("camera-control-status", (event, isRunning) => {
           console.log("Live view check successful.")
           showScreen("splash-screen")
         } catch (error) {
-          console.error("Live view check failed:", error)
+          console.error("Ошибка в live view check:", error)
           if (!videoStream) {
             console.log("Restarting camera...")
             await startCamera()
