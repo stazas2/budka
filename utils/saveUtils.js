@@ -78,4 +78,44 @@ async function saveImageWithUtils(folderType, urlImage) {
   }
 }
 
-module.exports = { saveImageWithUtils }
+async function copyPhotoToDateFolder(imagesFolder, filepath) {
+  try {
+    // Берём имя файла из пути и создаём папку в случае отсут-я
+    const arrayPath = filepath.split("\\")
+    const filename = arrayPath[arrayPath.length - 1]
+    const filePath = path.join(imagesFolder, filename);
+    const { inputDir } = createDateFolders();
+
+    // console.log(`📂 Оригинальный файл: ${filePath}`);
+    // console.log(`📁 Папка назначения: ${inputDir}`);
+
+    // Проверяем, существует ли файл перед копированием
+    try {
+      await fs.promises.access(filePath);
+    } catch (err) {
+      console.error(`❌ Файл ${filePath} не найден!`);
+      return null;
+    }
+
+    // 🗂 Создаём папку, если её нет
+    await fs.promises.mkdir(inputDir, { recursive: true });
+
+    // 🏷 Генерируем новое имя файла
+    const newFileName = generateFileName();
+    const targetPath = path.join(inputDir, newFileName);
+
+    // 🎯 Копируем фото с новым именем
+    await fs.promises.copyFile(filePath, targetPath);
+    // console.log(`✅ Фото скопировано в ${targetPath}`);
+
+    return targetPath; // Возвращаем путь к новому файлу
+  } catch (error) {
+    console.error(`❌ Ошибка копирования фото: ${error.message}`);
+    return null;
+  }
+}
+
+
+
+
+module.exports = { saveImageWithUtils, copyPhotoToDateFolder }
