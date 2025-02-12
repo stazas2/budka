@@ -66,6 +66,10 @@ function createWindow() {
 
 // Обработчик запроса стилей
 ipcMain.handle("get-styles", async (event, genders) => {
+  if (!genders || genders.length === 0) {
+    console.warn("Гендеры не указаны. Возвращаю пустой список стилей.")
+    return []
+  }
   console.log(
     `Загрузка стилей для гендеров "${(genders || []).join(
       ", "
@@ -127,7 +131,7 @@ ipcMain.on("print-photo", async (event, data) => {
   }
 
   const { imageData, isLandscape } = data
-  console.log(`Ориентация изображения: ${isLandscape ? "landscape" : "portrait"}`)
+  console.log(`Image orientation: ${isLandscape ? "landscape" : "portrait"}`)
 
   try {
     let orientation = ""
@@ -330,7 +334,7 @@ function checkCameraControlProcess() {
       }
       // If process is running, clear interval to stop further checks
       if (isRunning && cameraCheckInterval) {
-        clearInterval(cameraCheckInterval)
+        clearInterval(cameraCheckInterval)  
         console.log("CameraControl.exe обнаружен; дальнейшие проверки остановлены.")
       }
     }

@@ -41,39 +41,31 @@ async function saveImageWithUtils(folderType, urlImage) {
     const filePath = path.join(folderPath, fileName);
 
     if (folderType === "input") {
-      // Обработка base64
-      if (config.cameraMode === "canon") {
-        const imageData = urlImage.replace(/^data:image\/\w+;base64,/, "");
-        fs.writeFileSync(filePath, imageData, "base64");
-      } else {
-        const imageData = urlImage.replace(/^data:image\/\w+;base64,/, "");
-        fs.writeFileSync(filePath, imageData, "base64");
-      }
-      console.log("Image saved (input):", filePath);
+      const imageData = urlImage.replace(/^data:image\/\w+;base64,/, "");
+      fs.writeFileSync(filePath, imageData, "base64");
+      console.log("Изображение сохранено (input):", filePath);
     } else if (folderType === "output") {
       if (/^https?:\/\//.test(urlImage)) {
-        // Если URL, скачиваем изображение
         try {
           const response = await fetch(urlImage);
           if (!response.ok) {
-            throw new Error(`Failed to fetch image: ${response.statusText}`);
+            throw new Error(`Не удалось загрузить изображение: ${response.statusText}`);
           }
           const buffer = await response.arrayBuffer();
           fs.writeFileSync(filePath, Buffer.from(buffer));
-          console.log("Image saved (output, URL):", filePath);
+          console.log("Изображение сохранено (output, URL):", filePath);
         } catch (error) {
-          console.error("Error fetching the image:", error);
+          console.error("Ошибка загрузки изображения:", error);
           throw error;
         }
       } else {
-        // Если это base64
         const imageData = urlImage.replace(/^data:image\/\w+;base64,/, "");
         fs.writeFileSync(filePath, imageData, "base64");
-        console.log("Image saved (output, base64):", filePath);
+        console.log("Изображение сохранено (output, base64):", filePath);
       }
     }
   } catch (error) {
-    console.error(`Error in saveImage (${folderType}):`, error);
+    console.error(`Ошибка в saveImage (${folderType}):`, error);
     throw error;
   }
 }
@@ -105,7 +97,7 @@ async function copyPhotoToDateFolder(imagesFolder, filepath) {
 
     // 🎯 Копируем фото с новым именем
     await fs.promises.copyFile(filePath, targetPath);
-    // console.log(`✅ Фото скопировано в ${targetPath}`);
+    console.log(`✅ Фото скопировано в ${targetPath}`);
 
     return targetPath; // Возвращаем путь к новому файлу
   } catch (error) {
@@ -113,8 +105,5 @@ async function copyPhotoToDateFolder(imagesFolder, filepath) {
     return null;
   }
 }
-
-
-
 
 module.exports = { saveImageWithUtils, copyPhotoToDateFolder }

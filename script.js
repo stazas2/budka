@@ -126,17 +126,12 @@ let isEvf = config.isEvf
 function applyRotationStyles() {
   try {
     const videoElement = document.getElementById("video")
-    // const resultImage = document.getElementById("result-image")
     if (videoElement) {
       videoElement.style.transform = `rotate(${config.camera_rotation}deg)`
-      console.log(`Camera rotation set to ${config.camera_rotation} degrees.`)
+      console.log(
+        `▶️ Поворот камеры установлен на ${config.camera_rotation} градусов`
+      )
     }
-    // if (resultImage) {
-    //   resultImage.style.transform = `rotate(${config.final_image_rotation}deg)`
-    //   console.log(
-    //     `Final image rotation set to ${config.final_image_rotation} degrees.`
-    //   )
-    // }
   } catch (error) {
     console.error("Ошибка в applyRotationStyles:", error)
   }
@@ -153,7 +148,7 @@ function initStyleButtons(parsedStyles) {
       (style, index, self) =>
         index === self.findIndex((s) => s.originalName === style.originalName)
     )
-    console.log("Отфильтрованные стили: ", uniqueStyles)
+    console.log("▶️ Отфильтрованные стили: ", uniqueStyles)
     amountOfStyles = uniqueStyles.length
 
     if (!styleButtonsContainer) {
@@ -219,7 +214,7 @@ function initStyleButtons(parsedStyles) {
 
         button.appendChild(img)
         button.appendChild(label)
-        console.log(`Style button created: ${style}`)
+        console.log(`Кнопка стиля создана: ${style}`)
 
         button.addEventListener("click", () => {
           selectedStyle = style.originalName.replace(/\s*\(.*?\)/g, "")
@@ -229,14 +224,14 @@ function initStyleButtons(parsedStyles) {
           //   resultShowStyle = style.originalName.match(/\((.*?)\)/)
           // }
           showScreen("camera-screen")
-          console.log(`Style selected: ${selectedStyle}`)
+          console.log(`▶️ Выбранный стиль: ${selectedStyle}`)
         })
 
         button.style.animationDelay = `${index * 0.3}s`
         styleButtonsContainer.appendChild(button)
       })
     } else if (amountOfStyles === 0) {
-      alert(`No styles found for the ${selectedGenders}`)
+      alert(`Не найдено стилей для ${selectedGenders}`)
       showScreen("gender-screen")
     } else {
       selectedStyle = uniqueStyles[0].originalName.replace(/\s*\(.*?\)/g, "")
@@ -389,7 +384,7 @@ async function startCamera() {
       videoContainer.classList.add("loading")
       const bestResolution = await findBestResolution()
       console.log(
-        `Using resolution: ${bestResolution.width}x${bestResolution.height}`
+        `Используется разрешение: ${bestResolution.width}x${bestResolution.height}`
       )
 
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -405,7 +400,7 @@ async function startCamera() {
         new Promise((resolve) => {
           video.onloadedmetadata = () => {
             cameraInitialized = true
-            console.log("Camera metadata loaded successfully")
+            console.log("Метаданные камеры успешно загружены")
             resolve()
           }
         }),
@@ -418,9 +413,9 @@ async function startCamera() {
       ])
 
       videoContainer.classList.remove("loading")
-      console.log("Camera started successfully")
+      console.log("▶️ Камера успешно запущена")
     } catch (error) {
-      console.error("Ошибка в startCamera:", error)
+      console.error("Ошибка запуска камеры:", error)
       videoContainer.classList.remove("loading")
       throw error
     } finally {
@@ -440,7 +435,7 @@ function stopCamera() {
       video.srcObject = null
       videoStream = null
       cameraInitialized = false
-      console.log("Camera stopped")
+      console.log("Камера остановлена")
     }
   } catch (error) {
     console.error("Ошибка в stopCamera:", error)
@@ -470,15 +465,16 @@ async function takePicture() {
             imagesFolder,
             errorImages
           )
-          console.log("Первые 20 байт изображения: \n" + imageData.slice(0, 20))
+          console.log("▶️ Первые 20 байт изображения: \n" + imageData.slice(0, 20))
         } catch (error) {
           console.error("Ошибка в takePicture:", error)
           alert("Не удалось сделать снимок.")
-          showScreen("style-screen")
         }
 
-        await sendDateToServer(imageData)
-        console.log("Canon photo captured and processed.")
+        if (imageData) {
+          await sendDateToServer(imageData)
+          console.log("Canon-фото сделано и отправлено.")
+        } else showScreen("style-screen")
       } catch (error) {
         console.error("Ошибка в takePicture:", error)
         alert("Не удалось сделать снимок.")
@@ -521,13 +517,13 @@ async function takePicture() {
       stopCamera()
 
       imageData = canvas.toDataURL("image/png")
-      console.log("Picture taken successfully")
+      console.log("Фото сделано успешно.")
 
       try {
         await saveImageWithUtils("input", imageData)
-        console.log("Input image saved successfully")
+        console.log("Входящее фото сохранено успешно.")
       } catch (error) {
-        console.error("Failed to save input image:", error)
+        console.error("Ошибка при сохранении input-фото:", error)
       }
 
       await sendDateToServer(imageData)
@@ -573,7 +569,7 @@ async function findBestResolution() {
 function startCountdown() {
   try {
     if (!cameraInitialized && cameraMode === "pc") {
-      console.log("Camera not ready, waiting for initialization...")
+      console.log("Камера не готова, ожидаю инициализации...")
       // Ждем события onloadedmetadata, если камера еще не готова
       video.onloadedmetadata = () => {
         cameraInitialized = true
@@ -694,7 +690,7 @@ async function sendDateToServer(imageData) {
 
     fetch("http://90.156.158.209/api/handler/", fetchOptions)
       .then((response) => {
-        console.log("HTTP response status:", response.status)
+        console.log("▶️ HTTP response status:", response.status)
         if (!response.ok) throw new Error("Network error: " + response.status)
         return response.json()
       })
@@ -714,7 +710,10 @@ async function sendDateToServer(imageData) {
             handleServerResponse(responseData)
           })
           .catch((error) => {
-            console.error("Ошибка при отправке данных на резервный сервер:", error)
+            console.error(
+              "Ошибка при отправке данных на резервный сервер:",
+              error
+            )
             alert("Ошибка при отправке изображения на сервер.")
             showScreen("style-screen")
           })
@@ -747,9 +746,9 @@ async function handleServerResponse(responseData) {
       await saveImageWithUtils("output", resultImage.src)
 
       resultImage.onload = () => {
-        console.log("Image loaded successfully")
+        console.log("▶️ Фото загружено успешно.")
         console.log(
-          "Image dimensions: ",
+          "Разрешение изображения: ",
           resultImage.width,
           "x",
           resultImage.height
@@ -780,12 +779,12 @@ function getRandomImageFromStyleFolder(style) {
 
     if (!fs.existsSync(styleFolderPath)) {
       console.warn(
-        `\x1b[41m[Warning]\x1b[0m Folder for style "${style}" and gender "${selectedGenders[0]}" does not exist.`
+        `\x1b[41m[Warning]\x1b[0m Папки для Стиля "${style}" и Поля "${selectedGenders[0]}" не существует.`
       )
       return null
     }
 
-    console.log(`[Info] Reading folder: ${styleFolderPath}`)
+    console.log(`Чтение папки: ${styleFolderPath}`)
 
     // Очистка стиля (удаляем содержимое скобок)
     const cleanedStyle = style.replace(/\s*\(.*?\)/g, "") // Убираем пробелы и содержимое в скобках
@@ -814,7 +813,7 @@ function getRandomImageFromStyleFolder(style) {
       return null
     }
 
-    console.log(`[Info] Фильтрованные файлы: ${files}`)
+    // console.log(`[Инфо] Отфильтрованные файлы: ${files}`)
 
     // Инициализируем индекс для стиля, если он еще не существует
     if (!styleImageIndices[style]) {
@@ -828,7 +827,7 @@ function getRandomImageFromStyleFolder(style) {
     // Обновляем индекс для следующего вызова
     styleImageIndices[style] = (currentIndex + 1) % files.length
 
-    console.log(`[Selected] Выбранный фон: ${fileName}`)
+    console.log(`▶️ Выбранный фон: ${fileName}`)
     const filePath = path.join(styleFolderPath, fileName)
 
     const imageData = fs.readFileSync(filePath, { encoding: "base64" })
@@ -836,7 +835,10 @@ function getRandomImageFromStyleFolder(style) {
 
     return `data:${mimeType};base64,${imageData}`
   } catch (error) {
-    console.error(`Ошибка в getRandomImageFromStyleFolder для стиля "${style}":`, error)
+    console.error(
+      `Ошибка в getRandomImageFromStyleFolder для стиля "${style}":`,
+      error
+    )
     return null
   }
 }
@@ -846,7 +848,7 @@ function getRandomImageFromStyleFolder(style) {
 // Переключает видимость экранов приложения
 async function showScreen(screenId) {
   try {
-    console.log(`Переключение на экран: ${screenId}`)
+    console.log(`➩ Переключение на экран: ${screenId}`)
 
     // if (screenId === "loading-screen" && config.cameraMode !== "canon") {
     //   console.log("Skipping loading-screen in canon mode.")
@@ -1003,16 +1005,16 @@ if (printPhotoButton) {
         isLandscape,
       })
     } else {
-      console.error("Image not found for printing.")
+      console.error("Нет фото для печати.")
     }
   })
 }
 
 ipcRenderer.on("print-photo-response", (event, success) => {
   if (success) {
-    console.log("Print job completed successfully.")
+    console.log("▶️ Печать выполнена успешно.")
   } else {
-    console.error("Print job failed.")
+    console.error("Ошибка печати.")
   }
 })
 
@@ -1584,8 +1586,11 @@ async function getUniquePhotoBase64(apiResponse, folderPath, error_images) {
     }
 
     console.log("📸 Найденные файлы:", photos)
-    console.log("🚫 Исключенные файлы (ошибочные):", error_images)
 
+    if (error_images.length > 0) {
+      console.log("🚫 Исключенные файлы (ошибочные):", error_images)
+    }
+    
     // 🔍 Оставляем только файлы, которых нет в error_images
     const uniqueFiles = photos.filter((file) => !error_images.includes(file))
 
@@ -1609,9 +1614,9 @@ async function getUniquePhotoBase64(apiResponse, folderPath, error_images) {
     if (base64Image) {
       try {
         await fs.promises.unlink(uniqueFilePath)
-        console.log(`File successfully removed.\n\n\n`)
+        console.log(`Файл успешно удалён.`)
       } catch (err) {
-        console.error(`Failed to remove file ${uniqueFilePath}:`, err)
+        console.error(`❌ Ошибка при удалении файла ${uniqueFilePath}:`, err)
       }
     }
 
@@ -1638,7 +1643,7 @@ async function waitForFileReady(filePath) {
         // Пробуем открыть файл для чтения (гарантия, что он записан полностью)
         try {
           await fs.promises.readFile(filePath)
-          console.log(`📥 Файл доступен для чтения.`)
+          console.log(`Файл доступен для чтения.`)
           return
         } catch (readError) {
           console.log(
@@ -1674,18 +1679,7 @@ async function getBase64Image(filePath) {
         .toFormat("jpeg", { quality: 80 })
         .toBuffer()
 
-      // todo
-      const copyPath = await copyPhotoToDateFolder(canonPhotosPath, filePath)
-
-      if (copyPath) {
-        console.log(
-          `✅ Файл ${filePath.split("\\")[2]} скопирован в ${copyPath}`
-        )
-      } else {
-        console.error(`❌ Ошибка копирования файла ${filePath}`)
-      }
-
-      // !
+      await copyPhotoToDateFolder(canonPhotosPath, filePath)
 
       return data.toString("base64")
     } catch (err) {
@@ -1708,42 +1702,43 @@ async function getBase64Image(filePath) {
 }
 
 ipcRenderer.on("camera-control-status", (event, isRunning) => {
-  console.log("CameraControl.exe running:", isRunning)
+  console.log("CameraControl.exe в состоянии:", isRunning)
   window.cameraControlActive = isRunning
   if (isRunning) {
     setTimeout(async () => {
       if (config.cameraMode === "canon") {
         try {
-          console.log("Checking Canon live view...")
+          console.log("Проверка Canon live view...")
           const response = await fetch(`${localhost}/api/get/live-view`)
           if (!response.ok) {
-            throw new Error("Canon live view check failed")
+            throw new Error("Canon live view не активен.")
           }
-          console.log("Canon live view is active.")
+          console.log("▶️ Canon live view активен.")
           showScreen("splash-screen")
         } catch (error) {
           console.error("Ошибка в Canon mode:", error)
-          console.log("Attempting to restart Canon live view...")
+          console.log("Попытка перезапустить Canon live view...")
           await startLiveView()
           setTimeout(async () => {
             try {
-              console.log("Verifying Canon live view after restart...")
+              console.log("Проверка Canon live view после перезапуска...")
               const checkResponse = await fetch(
                 `${localhost}/api/get/live-view`
               )
               if (!checkResponse.ok) {
-                throw new Error("Canon live view check failed after restart")
+                throw new Error("Canon live view не активен после перезапуска.")
               }
-              console.log("Canon live view restarted successfully.")
+              console.log("▶️ Canon live view перезапущен успешно.")
               showScreen("splash-screen")
             } catch (err) {
-              console.error("Canon live view still inactive:", err)
+              console.error("Canon live view всё еще не активен:", err)
               alert(
-                "Canon camera did not start. Please check the connection or try another mode."
+                "Canon-камера не включилась. Проверьте соединение или включите другой режим."
               )
               // Optionally fallback to PC camera:
               // await startCamera();
               showScreen("splash-screen")
+              console.warn("Переключаемся на PC-камеру...")
               cameraMode = "pc"
             }
           }, 2000)
@@ -1751,13 +1746,13 @@ ipcRenderer.on("camera-control-status", (event, isRunning) => {
       } else {
         try {
           const response = await fetch(`${localhost}/api/get/live-view`)
-          if (!response.ok) throw new Error("Live view not responding")
-          console.log("Live view check successful.")
+          if (!response.ok) throw new Error("Live view не отвечает")
+          console.log("▶️ Live view активен.")
           showScreen("splash-screen")
         } catch (error) {
           console.error("Ошибка в live view check:", error)
           if (!videoStream) {
-            console.log("Restarting camera...")
+            console.log("Рестарт камеры...")
             await startCamera()
           }
           showScreen("splash-screen")
