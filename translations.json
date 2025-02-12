@@ -1,5 +1,6 @@
 {
   "ru": {
+    "loadingScreenTitle": "Загрузка камеры...",
     "welcomeMessage": "Добро пожаловать!",
     "startButtonText": "Начать",
     "styleScreenTitle": "Выберите стиль",
@@ -37,6 +38,7 @@
     }
   },
   "kz": {
+    "loadingScreenTitle": "Камера жүктелуде...",
     "welcomeMessage": "Фотобудкаға қош келдіңіз!",
     "startButtonText": "Бастау",
     "styleScreenTitle": "Стильді таңдаңыз",

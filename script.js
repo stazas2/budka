@@ -1027,6 +1027,7 @@ function updateTexts() {
     if (!texts) return
 
     const screenTitles = {
+      "loading-screen": texts.loadingScreenTitle,
       "splash-screen": texts.welcomeMessage,
       "style-screen": texts.styleScreenTitle,
       "gender-screen": texts.genderScreenTitle,
