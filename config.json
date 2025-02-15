@@ -12,7 +12,7 @@
   "printButtonVisible": true,
   "showResultQrBtn": false,
   "showStyleNames": true,
-  "visibilityAgree": false,
+  "visibilityAgree": true,
   "stylesDir": "{{basePath}}\\styles",
   "basePath": "C:\\MosPhotoBooth2",
   "logoPath": "logo.png",
@@ -39,7 +39,7 @@
   "camera_rotation": 90,
   "final_image_rotation": 0,
   "send_image_rotation": 90,
-  "cameraMode": "canon",
+  "cameraMode": "pc",
   "allowMultipleGenderSelection": false,
   "allowedGenders": [["man", "woman"], ["boy", "girl"], []],
   "isEvf": false

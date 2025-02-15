@@ -297,13 +297,13 @@ function initGenderButtons() {
             continueButton.disabled = true
           }
 
-          console.log("Selected genders:", selectedGenders)
+          console.log("▶️ Выбранный(e) пол(ы): ", selectedGenders)
           // continueButton.style.display = selectedGenders.length > 0 ? "block" : "none";
         } else {
           // Режим одиночного выбора
           genderButtons.forEach((btn) => btn.classList.remove("selected"))
           selectedGenders = [gender]
-          console.log(selectedGenders)
+          console.log("▶️ Выбранный пол: " + selectedGenders[0])
           showScreen("style-screen")
           fetchStyles()
         }
@@ -465,7 +465,12 @@ async function takePicture() {
             imagesFolder,
             errorImages
           )
-          console.log("▶️ Первые 20 байт изображения: \n" + imageData.slice(0, 20))
+          if (!imageData) {
+            console.error("Фото в некорректном формате, либо не существует.")
+          } else
+            console.log(
+              "▶️ Первые 20 байт изображения: \n" + imageData.slice(0, 20)
+            )
         } catch (error) {
           console.error("Ошибка в takePicture:", error)
           alert("Не удалось сделать снимок.")
@@ -1480,7 +1485,7 @@ showResultQrBtn.addEventListener("click", () => {
 async function startLiveView() {
   isEvf = true
   try {
-    await fetch(`${localhost}/api/post/evf/start`, { method: "POST" }) // Исправьте URL
+    await fetch(`${localhost}/api/post/evf/start`, { method: "POST" })
     liveViewInterval = setInterval(updateLiveView, 100)
     lastLiveViewUpdate = Date.now()
     noResponseWarning.style.display = "none"
@@ -1492,7 +1497,7 @@ async function startLiveView() {
 async function endLiveView() {
   isEvf = false
   try {
-    await fetch(`${localhost}/api/post/evf/end`, { method: "POST" }) // Исправьте URL
+    await fetch(`${localhost}/api/post/evf/end`, { method: "POST" })
     clearInterval(liveViewInterval)
     liveViewImage.style.display = "none"
     noResponseWarning.style.display = "none"
@@ -1509,7 +1514,7 @@ async function updateLiveView() {
   isFetchingLiveView = true
 
   try {
-    const response = await fetch(`${localhost}/api/get/live-view`) // Исправьте URL
+    const response = await fetch(`${localhost}/api/get/live-view`)
     if (response.ok) {
       const blob = await response.blob()
       liveViewImage.src = URL.createObjectURL(blob)
@@ -1536,7 +1541,7 @@ async function reconnect() {
     }
 
     console.log("Реконнект...")
-    await fetch(`${localhost}/api/post/reconnect`, { method: "POST" }) // Исправьте URL
+    await fetch(`${localhost}/api/post/reconnect`, { method: "POST" })
     console.log("Реконнект успешен.")
 
     if (wasEvfActive) {
@@ -1561,11 +1566,11 @@ async function capture() {
 
     if (response.ok) {
       console.log("Снимок сделан.")
+      return response.ok
       // const data = await response.json();
     } else {
       console.error("Ошибка при съемке.")
     }
-    return response.ok
   } catch (error) {
     console.error("Ошибка:", error)
   }
@@ -1574,7 +1579,7 @@ async function capture() {
 async function getUniquePhotoBase64(apiResponse, folderPath, error_images) {
   try {
     if (!apiResponse) {
-      throw new Error("API response is not ok")
+      throw new Error("API-ответ не пришёл.")
     }
 
     // 📂 Получаем список файлов в папке
@@ -1591,7 +1596,7 @@ async function getUniquePhotoBase64(apiResponse, folderPath, error_images) {
     if (error_images.length > 0) {
       console.log("🚫 Исключенные файлы (ошибочные):", error_images)
     }
-    
+
     // 🔍 Оставляем только файлы, которых нет в error_images
     const uniqueFiles = photos.filter((file) => !error_images.includes(file))
 
