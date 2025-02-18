@@ -89,22 +89,22 @@ const localhost = "http://localhost:5000"
 const imagesFolder = `./canon/SavedPhotos/`
 
 //! Путь для билда
-// let dir = __dirname;
-// while (path.basename(dir) !== 'resources' && dir !== path.parse(dir).root) {
-//     dir = path.dirname(dir);
-// }
+let dir = __dirname;
+while (path.basename(dir) !== 'resources' && dir !== path.parse(dir).root) {
+    dir = path.dirname(dir);
+}
 
-// const resourcePath = path.dirname(dir);
-// // Формируем путь к папке
-// const canonPhotosPath = path.join(resourcePath, "canon", "SavedPhotos")
+const resourcePath = path.dirname(dir);
+// Формируем путь к папке
+const canonPhotosPath = path.join(resourcePath, "canon", "SavedPhotos")
 
-// if (!fs.existsSync(canonPhotosPath)) {
-//     fs.mkdirSync(canonPhotosPath, { recursive: true });
-//     console.log(`Временное расположение: \n${canonPhotosPath}`);
-// } 
+if (!fs.existsSync(canonPhotosPath)) {
+    fs.mkdirSync(canonPhotosPath, { recursive: true });
+    console.log(`Временное расположение: \n${canonPhotosPath}`);
+} 
 
 //! Путь для локалки
-const canonPhotosPath = path.join(__dirname, "canon", "SavedPhotos")
+// const canonPhotosPath = path.join(__dirname, "canon", "SavedPhotos")
 
 const printLogo = config?.logoPath
 const logo_scale= config.logoScale
