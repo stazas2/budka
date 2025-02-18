@@ -87,7 +87,24 @@ const stylesDir = config.stylesDir.replace("{{basePath}}", basePath)
 // const localhost = config.localhost
 const localhost = "http://localhost:5000"
 const imagesFolder = `./canon/SavedPhotos/`
-const canonPhotosPath = path.join(__dirname, "canon", "SavedPhotos")
+
+//! Путь для билда
+let dir = __dirname;
+while (path.basename(dir) !== 'resources' && dir !== path.parse(dir).root) {
+    dir = path.dirname(dir);
+}
+
+const resourcePath = path.dirname(dir);
+// Формируем путь к папке
+const canonPhotosPath = path.join(resourcePath, "canon", "SavedPhotos")
+
+if (!fs.existsSync(canonPhotosPath)) {
+    fs.mkdirSync(canonPhotosPath, { recursive: true });
+    console.log(`Временное расположение: \n${canonPhotosPath}`);
+} 
+
+//! Путь для локалки
+// const canonPhotosPath = path.join(__dirname, "canon", "SavedPhotos")
 
 const printLogo = config?.logoPath
 brandLogo.src = config?.brandLogoPath
@@ -121,7 +138,7 @@ let cameraMode = config.cameraMode
 if (!cameraMode) {
   cameraMode = "pc"
 }
-let isEvf = config.isEvf
+let isLiveViewCanon = false
 
 function applyRotationStyles() {
   try {
@@ -641,8 +658,9 @@ async function sendDateToServer(imageData) {
     const base64FonImage = fonImage ? fonImage.split(",")[1] : urlImage
 
     // Логотив в формате base64
+    //todo если нет лого, не работает
     const logoData = fs.readFileSync(printLogo, { encoding: "base64" })
-    const base64Logo = `data:image/png;base64,${logoData}`.split(",")[1]
+    const logo_base64 = `data:image/png;base64,${logoData}`.split(",")[1]
 
     const genders = selectedGenders.join(", ")
 
@@ -651,7 +669,7 @@ async function sendDateToServer(imageData) {
       style: selectedStyle,
       return_s3_link: true,
       event: basePathName,
-      logo_base64: base64Logo,
+      logo_base64,
       logo_pos_x,
       logo_pos_y,
       logo_scale: 100,
@@ -1483,7 +1501,7 @@ showResultQrBtn.addEventListener("click", () => {
 // liveViewContainer.parentNode.insertBefore(noResponseWarning, liveViewContainer.nextSibling);
 
 async function startLiveView() {
-  isEvf = true
+  isLiveViewCanon = true
   try {
     await fetch(`${localhost}/api/post/evf/start`, { method: "POST" })
     liveViewInterval = setInterval(updateLiveView, 100)
@@ -1495,7 +1513,7 @@ async function startLiveView() {
 }
 
 async function endLiveView() {
-  isEvf = false
+  isLiveViewCanon = false
   try {
     await fetch(`${localhost}/api/post/evf/end`, { method: "POST" })
     clearInterval(liveViewInterval)
@@ -1532,7 +1550,7 @@ async function updateLiveView() {
 }
 
 async function reconnect() {
-  const wasEvfActive = isEvf
+  const wasEvfActive = isLiveViewCanon
   try {
     if (wasEvfActive) {
       console.log("Выключаем EVF перед реконнектом...")
@@ -1556,7 +1574,6 @@ async function reconnect() {
   }
 }
 
-// Modified capture function with async/await.
 async function capture() {
   try {
     const response = await fetch(

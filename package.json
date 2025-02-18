@@ -61,9 +61,7 @@
       "allowToChangeInstallationDirectory": true
     },
     "extraFiles": [
-      "canon/**",
-      "SavedPhotos/**",
-      "Server/pathExe.txt"
+      "canon/**"
     ]
   }
 }

@@ -41,19 +41,10 @@ function createWindow() {
     // const url = `file://${__dirname}/index.html?cache_bust=${Date.now()}`
     // mainWindow.loadURL(url)
 
-    // monitorSystemLoad(); // Запуск мониторинга при старте приложения
-
     mainWindow.webContents.on("did-finish-load", () => {
       console.log("Окно успешно загружено")
       mainWindow.webContents.setZoomFactor(1)
-
-      // Логирование времени запуска
-      // const mainStartupTimeEnd = Date.now()
-      // const startupDuration = mainStartupTimeEnd - mainStartupTimeStart
-      // console.log(`Время запуска main процесса: ${startupDuration} мс`)
     })
-    // Получение списка принтеров
-    // console.log(mainWindow.webContents.getPrinters());
 
     mainWindow.on("error", (error) => {
       console.error("Ошибка окна:", error)
@@ -82,7 +73,6 @@ ipcMain.handle("get-styles", async (event, genders) => {
     }
 
     const styles = new Set()
-    let files = []
     for (const gender of genders) {
       const genderDir = path.join(stylesDir, gender)
       if (!fs.existsSync(genderDir)) {
@@ -99,7 +89,7 @@ ipcMain.handle("get-styles", async (event, genders) => {
 
       for (const folder of folders) {
         const folderPath = path.join(genderDir, folder)
-        files = fs.readdirSync(folderPath, { encoding: "utf8" })
+        const files = fs.readdirSync(folderPath, { encoding: "utf8" })
 
         const imageFiles = files.filter(
           (file) =>
@@ -134,7 +124,6 @@ ipcMain.on("print-photo", async (event, data) => {
   console.log(`Image orientation: ${isLandscape ? "landscape" : "portrait"}`)
 
   try {
-    let orientation = ""
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "print-"))
     const imageFileName = "image.jpg"
     const pdfFileName = "print.pdf"
@@ -148,7 +137,7 @@ ipcMain.on("print-photo", async (event, data) => {
     fs.writeFileSync(tempImagePath, buffer)
     console.log(`Изображение сохранено: ${tempImagePath}`)
 
-    // Генерация PDF
+    // Генерация PDF с учетом новой логики
     const generatedPdfPath = await createPdf(
       tempImagePath,
       tempPdfPath,
@@ -156,18 +145,7 @@ ipcMain.on("print-photo", async (event, data) => {
     )
     console.log(`Путь сгенерированного PDF: ${generatedPdfPath}`)
 
-    if (config.orientation === "landscape") {
-      orientation = "landscape"
-    } else if (
-      config.orientation === "portrait" ||
-      config?.orientation.trim() === ""
-    ) {
-      orientation = "portrait"
-    }
-
     const printOptions = {
-      paperSize: "A6",
-      orientation,
       scale: "fit",
       silent: true,
     }
@@ -186,108 +164,154 @@ ipcMain.on("print-photo", async (event, data) => {
   }
 })
 
-// Создание PDF-файла с изображением
+// Создание PDF-файла с изображением с учётом нового параметра PDForientation
 async function createPdf(tempImagePath, tempPdfPath, isLandscape) {
-  console.log("Добавление логотипа в PDF...")
+  console.log("Добавление логотипа в PDF...");
   return new Promise((resolve, reject) => {
     try {
-      const A6 = [1240, 1748] // Размеры A6 в точках
-      const A6Landscape = [1748, 1240] // Размеры A6 в точках (альбомная ориентация)
+      // Размеры A6
+      const PaperSizeX = Number(config.PaperSizeX);
+      const PaperSizeY = Number(config.PaperSizeY);
+      const A6 = [PaperSizeX, PaperSizeY];
+      const A6Landscape = [PaperSizeY, PaperSizeX];
+      
+      //const A6 = [1212, 1842];
+      //const A6Landscape = [1842, 1212];
 
-      // Создаем новый документ PDF
+      // Новый параметр из конфига для ориентации PDF
+      // Ожидается значение "horizon" или "vertical"
+      const pdfOrientation = (config.PDForientation === "horizon") ? "horizon" : "vertical";
+      // Выбираем размер страницы согласно параметру PDForientation
+      const pageSize = (pdfOrientation === "horizon") ? A6Landscape : A6;
+
+      // Создаем документ PDF с выбранным размером страницы
       const doc = new PDFDocument({
-        size: isLandscape ? A6Landscape : A6,
-        margins: { top: 0, bottom: 0, left: 0, right: 0 }, // Убираем отступы
-      })
+        size: pageSize,
+        margins: { top: 0, bottom: 0, left: 0, right: 0 },
+      });
 
       // Поток записи PDF-файла
-      const writeStream = fs.createWriteStream(tempPdfPath)
-      doc.pipe(writeStream)
+      const writeStream = fs.createWriteStream(tempPdfPath);
+      doc.pipe(writeStream);
 
-      console.log("Чтение файла изображения...")
-      const extension = path.extname(tempImagePath).toLowerCase()
-
-      // Проверяем поддерживаемые форматы изображений
+      console.log("Чтение файла изображения...");
+      const extension = path.extname(tempImagePath).toLowerCase();
       if (
         extension !== ".jpg" &&
         extension !== ".jpeg" &&
         extension !== ".png"
       ) {
-        throw new Error(`Неподдерживаемый формат изображения: ${extension}`)
+        throw new Error(`Неподдерживаемый формат изображения: ${extension}`);
       }
 
-      // todo
+      // Определяем, нужно ли повернуть изображение.
+      // Если ориентация PDF (pdfOrientation) не совпадает с ориентацией фото (isLandscape),
+      // то требуется поворот на 90 градусов.
+      const rotateImage = (pdfOrientation === "horizon" && !isLandscape) ||
+                          (pdfOrientation === "vertical" && isLandscape);
+
       if (!borderPrintImage) {
-        ;[width, height] = [
-          ...doc.image(tempImagePath, 0, 0, {
-            width: isLandscape ? A6Landscape[0] : A6[0], // Полная ширина страницы
-            height: isLandscape ? A6[0] : A6Landscape[0], // Полная высота страницы
-          }).options.size,
-        ]
+        if (rotateImage) {
+          // Для поворота: исходные размеры страницы
+          const pageW = pageSize[0], pageH = pageSize[1];
+          // Эффективная область для отрисовки после поворота: targetW = pageH, targetH = pageW
+          const targetW = pageH, targetH = pageW;
+          // Центр оригинальной страницы
+          const centerX = pageW / 2, centerY = pageH / 2;
+
+          // Открываем изображение
+          const img = doc.openImage(tempImagePath);
+          const imgW = img.width, imgH = img.height;
+          let drawWidth, drawHeight;
+          const imgRatio = imgW / imgH;
+          const targetRatio = targetW / targetH;
+          if (imgRatio > targetRatio) {
+            drawHeight = targetH;
+            drawWidth = imgRatio * drawHeight;
+          } else {
+            drawWidth = targetW;
+            drawHeight = drawWidth / imgRatio;
+          }
+          // Вычисляем координаты, чтобы изображение было отцентрировано относительно target-области
+          const drawX = centerX - (drawWidth / 2);
+          const drawY = centerY - (drawHeight / 2);
+
+          // Применяем трансформацию: перемещаемся в центр, поворачиваем, возвращаемся, устанавливаем клиппинг для target-области
+          doc.save();
+          doc.translate(centerX, centerY);
+          doc.rotate(90);
+          doc.translate(-centerX, -centerY);
+          // Клиппим область отрисовки: отцентрированный прямоугольник с размерами targetW x targetH
+          doc.rect(centerX - targetW/2, centerY - targetH/2, targetW, targetH).clip();
+          // Отрисовываем изображение так, чтобы его центр совпадал с центром страницы
+          doc.image(tempImagePath, drawX, drawY, { width: drawWidth, height: drawHeight });
+          doc.restore();
+        } else {
+          // Режим "cover" без поворота
+          const img = doc.openImage(tempImagePath);
+          const imgW = img.width, imgH = img.height;
+          const pageW = pageSize[0], pageH = pageSize[1];
+          let drawWidth, drawHeight, offsetX, offsetY;
+          const pageRatio = pageW / pageH;
+          const imgRatio = imgW / imgH;
+          if (imgRatio > pageRatio) {
+            drawHeight = pageH;
+            drawWidth = imgRatio * drawHeight;
+            offsetX = -(drawWidth - pageW) / 2;
+            offsetY = 0;
+          } else {
+            drawWidth = pageW;
+            drawHeight = drawWidth / imgRatio;
+            offsetX = 0;
+            offsetY = -(drawHeight - pageH) / 2;
+          }
+          doc.save();
+          doc.rect(0, 0, pageW, pageH).clip();
+          doc.image(tempImagePath, offsetX, offsetY, { width: drawWidth, height: drawHeight });
+          doc.restore();
+        }
       } else {
-        ;[width, height] = [
-          ...doc
-            .image(tempImagePath, 0, 0, {
-              fit: isLandscape ? A6Landscape : A6,
-              align: "center",
-              valign: "center",
-            })
-            .scale(1).options.size,
-        ]
+        // Если включена опция обрезки границ (borderPrintImage true) — оставляем прежнюю логику с fit
+        if (rotateImage) {
+          const pageW = pageSize[0], pageH = pageSize[1];
+          const centerX = pageW / 2, centerY = pageH / 2;
+          doc.rotate(90, { origin: [centerX, centerY] });
+          doc.image(tempImagePath, 0, -pageW, {
+            fit: [pageH, pageW],
+            align: "center",
+            valign: "center",
+          });
+          doc.rotate(-90, { origin: [centerX, centerY] });
+        } else {
+          doc.image(tempImagePath, 0, 0, {
+            fit: pageSize,
+            align: "center",
+            valign: "center",
+          });
+        }
       }
 
-      console.log(`Размеры изображения: ${width} x ${height}`)
+      console.log("Завершаю создание PDF...");
+      doc.end();
 
-      console.log("Завершаю создание PDF...")
-      doc.end()
-
-      // Завершаем выполнение при завершении потока
       writeStream.on("finish", () => {
-        console.log(`PDF успешно создан: ${tempPdfPath}`)
-        resolve(tempPdfPath) // Возвращаем путь к файлу
-      })
+        console.log(`PDF успешно создан: ${tempPdfPath}`);
+        resolve(tempPdfPath);
+      });
 
       writeStream.on("error", (err) => {
-        console.error("Ошибка при записи PDF:", err)
-        reject(err) // Отклоняем Promise при ошибке
-      })
+        console.error("Ошибка при записи PDF:", err);
+        reject(err);
+      });
     } catch (error) {
-      console.error("Не удалось создать PDF:", error)
-      reject(error)
+      console.error("Не удалось создать PDF:", error);
+      reject(error);
     }
-  })
+  });
 }
 
+
 // Если приложение-canon запущено, то не запускаем его повторно
-// app.whenReady().then(() => {
-//   if (config.cameraMode === "canon") {
-//     // Проверка запущенных процессов
-//     exec("tasklist", (error, stdout, stderr) => {
-//       if (error) {
-//         console.error("Error executing tasklist:", error);
-//         return;
-//       }
-
-//       const processes = ["Api.exe", "CameraControl.exe"];
-//       const runningProcesses = processes.filter(process => stdout.includes(process));
-
-//       if (runningProcesses.length === processes.length) {
-//         console.log("All required processes are already running.");
-//       } else {
-//         exec("start.bat", { cwd: `./canon` }, (error, stdout, stderr) => {
-//           if (error) {
-//             console.error("Could not start Canon camera:", error);
-//             return;
-//           }
-//           console.log(stdout || stderr);
-//         });
-//       }
-//     });
-//   }
-//   createWindow();
-// });
-
-// !
 app.whenReady().then(() => {
   if (config.cameraMode === "canon") {
     exec("start.bat", { cwd: `./canon` }, (error, stdout, stderr) => {
@@ -297,24 +321,10 @@ app.whenReady().then(() => {
       }
       console.log(stdout || stderr)
     })
-
-    //   exec(
-    //     `"${process.env.COMSPEC}" /c start.bat`,
-    //     { cwd: `${basePath}/canon` },
-    //     (error, stdout, stderr) => {
-    //       if (error) {
-    //         console.error("Could not start Canon camera:", error);
-    //         return;
-    //       }
-    //       console.log(stdout || stderr);
-    //     }
-    //   );
-    // }
   }
   createWindow()
 
   if (config.cameraMode === "canon") {
-    // Start checking camera control process; stop when true
     cameraCheckInterval = setInterval(checkCameraControlProcess, 1000)
   }
 })
@@ -332,16 +342,14 @@ function checkCameraControlProcess() {
       if (mainWindow && mainWindow.webContents) {
         mainWindow.webContents.send("camera-control-status", isRunning)
       }
-      // If process is running, clear interval to stop further checks
       if (isRunning && cameraCheckInterval) {
-        clearInterval(cameraCheckInterval)  
+        clearInterval(cameraCheckInterval)
         console.log("CameraControl.exe обнаружен; дальнейшие проверки остановлены.")
       }
     }
   )
 }
 
-// // //! Одновременное закрытие приложения и Canon camera application
 app.on("before-quit", () => {
   try {
     if (config.cameraMode === "canon") {
@@ -354,13 +362,11 @@ app.on("before-quit", () => {
     console.error("Не удалось закрыть приложение Canon камеры:", error)
   }
 })
-// !
 
 app.on("window-all-closed", () => {
   app.quit()
 })
 
-// Обработчик ошибок приложения
 app.on("error", (error) => {
   console.error("Ошибка приложения:", error)
 })
@@ -373,10 +379,8 @@ process.on("unhandledRejection", (error) => {
   console.error("Необработанное отклонение:", error)
 })
 
-// TEST
-// Функция для мониторинга ЦП и GPU
+// TEST: Функция для мониторинга ЦП и GPU
 function monitorSystemLoad() {
-  // Мониторинг загрузки CPU
   setInterval(async () => {
     try {
       const cpuLoad = await si.currentLoad()
@@ -384,8 +388,6 @@ function monitorSystemLoad() {
     } catch (error) {
       console.error("Ошибка при получении загрузки CPU:", error)
     }
-
-    // Мониторинг GPU через nvidia-smi
     exec(
       "nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits",
       (error, stdout, stderr) => {
@@ -396,5 +398,5 @@ function monitorSystemLoad() {
         console.log(`Загрузка GPU: ${stdout.trim()}%`)
       }
     )
-  }, 5000) // Обновление каждые 5 секунд
+  }, 5000)
 }
