@@ -478,7 +478,7 @@ async function takePicture() {
 
         if (imageData) {
           await sendDateToServer(imageData)
-          console.log("Canon-фото сделано и отправлено.")
+          console.log("▶️ Canon-фото сделано и отправлено.")
         } else showScreen("style-screen")
       } catch (error) {
         console.error("Ошибка в takePicture:", error)
