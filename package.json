@@ -61,7 +61,14 @@
       "allowToChangeInstallationDirectory": true
     },
     "extraFiles": [
-      "canon/**"
+      {
+        "from": "canon",
+        "to": "canon",
+        "filter": [
+          "**/*",
+          "!**/Server/pathExe.txt"
+        ]
+      }
     ]
   }
 }
