@@ -87,6 +87,7 @@ const stylesDir = config.stylesDir.replace("{{basePath}}", basePath)
 // const localhost = config.localhost
 const localhost = "http://localhost:5000"
 const imagesFolder = `./canon/SavedPhotos/`
+const hotHolder = !!config?.HotFolder
 
 //! Путь для билда
 let dir = __dirname;
@@ -101,13 +102,13 @@ const canonPhotosPath = path.join(resourcePath, "canon", "SavedPhotos")
 if (!fs.existsSync(canonPhotosPath)) {
     fs.mkdirSync(canonPhotosPath, { recursive: true });
     console.log(`Временное расположение: \n${canonPhotosPath}`);
-} 
+}
 
 //! Путь для локалки
 // const canonPhotosPath = path.join(__dirname, "canon", "SavedPhotos")
 
 const printLogo = config?.logoPath
-const logo_scale= config.logoScale
+const logo_scale = config.logoScale
 brandLogo.src = config?.brandLogoPath
 brandLogo.style.transform = `scale(${config.mainLogoScale})`
 document.body.classList.add(`rotation-${config.camera_rotation}`)
@@ -1008,32 +1009,41 @@ if (startOverButton) {
 }
 
 if (printPhotoButton) {
-  printPhotoButton.addEventListener("click", () => {
+  printPhotoButton.addEventListener("click", async () => {
     printPhotoButton.disabled = true
     printPhotoButton.textContent =
       translations[currentLanguage].printButtonTextWaiting
-    setTimeout(() => {
-      printPhotoButton.disabled = false
-      printPhotoButton.textContent =
-        translations[currentLanguage].printButtonText
-    }, 4000)
+    setTimeout(
+      () => {
+        printPhotoButton.disabled = false
+        printPhotoButton.textContent =
+          translations[currentLanguage].printButtonText
+      },
+      hotHolder ? 2000 : 4000
+    )
 
     if (resultImage && resultImage.src) {
       const imageData = resultImage.src
       const isLandscape = resultImage.width > resultImage.height
-      console.log(
-        `isLandscape: ${isLandscape}: ${resultImage.width}x${resultImage.height}`
-      )
-      ipcRenderer.send("print-photo", {
-        imageData: imageData,
-        isLandscape,
-      })
+      if (hotHolder) {
+        await saveImageWithUtils("copyDirectory", imageData)
+      } else {
+        console.log(
+          `isLandscape: ${isLandscape}: ${resultImage.width}x${resultImage.height}`
+        )
+
+        ipcRenderer.send("print-photo", {
+          imageData: imageData,
+          isLandscape,
+        })
+      }
     } else {
       console.error("Нет фото для печати.")
     }
   })
 }
 
+// todo
 ipcRenderer.on("print-photo-response", (event, success) => {
   if (success) {
     console.log("▶️ Печать выполнена успешно.")
@@ -1707,7 +1717,7 @@ async function getBase64Image(filePath) {
 
       return data.toString("base64")
     } catch (err) {
-      console.error(`❌ Ошибка сжатия (попытка ${attempts + 1}):`, err)
+      console.warn(`❌ Ошибка сжатия (попытка ${attempts + 1}):`, err)
 
       if (err.message.includes("Premature end of input file")) {
         console.log(

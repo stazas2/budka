@@ -35,38 +35,52 @@ function generateFileName() {
 
 async function saveImageWithUtils(folderType, urlImage) {
   try {
-    const { inputDir, outputDir } = createDateFolders();
-    const folderPath = folderType === "input" ? inputDir : outputDir;
-    const fileName = generateFileName();
-    const filePath = path.join(folderPath, fileName);
+    const { inputDir, outputDir } = createDateFolders()
+    const folderPath = folderType === "input" ? inputDir : outputDir
+    const fileName = generateFileName()
+    const filePath = path.join(folderPath, fileName)
+    let fileBuffer
 
-    if (folderType === "input") {
-      const imageData = urlImage.replace(/^data:image\/\w+;base64,/, "");
-      fs.writeFileSync(filePath, imageData, "base64");
-      console.log("Изображение сохранено (input):", filePath);
-    } else if (folderType === "output") {
-      if (/^https?:\/\//.test(urlImage)) {
-        try {
-          const response = await fetch(urlImage);
-          if (!response.ok) {
-            throw new Error(`Не удалось загрузить изображение: ${response.statusText}`);
-          }
-          const buffer = await response.arrayBuffer();
-          fs.writeFileSync(filePath, Buffer.from(buffer));
-          console.log("Изображение сохранено (output, URL):", filePath);
-        } catch (error) {
-          console.error("Ошибка загрузки изображения:", error);
-          throw error;
-        }
-      } else {
-        const imageData = urlImage.replace(/^data:image\/\w+;base64,/, "");
-        fs.writeFileSync(filePath, imageData, "base64");
-        console.log("Изображение сохранено (output, base64):", filePath);
+    // Если тип "input" или urlImage не является валидным HTTP/HTTPS URL, обрабатываем как base64
+    if (folderType === "input" || !/^https?:\/\//.test(urlImage)) {
+      const imageData = urlImage.replace(/^data:image\/\w+;base64,/, "")
+      fileBuffer = Buffer.from(imageData, "base64")
+      // console.log(`▶️ Изображение обработано как base64 (${folderType})`)
+    } else {
+      // Обработка изображения по URL
+      const response = await fetch(urlImage)
+      if (!response.ok) {
+        throw new Error(
+          `Не удалось загрузить изображение: ${response.statusText}`
+        )
       }
+      const buffer = await response.arrayBuffer()
+      fileBuffer = Buffer.from(buffer)
+    }
+
+    // Если требуется копирование в HotFolder
+    if (folderType === "copyDirectory") {
+      const hotPath =
+        config?.HotFolderPath || "C:\\DNP\\Hot Folder\\Prints\\4x6"
+      if (!fs.existsSync(hotPath)) {
+        fs.mkdirSync(hotPath, { recursive: true })
+        console.log("Папка для копирования создана.")
+      }
+      const hotFilePath = path.join(hotPath, fileName)
+      if (hotFilePath) {
+        fs.writeFileSync(hotFilePath, fileBuffer)
+        console.log("▶️ Изображение скопировано:", hotFilePath)
+      } else {
+        console.error("Папки для копирования не существует!")
+      }
+    } else {
+      // Сохраняем изображение в папку
+      fs.writeFileSync(filePath, fileBuffer)
+      console.log(`▶️ Изображение сохранено (${folderType}):`, filePath)
     }
   } catch (error) {
-    console.error(`Ошибка в saveImage (${folderType}):`, error);
-    throw error;
+    console.error(`Ошибка в saveImage (${folderType}):`, error)
+    throw error
   }
 }
 
@@ -74,35 +88,35 @@ async function copyPhotoToDateFolder(imagesFolder, filepath) {
   try {
     // Берём имя файла из пути и создаём папку в случае отсут-я
     const filename = filepath.split("\\")[2]
-    const filePath = path.join(imagesFolder, filename);
-    const { inputDir } = createDateFolders();
+    const filePath = path.join(imagesFolder, filename)
+    const { inputDir } = createDateFolders()
 
     // console.log(`📂 Оригинальный файл: ${filePath}`);
     // console.log(`📁 Папка назначения: ${inputDir}`);
 
     // Проверяем, существует ли файл перед копированием
     try {
-      await fs.promises.access(filePath);
+      await fs.promises.access(filePath)
     } catch (err) {
-      console.error(`❌ Файл ${filePath} не найден!`);
-      return null;
+      console.error(`❌ Файл ${filePath} не найден!`)
+      return null
     }
 
     // 🗂 Создаём папку, если её нет
-    await fs.promises.mkdir(inputDir, { recursive: true });
+    await fs.promises.mkdir(inputDir, { recursive: true })
 
     // 🏷 Генерируем новое имя файла
-    const newFileName = generateFileName();
-    const targetPath = path.join(inputDir, newFileName);
+    const newFileName = generateFileName()
+    const targetPath = path.join(inputDir, newFileName)
 
     // 🎯 Копируем фото с новым именем
-    await fs.promises.copyFile(filePath, targetPath);
-    console.log(`✅ Фото скопировано в ${targetPath}`);
+    await fs.promises.copyFile(filePath, targetPath)
+    console.log(`▶️ Изображение сохранено (input): ${targetPath}`)
 
-    return targetPath; // Возвращаем путь к новому файлу
+    return targetPath // Возвращаем путь к новому файлу
   } catch (error) {
-    console.error(`❌ Ошибка копирования фото: ${error.message}`);
-    return null;
+    console.error(`❌ Ошибка копирования фото: ${error.message}`)
+    return null
   }
 }
 
