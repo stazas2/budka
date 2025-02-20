@@ -89,7 +89,6 @@ const localhost = "http://localhost:5000"
 const imagesFolder = `./canon/SavedPhotos/`
 const hotHolder = !!config?.HotFolder
 
-//! Путь для билда
 let dir = __dirname;
 while (path.basename(dir) !== 'resources' && dir !== path.parse(dir).root) {
     dir = path.dirname(dir);
@@ -104,8 +103,28 @@ if (!fs.existsSync(canonPhotosPath)) {
     console.log(`Временное расположение: \n${canonPhotosPath}`);
 }
 
-//! Путь для локалки
-// const canonPhotosPath = path.join(__dirname, "canon", "SavedPhotos")
+// let canonPhotosPath;
+
+// // Если запущено ли приложение из asar-архива, то билд)
+// if (__dirname.includes('app.asar')) {
+//     // Логика для билда
+//     let dir = __dirname;
+//     while (path.basename(dir) !== 'resources' && dir !== path.parse(dir).root) {
+//         dir = path.dirname(dir);
+//     }
+
+//     const resourcePath = path.dirname(dir);
+//     canonPhotosPath = path.join(resourcePath, "canon", "SavedPhotos");
+// } else {
+//     // Локальный запуск
+//     canonPhotosPath = path.join(__dirname, "canon", "SavedPhotos");
+// }
+
+// // Создаём папку, если её нет
+// if (!fs.existsSync(canonPhotosPath)) {
+//     fs.mkdirSync(canonPhotosPath, { recursive: true });
+//     console.log(`Временное расположение: \n${canonPhotosPath}`);
+// }
 
 const printLogo = config?.logoPath
 const logo_scale = config.logoScale
@@ -716,19 +735,31 @@ async function sendDateToServer(imageData) {
     fetch("http://90.156.158.209/api/handler/", fetchOptions)
       .then((response) => {
         console.log("▶️ HTTP response status:", response.status)
-        if (!response.ok) throw new Error("Network error: " + response.status)
+        if (response.status === 403) {
+          throw new Error("403 Forbidden: сервер отказал в доступе")
+        }
+        if (!response.ok) {
+          throw new Error("Network error: " + response.status)
+        }
         return response.json()
       })
       .then((responseData) => {
         console.log("Data received from server:", responseData)
         handleServerResponse(responseData)
       })
-      .catch(() => {
+      .catch((error) => {
+        if (error.message.includes("403")) {
+          console.error("Ошибка:", error.message)
+          alert("Ошибка 403: отказано в доступе")
+          showScreen("style-screen")
+          return // В случае 403 резервный сервер не вызываем
+        }
         fetch("http://85.95.186.114/api/handler/", fetchOptions)
           .then((response) => {
             console.log("HTTP response status:", response.status)
-            if (!response.ok)
+            if (!response.ok) {
               throw new Error("Network error: " + response.status)
+            }
             return response.json()
           })
           .then((responseData) => {

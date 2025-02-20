@@ -71,7 +71,7 @@ async function saveImageWithUtils(folderType, urlImage) {
         fs.writeFileSync(hotFilePath, fileBuffer)
         console.log("▶️ Изображение скопировано:", hotFilePath)
       } else {
-        console.error("Папки для копирования не существует!")
+        console.error("Папки для hot-копирования не существует!")
       }
     } else {
       // Сохраняем изображение в папку
