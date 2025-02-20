@@ -89,42 +89,28 @@ const localhost = "http://localhost:5000"
 const imagesFolder = `./canon/SavedPhotos/`
 const hotHolder = !!config?.HotFolder
 
-let dir = __dirname;
-while (path.basename(dir) !== 'resources' && dir !== path.parse(dir).root) {
-    dir = path.dirname(dir);
+let canonPhotosPath;
+
+// Если запущено ли приложение из asar-архива, то билд)
+if (__dirname.includes('app.asar')) {
+    // Логика для билда
+    let dir = __dirname;
+    while (path.basename(dir) !== 'resources' && dir !== path.parse(dir).root) {
+        dir = path.dirname(dir);
+    }
+
+    const resourcePath = path.dirname(dir);
+    canonPhotosPath = path.join(resourcePath, "canon", "SavedPhotos");
+} else {
+    // Локальный запуск
+    canonPhotosPath = path.join(__dirname, "canon", "SavedPhotos");
 }
 
-const resourcePath = path.dirname(dir);
-// Формируем путь к папке
-const canonPhotosPath = path.join(resourcePath, "canon", "SavedPhotos")
-
+// Создаём папку, если её нет
 if (!fs.existsSync(canonPhotosPath)) {
     fs.mkdirSync(canonPhotosPath, { recursive: true });
     console.log(`Временное расположение: \n${canonPhotosPath}`);
 }
-
-// let canonPhotosPath;
-
-// // Если запущено ли приложение из asar-архива, то билд)
-// if (__dirname.includes('app.asar')) {
-//     // Логика для билда
-//     let dir = __dirname;
-//     while (path.basename(dir) !== 'resources' && dir !== path.parse(dir).root) {
-//         dir = path.dirname(dir);
-//     }
-
-//     const resourcePath = path.dirname(dir);
-//     canonPhotosPath = path.join(resourcePath, "canon", "SavedPhotos");
-// } else {
-//     // Локальный запуск
-//     canonPhotosPath = path.join(__dirname, "canon", "SavedPhotos");
-// }
-
-// // Создаём папку, если её нет
-// if (!fs.existsSync(canonPhotosPath)) {
-//     fs.mkdirSync(canonPhotosPath, { recursive: true });
-//     console.log(`Временное расположение: \n${canonPhotosPath}`);
-// }
 
 const printLogo = config?.logoPath
 const logo_scale = config.logoScale
