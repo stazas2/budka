@@ -89,27 +89,27 @@ const localhost = "http://localhost:5000"
 const imagesFolder = `./canon/SavedPhotos/`
 const hotHolder = !!config?.HotFolder
 
-let canonPhotosPath;
+let canonPhotosPath
 
 // Если запущено ли приложение из asar-архива, то билд)
-if (__dirname.includes('app.asar')) {
-    // Логика для билда
-    let dir = __dirname;
-    while (path.basename(dir) !== 'resources' && dir !== path.parse(dir).root) {
-        dir = path.dirname(dir);
-    }
+if (__dirname.includes("app.asar")) {
+  // Логика для билда
+  let dir = __dirname
+  while (path.basename(dir) !== "resources" && dir !== path.parse(dir).root) {
+    dir = path.dirname(dir)
+  }
 
-    const resourcePath = path.dirname(dir);
-    canonPhotosPath = path.join(resourcePath, "canon", "SavedPhotos");
+  const resourcePath = path.dirname(dir)
+  canonPhotosPath = path.join(resourcePath, "canon", "SavedPhotos")
 } else {
-    // Локальный запуск
-    canonPhotosPath = path.join(__dirname, "canon", "SavedPhotos");
+  // Локальный запуск
+  canonPhotosPath = path.join(__dirname, "canon", "SavedPhotos")
 }
 
 // Создаём папку, если её нет
 if (!fs.existsSync(canonPhotosPath)) {
-    fs.mkdirSync(canonPhotosPath, { recursive: true });
-    console.log(`Временное расположение: \n${canonPhotosPath}`);
+  fs.mkdirSync(canonPhotosPath, { recursive: true })
+  console.log(`Временное расположение: \n${canonPhotosPath}`)
 }
 
 const printLogo = config?.logoPath
@@ -163,7 +163,6 @@ function applyRotationStyles() {
 applyRotationStyles()
 
 //* ================ STYLE HANDLING MODULE ================
-// === Управление стилями ===
 // Инициализирует кнопки стилей на основе полученных данных
 function initStyleButtons(parsedStyles) {
   try {
@@ -247,8 +246,14 @@ function initStyleButtons(parsedStyles) {
           // if (hasBrackets) {
           //   resultShowStyle = style.originalName.match(/\((.*?)\)/)
           // }
-          showScreen("camera-screen")
-          console.log(`▶️ Выбранный стиль: ${selectedStyle}`)
+
+          if (fs.existsSync(printLogo)) {
+            showScreen("camera-screen")
+            console.log(`▶️ Выбранный стиль: ${selectedStyle}`)
+          } else {
+            alert("Логотип не найден. Пожалуйста, добавьте логотип.")
+            showScreen("style-screen")
+          }
         })
 
         button.style.animationDelay = `${index * 0.3}s`
@@ -950,8 +955,6 @@ async function showScreen(screenId) {
       if (screenId === "camera-screen") {
         if (cameraMode === "canon") {
           video.style.display = "none"
-          // todo ( обязательно ли это?)
-          liveViewContainer.style.display = "block"
           startCountdown() // Убедитесь, что обратный отсчет запускается для режима canon
         } else {
           // Запускаем камеру при отображении экрана camera-screen
@@ -1535,6 +1538,7 @@ async function startLiveView() {
     liveViewInterval = setInterval(updateLiveView, 100)
     lastLiveViewUpdate = Date.now()
     noResponseWarning.style.display = "none"
+    liveViewImage.style.display = "block"
   } catch (error) {
     console.error("Ошибка при включении Live View:", error)
   }
@@ -1578,8 +1582,20 @@ async function updateLiveView() {
 }
 
 async function reconnect() {
+  showBlockingOverlay()
+
+  if (cameraScreen.classList.contains("active") && amountOfStyles > 1) {
+    showScreen("style-screen")
+  } else if (
+    cameraScreen.classList.contains("active") &&
+    amountOfStyles === 1
+  ) {
+    showScreen("gender-screen")
+  }
+
   const wasEvfActive = isLiveViewCanon
   try {
+    await new Promise((resolve) => setTimeout(resolve, 5000))
     if (wasEvfActive) {
       console.log("Выключаем EVF перед реконнектом...")
       await endLiveView()
@@ -1591,14 +1607,53 @@ async function reconnect() {
     console.log("Реконнект успешен.")
 
     if (wasEvfActive) {
-      console.log("Ждем 3 секунды перед включением EVF...")
+      console.log("Ждем несколько секунд перед включением EVF...")
       await new Promise((resolve) => setTimeout(resolve, 5000))
       console.log("Включаем EVF после реконнекта...")
       await startLiveView()
       console.log("EVF включен.")
     }
+
+    // Проверка live view перед скрытием оверлея
+    const liveResponse = await fetch(`${localhost}/api/get/live-view`)
+    if (liveResponse.ok) {
+      console.log("Live view активен, скрываем оверлей.")
+      hideBlockingOverlay()
+    } else {
+      throw new Error("Live view не отвечает после реконнекта.")
+    }
   } catch (error) {
     console.error("Ошибка реконнекта:", error)
+  }
+}
+
+// Добавляем функции для блокирующего оверлея
+function showBlockingOverlay() {
+  let overlay = document.getElementById("blocking-overlay")
+  if (!overlay) {
+    overlay = document.createElement("div")
+    overlay.id = "blocking-overlay"
+    overlay.style.position = "fixed"
+    overlay.style.top = "0"
+    overlay.style.left = "0"
+    overlay.style.width = "100%"
+    overlay.style.height = "100%"
+    overlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)"
+    overlay.style.color = "white"
+    overlay.style.display = "flex"
+    overlay.style.alignItems = "center"
+    overlay.style.justifyContent = "center"
+    overlay.style.zIndex = "9999"
+    overlay.style.fontSize = "24px"
+    overlay.innerHTML = "Подключение камеры, пожалуйста, подождите..."
+    document.body.appendChild(overlay)
+  }
+}
+
+function hideBlockingOverlay() {
+  const overlay = document.getElementById("blocking-overlay")
+  if (overlay) {
+    overlay.remove()
   }
 }
 
@@ -1765,7 +1820,10 @@ ipcRenderer.on("camera-control-status", (event, isRunning) => {
             throw new Error("Canon live view не активен.")
           }
           console.log("▶️ Canon live view активен.")
+          liveViewImage.style.display = "block"
           showScreen("splash-screen")
+          // Иниализация мониторинга liveView
+          monitorLiveView()
         } catch (error) {
           console.error("Ошибка в Canon mode:", error)
           console.log("Попытка перезапустить Canon live view...")
@@ -1780,7 +1838,10 @@ ipcRenderer.on("camera-control-status", (event, isRunning) => {
                 throw new Error("Canon live view не активен после перезапуска.")
               }
               console.log("▶️ Canon live view перезапущен успешно.")
+              liveViewImage.style.display = "block"
               showScreen("splash-screen")
+              // Иниализация мониторинга liveView
+              monitorLiveView()
             } catch (err) {
               console.error("Canon live view всё еще не активен:", err)
               alert(
@@ -1812,3 +1873,19 @@ ipcRenderer.on("camera-control-status", (event, isRunning) => {
     }, 3000)
   }
 })
+
+// Мониторинг liveView
+function monitorLiveView() {
+  setInterval(() => {
+    if (
+      isLiveViewCanon &&
+      lastLiveViewUpdate &&
+      Date.now() - lastLiveViewUpdate > 3000
+    ) {
+      console.warn(
+        "LiveView не отвечает более 3 секунд. Попытка переподключения..."
+      )
+      reconnect()
+    }
+  }, 3000)
+}
