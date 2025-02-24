@@ -1,8 +1,7 @@
-// windowManager.js
 const { BrowserWindow } = require("electron")
 
 function createWindow() {
-  console.log("Создание главного окна...")
+  console.log("Создание главного окна...");
   try {
     const mainWindow = new BrowserWindow({
       width: 1080,
@@ -19,7 +18,6 @@ function createWindow() {
 
     mainWindow.webContents.on("did-finish-load", () => {
       console.log("Окно успешно загружено")
-      mainWindow.webContents.setZoomFactor(1)
     })
 
     mainWindow.on("error", (error) => {
@@ -29,7 +27,7 @@ function createWindow() {
     return mainWindow
   } catch (error) {
     console.error("Не удалось создать окно:", error)
-    app.quit()
+    throw error; // Добавим, чтобы ошибка была видна в main.js
   }
 }
 

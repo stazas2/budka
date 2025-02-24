@@ -7,7 +7,8 @@ let state = {
   videoStream: null,
   cameraInitialized: false,
   config: loadConfig(),
-  currentLanguage: loadConfig().language?.current || "ru"
+  currentLanguage: loadConfig().language?.current || "ru",
+  inactivityTimer: null // Добавляем таймер в состояние
 }
 
 module.exports = {
