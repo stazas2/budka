@@ -4,15 +4,17 @@ const { sendDateToServer } = require("./imageProcessor");
 const { capture, getUniquePhotoBase64 } = require("./canon");
 const { getState, setState } = require("./state");
 
-async function startCamera() {
-  const { video } = require("./scripts");
+async function startCamera(video) {
   try {
     console.log("Попытка инициализации камеры...");
+    if (!video) {
+      throw new Error("Элемент <video> не найден");
+    }
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { width: 1920, height: 1280 }
     });
-    setState({ videoStream: stream, cameraInitialized: true });
     video.srcObject = stream;
+    setState({ videoStream: stream, cameraInitialized: true });
     console.log("Камера успешно инициализирована");
   } catch (error) {
     console.error("Ошибка инициализации камеры:", error.message);
@@ -37,7 +39,7 @@ function stopCamera() {
 }
 
 async function takePicture(onProcessing, onResult, resultImage) {
-  const { config, canvas, video } = require("./scripts");
+  const { config, canvas } = require("./scripts");
   const state = getState();
 
   try {

@@ -39,10 +39,13 @@ const qrCodeImage = document.getElementById("qr-code-img");
 const languageSwitcher = document.getElementById("language-switcher");
 const translations = require("./translations.json");
 
+// Инициализация состояния
+let config = getState().config;
+
 // Инициализация при загрузке DOM
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM полностью загружен");
-  const { config } = getState();
+  config = getState().config; // Обновляем config после загрузки DOM
   console.log("Конфигурация:", config);
   if (config.cameraMode !== "canon") {
     console.log("Переключение на splash-screen");
@@ -184,7 +187,34 @@ async function handleTakePicture() {
 // Слушатели событий для сброса таймера бездействия
 ["click", "mousemove", "keypress", "touchstart"].forEach((event) => {
   document.addEventListener(event, () => {
-    console.log(`Событие ${event} обнаружено, сброс таймера бездействия`);
+    // console.log(`Событие ${event} обнаружено, сброс таймера бездействия`);
     // resetInactivityTimer(showScreen, stopCamera);
   });
 });
+
+// Экспорт необходимых переменных и функций
+module.exports = {
+  styleScreen,
+  genderScreen,
+  cameraScreen,
+  processingScreen,
+  resultScreen,
+  styleButtonsContainer,
+  countdownElement,
+  video,
+  canvas,
+  resultImage,
+  startOverButton,
+  printPhotoButton,
+  backButtons,
+  startButton,
+  continueButton,
+  genderButtons,
+  showResultQrBtn,
+  qrCodeImage,
+  languageSwitcher,
+  onProcessing,
+  onResult,
+  handleTakePicture,
+  config // Добавляем config в экспорт
+};

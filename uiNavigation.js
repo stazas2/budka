@@ -4,7 +4,7 @@ const { startCountdown } = require("./countdown");
 const { getState } = require("./state");
 
 function showScreen(screenId) {
-  const screens = ["style-screen", "gender-screen", "camera-screen", "processing-screen", "result-screen"];
+  const screens = ["splash-screen", "style-screen", "gender-screen", "camera-screen", "processing-screen", "result-screen"];
   console.log(`Попытка переключения на экран: ${screenId}`);
   screens.forEach((id) => {
     const screen = document.getElementById(id);
@@ -16,7 +16,7 @@ function showScreen(screenId) {
     }
   });
 
-  const { resultImage } = require("./scripts");
+  const { resultImage, video } = require("./scripts"); // Импорт video из scripts.js
   if (screenId === "camera-screen") {
     const onProcessing = () => {
       console.log("Переход на экран обработки");
@@ -27,10 +27,10 @@ function showScreen(screenId) {
       showScreen("result-screen");
     };
     console.log("Запуск камеры и обратного отсчёта...");
-    startCamera()
+    startCamera(video)
       .then(() => {
         console.log("Камера инициализирована, запуск обратного отсчёта");
-        startCountdown(onProcessing, onResult, resultImage);
+        startCountdown(video, onProcessing, onResult, resultImage);
       })
       .catch((error) => {
         console.error("Ошибка при инициализации камеры, возврат на экран стилей:", error.message);
