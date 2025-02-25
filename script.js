@@ -88,8 +88,7 @@ const stylesDir = config.stylesDir.replace("{{basePath}}", basePath)
 const localhost = "http://localhost:5000"
 const imagesFolder = `./canon/SavedPhotos/`
 const hotHolder = !!config?.HotFolder
-
-let canonPhotosPath
+let canonPhotosPath, countdownInterval
 
 // Если запущено ли приложение из asar-архива, то билд)
 if (__dirname.includes("app.asar")) {
@@ -618,8 +617,6 @@ function startCountdown() {
   }
 }
 
-let countdownInterval
-
 // Выполняет обратный отсчет и делает снимок
 function beginCountdown() {
   try {
@@ -691,9 +688,6 @@ async function sendDateToServer(imageData) {
         Fon: base64FonImage,
       },
     }
-
-    // todo
-    // console.log("Кукусики: \n" + data.params.Face)
 
     const headers = {
       Accept: "application/json",
@@ -896,11 +890,6 @@ function getRandomImageFromStyleFolder(style) {
 async function showScreen(screenId) {
   try {
     console.log(`➩ Переключение на экран: ${screenId}`)
-
-    // if (screenId === "loading-screen" && config.cameraMode !== "canon") {
-    //   console.log("Skipping loading-screen in canon mode.")
-    //   return
-    // }
 
     const currentActive = document.querySelector(".screen.active")
     if (currentActive) {

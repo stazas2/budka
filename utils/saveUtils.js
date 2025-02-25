@@ -44,8 +44,12 @@ async function saveImageWithUtils(folderType, urlImage) {
     // Если тип "input" или urlImage не является валидным HTTP/HTTPS URL, обрабатываем как base64
     if (folderType === "input" || !/^https?:\/\//.test(urlImage)) {
       const imageData = urlImage.replace(/^data:image\/\w+;base64,/, "")
-      fileBuffer = Buffer.from(imageData, "base64")
-      // console.log(`▶️ Изображение обработано как base64 (${folderType})`)
+      buffer = Buffer.from(imageData, "base64") 
+
+      fileBuffer = await sharp(buffer)
+        .resize({ width: 1280, height: 720, fit: "inside" })
+        .toFormat("jpeg", { quality: 80 })
+        .toBuffer()
     } else {
       // Обработка изображения по URL
       const response = await fetch(urlImage)
