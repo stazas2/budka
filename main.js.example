@@ -1,0 +1,13 @@
+// This is a suggested addition to your main.js if you want to keep the sum tests
+// Add this near the top of the file
+
+function sum(a, b) {
+  return a + b;
+}
+
+// Export for testing
+if (typeof module !== 'undefined') {
+  module.exports = { sum };
+}
+
+// Rest of your main.js file...
