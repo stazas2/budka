@@ -58,16 +58,27 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "include": "build/installer.nsh",
+      "createDesktopShortcut": true,
+      "runAfterFinish": false
     },
     "extraFiles": [
       {
         "from": "canon",
         "to": "canon",
         "filter": [
-          "**/*",
-          "!**/Server/pathExe.txt"
+          "/*",
+          "!/Server/pathExe.txt"
         ]
+      },
+      {
+        "from": "build/dependencies/dotnet-runtime-9.0.2-win-x64.exe",
+        "to": "resources/dotnet-runtime-9.0.2-win-x64.exe"
+      },
+      {
+        "from": "build/dependencies/aspnetcore-runtime-9.0.2-win-x64.exe",
+        "to": "resources/aspnetcore-runtime-9.0.2-win-x64.exe"
       }
     ]
   }
