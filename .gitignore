@@ -20,3 +20,7 @@ canon/Server/pathExe.txt
 canon/Camera/camera_log.txt
 canon/Camera/image.jpg
 canon/Client/image.jpg
+
+
+coverage/*
+coverage/clover.xml

@@ -8,17 +8,17 @@ const stylesDir = config.stylesDir.replace("{{basePath}}", basePath)
 
 async function getStyles(genders) {
   if (!genders || genders.length === 0) {
-    console.warn("Гендеры не указаны. Возвращаю пустой список стилей.")
+    console.warn("Genders not specified. Returning empty style list.")
     return []
   }
   console.log(
-    `Загрузка стилей для гендеров "${(genders || []).join(
+    `Loading styles for genders "${(genders || []).join(
       ", "
-    )}" из директории: ${stylesDir}`
+    )}" from directory: ${stylesDir}`
   )
   try {
     if (!genders || genders.length === 0) {
-      console.warn("Гендеры не указаны. Возвращаю пустой список стилей.")
+      console.warn("Genders not specified. Returning empty style list.")
       return []
     }
 
@@ -26,7 +26,7 @@ async function getStyles(genders) {
     for (const gender of genders) {
       const genderDir = path.join(stylesDir, gender)
       if (!fs.existsSync(genderDir)) {
-        console.warn(`Директория для гендера не существует: ${genderDir}`)
+        console.warn(`Gender directory does not exist: ${genderDir}`)
         continue
       }
 
@@ -52,13 +52,13 @@ async function getStyles(genders) {
     }
 
     if (styles.size === 0) {
-      console.warn("Не найдено стилей для указанных гендеров")
+      console.warn("No styles found for specified genders")
       return []
     }
 
     return Array.from(styles)
   } catch (error) {
-    console.error("Ошибка чтения директории стилей:", error)
+    console.error("Error reading styles directory:", error)
     return []
   }
 }

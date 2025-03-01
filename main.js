@@ -2,13 +2,13 @@ const { app, ipcMain } = require("electron")
 const path = require("path")
 const { loadConfig } = require("./utils/configLoader")
 
-// Загружаем конфигурацию
+// Loading configuration
 const config = loadConfig() || {}
 
-/** Начало измерения времени запуска main процесса */
+/** Start measuring main process startup time */
 const mainStartupTimeStart = Date.now()
 
-// Обработчик печати фотографии
+// Photo print handler
 ipcMain.on("print-photo", async (event, data) => {
   try {
     const printService = require("./modules/printService")
@@ -20,7 +20,7 @@ ipcMain.on("print-photo", async (event, data) => {
   }
 })
 
-// Обработчик запроса стилей
+// Styles request handler
 ipcMain.handle("get-styles", async (event, genders = ['any']) => {
   try {
     const styleManager = require("./modules/styleManager")
@@ -41,17 +41,17 @@ app.on("ready", async () => {
     const systemMonitor = require("./modules/systemMonitor")
     
     // Initialize the application
-    // Выводим информацию о принтере
+    // Outputting printer information
     const printer = await printService.getDefaultPrinter() || { name: 'No printer found' }
     console.log('Default printer:', printer)
     
-    // Инициализируем камеру
+    // Initializing camera
     await cameraManager.initCamera()
     
-    // Создаем окно приложения
+    // Creating application window
     const mainWindow = windowManager.createWindow()
     
-    // Запускаем мониторинг камеры
+    // Starting camera monitoring
     cameraManager.startCameraMonitoring(mainWindow)
     
     // Start system monitoring with 10 second interval
@@ -75,13 +75,13 @@ app.on("window-all-closed", () => {
 })
 
 app.on("error", (error) => {
-  console.error("Ошибка приложения:", error)
+  console.error("Application error:", error)
 })
 
 process.on("uncaughtException", (error) => {
-  console.error("Неперехваченное исключение:", error)
+  console.error("Uncaught exception:", error)
 })
 
 process.on("unhandledRejection", (error) => {
-  console.error("Необработанное отклонение:", error)
+  console.error("Unhandled rejection:", error)
 })
