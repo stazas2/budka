@@ -20,40 +20,131 @@ const mainStartupTimeStart = Date.now()
 let mainWindow // new global variable
 let cameraCheckInterval // New global variable for interval
 
-// Функция создания окна приложения
-function createWindow() {
-  console.log("Создание главного окна...")
-  try {
-    getDefaultPrinter().then(console.log)
+// Keep window references to prevent garbage collection
+let launcherWindow = null;
+let emptyWindow = null;
 
-    mainWindow = new BrowserWindow({
-      width: 1080,
-      height: 1440,
-      webPreferences: {
-        nodeIntegration: true,
-        contextIsolation: false,
-      },
-      autoHideMenuBar: true,
-    })
+function createLauncherWindow() {
+  launcherWindow = new BrowserWindow({
+    width: 400,
+    height: 350,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
+  });
 
-    mainWindow.setMenuBarVisibility(false)
-    mainWindow.loadFile("index.html")
-    // const url = `file://${__dirname}/index.html?cache_bust=${Date.now()}`
-    // mainWindow.loadURL(url)
+  launcherWindow.loadFile('launcher.html');
+  
+  // Uncomment this line to open dev tools for launcher window
+  // launcherWindow.webContents.openDevTools();
 
-    mainWindow.webContents.on("did-finish-load", () => {
-      console.log("Окно успешно загружено")
-      mainWindow.webContents.setZoomFactor(1)
-    })
-
-    mainWindow.on("error", (error) => {
-      console.error("Ошибка окна:", error)
-    })
-  } catch (error) {
-    console.error("Не удалось создать окно:", error)
-    app.quit()
-  }
+  launcherWindow.on('closed', () => {
+    // Close all windows when launcher is closed
+    if (mainWindow) mainWindow.close();
+    if (emptyWindow) emptyWindow.close();
+    launcherWindow = null;
+  });
 }
+
+// Your existing create main window function
+// Modify it to keep the window hidden until requested
+function createMainWindow() {
+  mainWindow = new BrowserWindow({
+    // Your existing window settings
+    width: 1080,
+    height: 1440,
+    show: false, // Don't show until requested
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    },
+    autoHideMenuBar: true,
+  });
+
+  mainWindow.setMenuBarVisibility(false)
+  mainWindow.loadFile("index.html")
+  // const url = `file://${__dirname}/index.html?cache_bust=${Date.now()}`
+  // mainWindow.loadURL(url)
+
+  mainWindow.webContents.on("did-finish-load", () => {
+    console.log("Окно успешно загружено")
+    mainWindow.webContents.setZoomFactor(1)
+  })
+
+  mainWindow.on("error", (error) => {
+    console.error("Ошибка окна:", error)
+  })
+}
+
+function createEmptyWindow() {
+  emptyWindow = new BrowserWindow({
+    width: 800,
+    height: 600,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
+  });
+
+  emptyWindow.loadFile('empty.html');
+
+  emptyWindow.on('closed', () => {
+    emptyWindow = null;
+  });
+}
+
+app.whenReady().then(() => {
+  if (config.cameraMode === "canon") {
+    exec("start.bat", { cwd: `./canon` }, (error, stdout, stderr) => {
+      if (error) {
+        console.error("Не удалось запустить Canon камеру:", error)
+        return
+      }
+      console.log(stdout || stderr)
+    })
+  }
+  createLauncherWindow();
+  
+  // Pre-create the main window but keep it hidden
+  createMainWindow();
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createLauncherWindow();
+    }
+  });
+
+  if (config.cameraMode === "canon") {
+    cameraCheckInterval = setInterval(checkCameraControlProcess, 1000)
+  }
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+// IPC handlers for launcher buttons
+ipcMain.on('open-main-window', () => {
+  if (mainWindow === null) {
+    createMainWindow();
+  }
+  mainWindow.show();
+});
+
+ipcMain.on('open-empty-window', () => {
+  if (emptyWindow === null) {
+    createEmptyWindow();
+  } else {
+    emptyWindow.show();
+  }
+});
+
+ipcMain.on('close-app', () => {
+  app.quit();
+});
 
 // Обработчик запроса стилей
 ipcMain.handle("get-styles", async (event, genders) => {
@@ -332,24 +423,6 @@ async function createPdf(tempImagePath, tempPdfPath, isLandscape) {
   })
 }
 
-// Если приложение-canon запущено, то не запускаем его повторно
-app.whenReady().then(() => {
-  if (config.cameraMode === "canon") {
-    exec("start.bat", { cwd: `./canon` }, (error, stdout, stderr) => {
-      if (error) {
-        console.error("Не удалось запустить Canon камеру:", error)
-        return
-      }
-      console.log(stdout || stderr)
-    })
-  }
-  createWindow()
-
-  if (config.cameraMode === "canon") {
-    cameraCheckInterval = setInterval(checkCameraControlProcess, 1000)
-  }
-})
-
 // New function to check for CameraControl.exe process and send status to renderer
 function checkCameraControlProcess() {
   exec(
@@ -384,10 +457,6 @@ app.on("before-quit", () => {
   } catch (error) {
     console.error("Не удалось закрыть приложение Canon камеры:", error)
   }
-})
-
-app.on("window-all-closed", () => {
-  app.quit()
 })
 
 app.on("error", (error) => {
