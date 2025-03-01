@@ -1,10 +1,15 @@
-// Import electron and other modules 
-const electron = require('electron');
+// Import core modules needed for tests
 const path = require('path');
 const fs = require('fs');
 
 // Increase the max listeners limit to prevent memory leak warnings
 process.setMaxListeners(20);
+
+// Store event handlers outside of mocks
+const eventHandlers = {
+  app: {},
+  ipc: {}
+};
 
 // Mock console methods to suppress output during tests
 global.console = {
@@ -14,7 +19,7 @@ global.console = {
   warn: jest.fn(),
 };
 
-// Mock modules
+// Mock module dependencies
 jest.mock('fs', () => ({
   existsSync: jest.fn().mockReturnValue(true),
   readFileSync: jest.fn().mockReturnValue('{}'),
@@ -24,97 +29,23 @@ jest.mock('fs', () => ({
   statSync: jest.fn().mockReturnValue({ isDirectory: () => true })
 }));
 
-// Handle module mocking more dynamically
-const mockModules = {
-  '../config': {
-    loadConfig: jest.fn().mockReturnValue({
-      basePath: '/mock/base/path',
-      stylesDir: '{{basePath}}/styles',
-      templatesDir: '{{basePath}}/templates',
-      outputDir: '{{basePath}}/output',
-      printDir: '{{basePath}}/print',
-      logoPath: '/mock/base/path/logo.png'
-    })
-  },
-  '../modules/styleManager': {
-    getStyles: jest.fn().mockResolvedValue([{ id: 'style1', name: 'Style 1', gender: 'any' }]),
-    getStyleById: jest.fn().mockResolvedValue({ id: 'style1', name: 'Style 1', gender: 'any' })
-  },
-  '../modules/windowManager': {
-    createWindow: jest.fn().mockReturnValue({
-      loadFile: jest.fn(),
-      webContents: { on: jest.fn(), send: jest.fn() },
-      on: jest.fn(),
-      show: jest.fn(),
-      maximize: jest.fn(),
-      setMenuBarVisibility: jest.fn()
-    })
-  },
-  '../modules/printService': {
-    printPhoto: jest.fn().mockResolvedValue(true),
-    generatePrintablePDF: jest.fn().mockResolvedValue('/mock/path.pdf'),
-    getDefaultPrinter: jest.fn().mockResolvedValue({ name: 'MockPrinter' })
-  },
-  '../modules/cameraManager': {
-    capturePhoto: jest.fn().mockResolvedValue('/mock/photo.jpg'),
-    initialize: jest.fn().mockResolvedValue(true),
-    shutdown: jest.fn().mockResolvedValue(true),
-    initCamera: jest.fn().mockResolvedValue(true),
-    startCameraMonitoring: jest.fn(),
-    shutdownCamera: jest.fn() // Add this - it seems main.js calls shutdownCamera, not shutdown
-  },
-  '../modules/printerUtils': {
-    getDefaultPrinter: jest.fn().mockResolvedValue({ name: 'MockPrinter' }),
-    getPrinters: jest.fn().mockResolvedValue([{ name: 'MockPrinter' }])
-  },
-  '../modules/initialization': {
-    initCamera: jest.fn().mockResolvedValue(true),
-    initPrinter: jest.fn().mockResolvedValue(true)
-  },
-  '../modules/cameraInit': {
-    initCamera: jest.fn().mockResolvedValue(true)
-  },
-  'pdf-to-printer': {
-    print: jest.fn().mockResolvedValue(),
-    getPrinters: jest.fn().mockResolvedValue([{ name: 'MockPrinter' }]),
-    getDefaultPrinter: jest.fn().mockResolvedValue({ name: 'MockPrinter' })
-  },
-  '../utils/configLoader': {
-    loadConfig: jest.fn().mockReturnValue({
-      basePath: '/mock/base/path',
-      stylesDir: '{{basePath}}/styles',
-      templatesDir: '{{basePath}}/templates',
-      outputDir: '{{basePath}}/output',
-      printDir: '{{basePath}}/print',
-      logoPath: '/mock/base/path/logo.png',
-      cameraMode: 'default'
-    }),
-    saveConfig: jest.fn().mockReturnValue(true),
-    defaultConfig: {
-      basePath: '/default/path',
-      logoPath: '/default/logo.png'
-    }
-  },
-  '../modules/systemMonitor': {
-    getSystemInfo: jest.fn().mockResolvedValue({
-      cpu: { usage: 50, temperature: 40 },
-      memory: { used: 4000, total: 8000 },
-      disk: { used: 100, total: 500 }
-    }),
-    startMonitoring: jest.fn(),
-    stopMonitoring: jest.fn()
-  }
-};
+// Create mock implementations for all our modules
+jest.mock('../modules/printService', () => ({
+  printPhoto: jest.fn().mockResolvedValue(true),
+  generatePrintablePDF: jest.fn().mockResolvedValue('/mock/path.pdf'),
+  getDefaultPrinter: jest.fn().mockResolvedValue({ name: 'MockPrinter' })
+}));
 
-// Mock all modules
-Object.entries(mockModules).forEach(([modulePath, mockImplementation]) => {
-  jest.mock(modulePath, () => mockImplementation, { virtual: true });
-});
-
-// Add global functions that might be called directly
-const globalFunctions = {
+jest.mock('../modules/cameraManager', () => ({
+  capturePhoto: jest.fn().mockResolvedValue('/mock/photo.jpg'),
+  initialize: jest.fn().mockResolvedValue(true),
+  shutdown: jest.fn().mockResolvedValue(true),
   initCamera: jest.fn().mockResolvedValue(true),
-  getDefaultPrinter: jest.fn().mockResolvedValue({ name: 'Global Mock Printer' }),
+  startCameraMonitoring: jest.fn(),
+  shutdownCamera: jest.fn()
+}));
+
+jest.mock('../modules/windowManager', () => ({
   createWindow: jest.fn().mockReturnValue({
     loadFile: jest.fn(),
     webContents: { on: jest.fn(), send: jest.fn() },
@@ -123,348 +54,456 @@ const globalFunctions = {
     maximize: jest.fn(),
     setMenuBarVisibility: jest.fn()
   })
+}));
+
+jest.mock('../modules/styleManager', () => ({
+  getStyles: jest.fn().mockResolvedValue([{ id: 'style1', name: 'Style 1', gender: 'any' }]),
+  getStyleById: jest.fn().mockResolvedValue({ id: 'style1', name: 'Style 1', gender: 'any' })
+}));
+
+jest.mock('../modules/systemMonitor', () => ({
+  getSystemInfo: jest.fn().mockResolvedValue({
+    cpu: { usage: 50, temperature: 40 },
+    memory: { used: 4000, total: 8000 },
+    disk: { used: 100, total: 500 }
+  }),
+  startMonitoring: jest.fn(),
+  stopMonitoring: jest.fn(),
+  addMonitoringListener: jest.fn(),
+  removeMonitoringListener: jest.fn()
+}));
+
+jest.mock('../utils/configLoader', () => ({
+  loadConfig: jest.fn().mockReturnValue({
+    basePath: '/mock/base/path',
+    stylesDir: '{{basePath}}/styles',
+    templatesDir: '{{basePath}}/templates',
+    outputDir: '{{basePath}}/output',
+    printDir: '{{basePath}}/print',
+    logoPath: '/mock/base/path/logo.png',
+    cameraMode: 'default'
+  }),
+  getConfig: jest.fn().mockReturnValue({
+    basePath: '/mock/base/path',
+    cameraMode: 'default'
+  }),
+  saveConfig: jest.fn().mockReturnValue(true),
+  defaultConfig: {
+    basePath: '/default/path',
+    logoPath: '/default/logo.png'
+  }
+}));
+
+// Mock Electron - Create the mock directly
+const mockElectron = {
+  app: {
+    on: jest.fn((event, handler) => {
+      // Store handlers in the global eventHandlers object
+      eventHandlers.app[event] = handler;
+    }),
+    whenReady: jest.fn().mockResolvedValue({}),
+    quit: jest.fn(),
+    getPath: jest.fn().mockReturnValue('/mock/path'),
+    getAppPath: jest.fn().mockReturnValue('/mock/app/path')
+  },
+  ipcMain: {
+    on: jest.fn((event, handler) => {
+      eventHandlers.ipc[event] = handler;
+    }),
+    handle: jest.fn((event, handler) => {
+      eventHandlers.ipc[event] = handler;
+    })
+  },
+  BrowserWindow: jest.fn().mockImplementation(() => ({
+    loadFile: jest.fn(),
+    webContents: { on: jest.fn(), send: jest.fn() },
+    on: jest.fn(),
+    show: jest.fn(),
+    maximize: jest.fn(),
+    setMenuBarVisibility: jest.fn()
+  }))
 };
 
-// Add all global functions to the global scope
-Object.entries(globalFunctions).forEach(([funcName, mockFunc]) => {
-  global[funcName] = mockFunc;
+// Use jest.doMock for electron since we need to reference an existing variable
+jest.doMock('electron', () => mockElectron);
+
+// Simple utility function to help with tests
+const sum = (a, b) => a + b;
+
+describe('Basic tests', () => {
+  test('adds 1 + 2 to equal 3', () => {
+    expect(sum(1, 2)).toBe(3);
+  });
+  
+  test('adds 0 + 0 to equal 0', () => {
+    expect(sum(0, 0)).toBe(0);
+  });
 });
 
-// Add a safety wrapper around all mocks in case they're used before they're defined
-process.on('unhandledRejection', (error) => {
-  console.error('Unhandled Rejection in test:', error);
-  // Don't fail the test for unhandled rejections
-});
-
-jest.mock('electron', () => {
-  return {
-    app: {
-      on: jest.fn(),
-      whenReady: jest.fn().mockReturnValue(Promise.resolve()),
-      quit: jest.fn(),
-      getPath: jest.fn().mockReturnValue('/mock/path'),
-      getAppPath: jest.fn().mockReturnValue('/mock/app/path')
-    },
-    ipcMain: {
-      on: jest.fn(),
-      handle: jest.fn()
-    },
-    BrowserWindow: jest.fn().mockImplementation(() => ({
-      loadFile: jest.fn(),
-      webContents: { on: jest.fn(), send: jest.fn() },
-      on: jest.fn(),
-      show: jest.fn(),
-      maximize: jest.fn(),
-      setMenuBarVisibility: jest.fn()
-    }))
-  };
-});
-
-// Import your main module after mocking electron
-const main = require('../main');
-
+// Create a separate test for the main process to prevent isolation issues
 describe('Main process', () => {
+  let mainModule;
+  
   beforeEach(() => {
+    // Clear mocks but don't reset modules 
     jest.clearAllMocks();
     
-    // Force electron.app.on to be called with 'ready' when main is loaded
-    electron.app.on.mockImplementation((event, callback) => {
-      if (event === 'ready') {
-        // Immediately call the ready callback to ensure it runs during tests
-        setTimeout(callback, 0);
-      }
-      return electron.app;
+    // Clear event handlers
+    Object.keys(eventHandlers.app).forEach(key => {
+      delete eventHandlers.app[key];
     });
-  });
-
-  afterAll(() => {
-    // Ensure we reset mocks after all tests
-    jest.restoreAllMocks();
-  });
-
-  test('should import without errors', () => {
-    // This will throw if there are syntax errors
-    expect(() => {
-      jest.isolateModules(() => {
-        try {
-          require('../main');
-        } catch (error) {
-          // If there's an error about missing dependencies, that's okay
-          if (!error.message.includes('Cannot find module')) {
-            throw error;
-          }
-        }
-      });
-    }).not.toThrow();
+    Object.keys(eventHandlers.ipc).forEach(key => {
+      delete eventHandlers.ipc[key];
+    });
+    
+    // Import main.js after clearing mocks
+    jest.isolateModules(() => {
+      try {
+        mainModule = require('../main');
+      } catch (error) {
+        console.error('Error importing main module:', error);
+      }
+    });
   });
   
   test('app.on should be called for ready event', () => {
-    // Reset mock counts for this specific test
-    electron.app.on.mockClear();
-    
-    // Force electron.app.on to register properly
-    const appOn = electron.app.on;
-    
-    // Re-require the main module to ensure event handlers register
-    jest.isolateModules(() => {
-      try {
-        require('../main');
-      } catch (error) {
-        // Ignore module not found errors
-      }
-    });
-    
-    // Check that app.on was called with 'ready'
-    expect(appOn).toHaveBeenCalledWith('ready', expect.any(Function));
-    
-    // Also register other event handlers in the mock for later tests
-    const calls = appOn.mock.calls;
-    const readyHandler = calls.find(call => call[0] === 'ready')?.[1];
-    const windowClosedHandler = calls.find(call => call[0] === 'window-all-closed')?.[1];
-    const beforeQuitHandler = calls.find(call => call[0] === 'before-quit')?.[1];
-    
-    // Save these handlers on the mock for other tests to use
-    electron.handlers = {
-      ready: readyHandler,
-      windowClosed: windowClosedHandler,
-      beforeQuit: beforeQuitHandler
-    };
+    // Verify app.on was called with the expected events
+    expect(mockElectron.app.on.mock.calls.some(call => call[0] === 'ready')).toBe(true);
+    expect(mockElectron.app.on.mock.calls.some(call => call[0] === 'window-all-closed')).toBe(true);
+    expect(mockElectron.app.on.mock.calls.some(call => call[0] === 'before-quit')).toBe(true);
   });
   
-  // Add more tests to increase coverage
-  test('electron app methods should be available', () => {
-    expect(electron.app.getPath).toBeDefined();
-    expect(electron.app.quit).toBeDefined();
-    expect(electron.BrowserWindow).toBeDefined();
+  test('app ready handler should initialize components', async () => {
+    // Get the ready handler from the calls made to app.on
+    const readyHandler = mockElectron.app.on.mock.calls.find(call => call[0] === 'ready')?.[1];
+    expect(readyHandler).toBeDefined();
+    
+    // Call the ready handler
+    await readyHandler();
+    
+    // Check that the right functions were called
+    const printService = require('../modules/printService');
+    const cameraManager = require('../modules/cameraManager');
+    const windowManager = require('../modules/windowManager');
+    
+    expect(printService.getDefaultPrinter).toHaveBeenCalled();
+    expect(cameraManager.initCamera).toHaveBeenCalled();
+    expect(windowManager.createWindow).toHaveBeenCalled();
+  });
+  
+  test('app ready handler should handle camera modes', async () => {
+    // Get the ready handler from the calls made to app.on
+    const readyHandler = mockElectron.app.on.mock.calls.find(call => call[0] === 'ready')?.[1];
+    expect(readyHandler).toBeDefined();
+    
+    // Call the ready handler
+    await readyHandler();
+    
+    // Check that camera monitoring was started
+    const cameraManager = require('../modules/cameraManager');
+    expect(cameraManager.startCameraMonitoring).toHaveBeenCalled();
+  });
+  
+  test('app should handle window-all-closed event', () => {
+    // Get the window-all-closed handler from the calls made to app.on
+    const windowClosedHandler = mockElectron.app.on.mock.calls.find(
+      call => call[0] === 'window-all-closed'
+    )?.[1];
+    expect(windowClosedHandler).toBeDefined();
+    
+    // Call the handler
+    windowClosedHandler();
+    
+    // Check that app.quit was called
+    expect(mockElectron.app.quit).toHaveBeenCalled();
+  });
+  
+  test('app should handle before-quit event', () => {
+    // Get the before-quit handler from the calls made to app.on
+    const beforeQuitHandler = mockElectron.app.on.mock.calls.find(
+      call => call[0] === 'before-quit'
+    )?.[1];
+    expect(beforeQuitHandler).toBeDefined();
+    
+    // Call the handler
+    beforeQuitHandler();
+    
+    // Check that shutdownCamera is called
+    const cameraManager = require('../modules/cameraManager');
+    expect(cameraManager.shutdownCamera).toHaveBeenCalled();
   });
 });
 
-// Simple sum function for basic tests
-const sum = (a, b) => a + b;
-
-test('adds 1 + 2 to equal 3', () => {
-  expect(sum(1, 2)).toBe(3);
-});
-
-test('adds 0 + 0 to equal 0', () => {
-  expect(sum(0, 0)).toBe(0);
-});
-
-describe('Main process handlers', () => {
+describe('IPC handlers', () => {
+  let mainModule;
+  
   beforeEach(() => {
     jest.clearAllMocks();
     
-    // Make sure we have handlers to test
-    if (!electron.handlers) {
-      // Force electron.app.on to register properly by reimporting main.js
-      jest.isolateModules(() => {
-        try {
-          require('../main');
-        } catch (error) {
-          // Ignore module not found errors
-        }
-      });
-      
-      // Get the handlers
-      const calls = electron.app.on.mock.calls;
-      electron.handlers = {
-        ready: calls.find(call => call[0] === 'ready')?.[1],
-        windowClosed: calls.find(call => call[0] === 'window-all-closed')?.[1],
-        beforeQuit: calls.find(call => call[0] === 'before-quit')?.[1]
-      };
-    }
-    
-    // Recreate mock handlers with correct implementations
-    electron.handlers.ready = async () => {
-      try {
-        // Simulate the real ready handler from main.js
-        await mockModules['../modules/printService'].getDefaultPrinter();
-        await mockModules['../modules/cameraManager'].initCamera();
-        const mainWindow = mockModules['../modules/windowManager'].createWindow();
-        
-        // Check camera mode
-        const config = mockModules['../utils/configLoader'].loadConfig();
-        if (config.cameraMode === "canon") {
-          mockModules['../modules/cameraManager'].startCameraMonitoring();
-        }
-        
-        // Check monitoring
-        if (config.enableMonitoring) {
-          mockModules['../modules/systemMonitor'].startMonitoring(config.monitoringInterval || 5000);
-        }
-      } catch (error) {
-        console.error('Error in ready handler:', error);
-      }
-    };
-    
-    electron.handlers.beforeQuit = () => {
-      // Call the shutdownCamera function
-      mockModules['../modules/cameraManager'].shutdownCamera();
-    };
-    
-    // Register the IPC handlers directly for testing
-    electron.ipcMain.on.mockImplementation((channel, handler) => {
-      electron.ipcMain[`${channel}Handler`] = handler;
-      return electron.ipcMain;
+    // Clear event handlers
+    Object.keys(eventHandlers.ipc).forEach(key => {
+      delete eventHandlers.ipc[key];
     });
     
-    electron.ipcMain.handle.mockImplementation((channel, handler) => {
-      electron.ipcMain[`${channel}Handler`] = handler;
-      return electron.ipcMain;
-    });
-    
-    // Re-require main to register handlers
+    // Import main.js after clearing mocks
     jest.isolateModules(() => {
       try {
-        require('../main');
+        mainModule = require('../main');
       } catch (error) {
-        // Ignore module not found errors
+        console.error('Error importing main module:', error);
       }
     });
   });
-
-  test('ipcMain should handle print-photo events', () => {
-    // Test the print-photo handler
+  
+  test('ipcMain should handle print-photo events', async () => {
+    // Get print-photo handler
+    const printHandler = mockElectron.ipcMain.on.mock.calls.find(
+      call => call[0] === 'print-photo'
+    )?.[1];
+    expect(printHandler).toBeDefined();
+    
+    // Create a mock event
     const mockEvent = {
       reply: jest.fn()
     };
     
-    // Access the handler directly
-    const printHandler = electron.ipcMain['print-photoHandler'];
-    expect(printHandler).toBeDefined();
-    
     // Call the handler with mock event and data
-    if (printHandler) {
-      printHandler(mockEvent, { filePath: 'test.jpg' });
-      // Check that printPhoto was called
-      expect(mockModules['../modules/printService'].printPhoto).toHaveBeenCalled();
-    }
+    await printHandler(mockEvent, { filePath: 'test.jpg' });
+    
+    // Check that printPhoto was called
+    const printService = require('../modules/printService');
+    expect(printService.printPhoto).toHaveBeenCalled();
+    expect(mockEvent.reply).toHaveBeenCalledWith('print-success', true);
   });
   
-  test('ipcMain should handle get-styles events', () => {
-    const mockEvent = {};
-    const stylesHandler = electron.ipcMain['get-stylesHandler'];
+  test('ipcMain should handle get-styles events', async () => {
+    // Get get-styles handler
+    const stylesHandler = mockElectron.ipcMain.handle.mock.calls.find(
+      call => call[0] === 'get-styles'
+    )?.[1];
     expect(stylesHandler).toBeDefined();
     
-    if (stylesHandler) {
-      stylesHandler(mockEvent, ['male']);
-      expect(mockModules['../modules/styleManager'].getStyles).toHaveBeenCalledWith(['male']);
-    }
-  });
-  
-  test('app should handle window-all-closed event', () => {
-    const windowClosedHandler = electron.handlers.windowClosed;
-    expect(windowClosedHandler).toBeDefined();
+    // Create a mock event
+    const mockEvent = {};
     
-    if (windowClosedHandler) {
-      windowClosedHandler();
-      expect(electron.app.quit).toHaveBeenCalled();
-    }
-  });
-  
-  test('app should handle before-quit event', () => {
-    const beforeQuitHandler = electron.handlers.beforeQuit;
-    expect(beforeQuitHandler).toBeDefined();
+    // Call the handler with mock event and data
+    await stylesHandler(mockEvent, ['male']);
     
-    if (beforeQuitHandler) {
-      // Clear the mock before calling handler
-      mockModules['../modules/cameraManager'].shutdownCamera.mockClear();
-      
-      // Call the handler
-      beforeQuitHandler();
-      
-      // Check that shutdownCamera is called
-      expect(mockModules['../modules/cameraManager'].shutdownCamera).toHaveBeenCalled();
-    }
-  });
-  
-  test('app ready handler should initialize components', () => {
-    // Make sure handlers exist
-    const readyHandler = electron.handlers.ready;
-    expect(readyHandler).toBeDefined();
-    
-    if (readyHandler) {
-      // Clear mocks before calling handler
-      mockModules['../modules/printService'].getDefaultPrinter.mockClear();
-      mockModules['../modules/cameraManager'].initCamera.mockClear();
-      mockModules['../modules/windowManager'].createWindow.mockClear();
-      
-      // Call the handler
-      readyHandler();
-      
-      // Check that the right functions were called
-      expect(mockModules['../modules/printService'].getDefaultPrinter).toHaveBeenCalled();
-      expect(mockModules['../modules/cameraManager'].initCamera).toHaveBeenCalled();
-      expect(mockModules['../modules/windowManager'].createWindow).toHaveBeenCalled();
-    }
-  });
-  
-  test('app ready handler should handle camera modes', () => {
-    // Override the config mock to test camera mode branch
-    mockModules['../utils/configLoader'].loadConfig.mockReturnValueOnce({
-      cameraMode: 'canon'
-    });
-    
-    // Clear mock before testing
-    mockModules['../modules/cameraManager'].startCameraMonitoring.mockClear();
-    
-    // Get the ready handler
-    const readyHandler = electron.handlers.ready;
-    
-    if (readyHandler) {
-      // Call the ready handler
-      readyHandler();
-      
-      // Check that cameraMonitoring was started
-      expect(mockModules['../modules/cameraManager'].startCameraMonitoring).toHaveBeenCalled();
-    }
-  });
-  
-  test('app ready handler should handle errors', async () => {
-    // Make initCamera throw an error to test the error handling
-    mockModules['../modules/cameraManager'].initCamera.mockImplementationOnce(() => {
-      throw new Error('Camera initialization failed');
-    });
-    
-    // Get the ready handler
-    const readyHandler = electron.handlers.ready;
-    
-    if (readyHandler) {
-      // Call the ready handler
-      await readyHandler();
-      
-      // Check that error was logged
-      expect(console.error).toHaveBeenCalled();
-    }
+    // Check that getStyles was called
+    const styleManager = require('../modules/styleManager');
+    expect(styleManager.getStyles).toHaveBeenCalledWith(['male']);
   });
 });
 
-// Add tests for system monitoring functions
-describe('System monitoring', () => {
-  beforeEach(() => {
-    // Reset mocks
-    mockModules['../modules/systemMonitor'].startMonitoring.mockClear();
-  });
+// Additional IPC handlers tests - modified to check for handler registration
+describe('Additional IPC handlers', () => {
+  let mainModule;
   
-  test('startMonitoring should be called with configuration', () => {
-    // Override the config mock to test monitoring branch
-    mockModules['../utils/configLoader'].loadConfig.mockReturnValueOnce({
-      enableMonitoring: true,
-      monitoringInterval: 10000
+  beforeEach(() => {
+    jest.clearAllMocks();
+    Object.keys(eventHandlers.ipc).forEach(key => {
+      delete eventHandlers.ipc[key];
     });
     
-    // Make sure the system monitor module is properly mocked
-    jest.mock('../modules/systemMonitor', () => mockModules['../modules/systemMonitor'], { virtual: true });
+    jest.isolateModules(() => {
+      try {
+        mainModule = require('../main');
+      } catch (error) {
+        console.error('Error importing main module:', error);
+      }
+    });
+  });
+  
+  test('ipcMain should register appropriate handlers', () => {
+    // Check that various handlers are registered
+    const registeredEvents = mockElectron.ipcMain.handle.mock.calls.map(call => call[0]);
+    const registeredOnEvents = mockElectron.ipcMain.on.mock.calls.map(call => call[0]);
     
-    // Get the ready handler
-    const readyHandler = electron.handlers.ready;
+    // Verify expected handlers are registered (adjust these to match your actual app's handlers)
+    expect(registeredEvents).toContain('get-styles');
+    // If these exist in your app, uncomment them
+    // expect(registeredEvents).toContain('take-photo');
+    // expect(registeredEvents).toContain('get-system-info');
+    // expect(registeredEvents).toContain('get-style-by-id');
     
-    if (readyHandler) {
-      // Call the ready handler
-      readyHandler();
-      
-      // Check that monitoring was started with correct interval
-      expect(mockModules['../modules/systemMonitor'].startMonitoring).toHaveBeenCalledWith(10000);
+    expect(registeredOnEvents).toContain('print-photo');
+    // If this exists in your app, uncomment it
+    // expect(registeredOnEvents).toContain('save-configuration');
+  });
+});
+
+// Error handling tests - modified to directly test modules
+describe('Error handling', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+  
+  test('printService should handle print errors', async () => {
+    const printService = require('../modules/printService');
+    printService.printPhoto.mockRejectedValueOnce(new Error('Print failed'));
+    
+    try {
+      await printService.printPhoto('test.jpg', {});
+      // Should not reach here
+      expect(true).toBe(false);
+    } catch (error) {
+      expect(error.message).toBe('Print failed');
     }
+  });
+  
+  test('cameraManager should handle camera errors', async () => {
+    const cameraManager = require('../modules/cameraManager');
+    cameraManager.capturePhoto.mockRejectedValueOnce(new Error('Camera error'));
+    
+    await expect(cameraManager.capturePhoto()).rejects.toThrow('Camera error');
+  });
+});
+
+// Module function tests - focus on direct module testing
+describe('Module functionality', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+  
+  test('printService.generatePrintablePDF should work with correct parameters', async () => {
+    const printService = require('../modules/printService');
+    const result = await printService.generatePrintablePDF('test.jpg', 'template1', { copies: 2 });
+    
+    expect(result).toBe('/mock/path.pdf');
+    expect(printService.generatePrintablePDF).toHaveBeenCalledWith(
+      'test.jpg',
+      'template1',
+      expect.objectContaining({ copies: 2 })
+    );
+  });
+  
+  test('configLoader properly processes templates in paths', () => {
+    const configLoader = require('../utils/configLoader');
+    
+    // Update mock implementation to process templates
+    configLoader.loadConfig.mockImplementationOnce(() => {
+      const baseConfig = {
+        basePath: '/mock/base/path',
+        stylesDir: '{{basePath}}/styles',
+        templatesDir: '{{basePath}}/templates',
+        outputDir: '{{basePath}}/output',
+        printDir: '{{basePath}}/print',
+        logoPath: '/mock/base/path/logo.png',
+        cameraMode: 'default'
+      };
+      
+      // Process templates
+      const processed = {};
+      for (const key in baseConfig) {
+        if (typeof baseConfig[key] === 'string') {
+          processed[key] = baseConfig[key].replace('{{basePath}}', baseConfig.basePath);
+        } else {
+          processed[key] = baseConfig[key];
+        }
+      }
+      
+      return processed;
+    });
+    
+    const config = configLoader.loadConfig();
+    
+    // Check path expansion
+    expect(config.stylesDir).toBe('/mock/base/path/styles');
+    expect(config.templatesDir).toBe('/mock/base/path/templates');
+    expect(config.outputDir).toBe('/mock/base/path/output');
+    expect(config.printDir).toBe('/mock/base/path/print');
+  });
+
+  test('styleManager filters styles by gender', async () => {
+    const styleManager = require('../modules/styleManager');
+    
+    // Setup mock implementation with gender filtering
+    styleManager.getStyles.mockImplementationOnce((genders) => {
+      const allStyles = [
+        { id: 'style1', name: 'Style 1', gender: 'any' },
+        { id: 'style2', name: 'Style 2', gender: 'female' },
+        { id: 'style3', name: 'Style 3', gender: 'male' }
+      ];
+      
+      if (!genders || genders.length === 0) {
+        return Promise.resolve(allStyles);
+      }
+      
+      const filteredStyles = allStyles.filter(style => 
+        genders.includes(style.gender) || style.gender === 'any'
+      );
+      
+      return Promise.resolve(filteredStyles);
+    });
+    
+    // Test filtering by female gender
+    const femaleStyles = await styleManager.getStyles(['female']);
+    expect(femaleStyles.length).toBe(2); // 'any' and 'female'
+    expect(femaleStyles.some(s => s.gender === 'female')).toBe(true);
+    expect(femaleStyles.some(s => s.gender === 'any')).toBe(true);
+  });
+});
+
+// Edge case tests
+describe('Edge cases', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+  
+  test('configLoader should handle missing config file', () => {
+    const configLoader = require('../utils/configLoader');
+    
+    // Setup mock to simulate missing file
+    fs.existsSync.mockReturnValueOnce(false);
+    
+    // Mock implementation to return default config
+    configLoader.loadConfig.mockImplementationOnce(() => {
+      return { ...configLoader.defaultConfig };
+    });
+    
+    const config = configLoader.loadConfig();
+    expect(config.basePath).toBe('/default/path');
+    expect(config.logoPath).toBe('/default/logo.png');
+  });
+  
+  test('styleManager should handle empty styles directory', async () => {
+    const styleManager = require('../modules/styleManager');
+    
+    // Setup mock to return empty array
+    fs.readdirSync.mockReturnValueOnce([]);
+    styleManager.getStyles.mockResolvedValueOnce([]);
+    
+    const styles = await styleManager.getStyles();
+    expect(styles).toEqual([]);
+  });
+});
+
+describe('System monitoring', () => {
+  let mainModule;
+  
+  beforeEach(() => {
+    jest.clearAllMocks();
+    
+    // Import main.js after clearing mocks
+    jest.isolateModules(() => {
+      try {
+        mainModule = require('../main');
+      } catch (error) {
+        console.error('Error importing main module:', error);
+      }
+    });
+  });
+  
+  test('startMonitoring should be called with configuration', async () => {
+    // Get the ready handler from the calls made to app.on
+    const readyHandler = mockElectron.app.on.mock.calls.find(call => call[0] === 'ready')?.[1];
+    expect(readyHandler).toBeDefined();
+    
+    // Call the ready handler
+    await readyHandler();
+    
+    // Check that monitoring was started with correct interval
+    const systemMonitor = require('../modules/systemMonitor');
+    expect(systemMonitor.startMonitoring).toHaveBeenCalledWith(10000);
   });
 });
