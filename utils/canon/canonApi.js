@@ -19,6 +19,136 @@ const paramData = {
     whiteBalance: { all: null, current: null, max: null, containerId: 'whiteBalanceValuesContainer', selectId: 'whiteBalanceSelect' }
 };
 
+const localhost = 'http://localhost:5000';
+
+// Canon camera control functions
+async function startCamera() {
+    try {
+        const response = await fetch(`${localhost}/api/post/reconnect`, { 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Failed to start camera: ${response.status} ${response.statusText}`);
+        }
+        
+        console.log('Canon camera started successfully');
+        return true;
+    } catch (error) {
+        console.error('Error starting Canon camera:', error);
+        return false;
+    }
+}
+
+async function takePicture() {
+    try {
+        const response = await fetch(`${localhost}/api/post/capture-image/capture`, { 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Failed to capture image: ${response.status} ${response.statusText}`);
+        }
+        
+        console.log('Canon photo captured successfully');
+        return true;
+    } catch (error) {
+        console.error('Error capturing Canon photo:', error);
+        return false;
+    }
+}
+
+async function getLiveView() {
+    try {
+        const response = await fetch(`${localhost}/api/get/live-view`);
+        if (!response.ok) {
+            throw new Error(`Failed to get live view: ${response.status} ${response.statusText}`);
+        }
+        
+        return await response.blob();
+    } catch (error) {
+        console.error('Error getting Canon live view:', error);
+        return null;
+    }
+}
+
+async function startLiveView() {
+    try {
+        const response = await fetch(`${localhost}/api/post/evf/start`, { 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Failed to start live view: ${response.status} ${response.statusText}`);
+        }
+        
+        console.log('Canon live view started successfully');
+        return true;
+    } catch (error) {
+        console.error('Error starting Canon live view:', error);
+        return false;
+    }
+}
+
+async function endLiveView() {
+    try {
+        const response = await fetch(`${localhost}/api/post/evf/end`, { 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Failed to end live view: ${response.status} ${response.statusText}`);
+        }
+        
+        console.log('Canon live view ended successfully');
+        return true;
+    } catch (error) {
+        console.error('Error ending Canon live view:', error);
+        return false;
+    }
+}
+
+function startCanonCamera() {
+    const { spawn } = require('child_process');
+    const path = require('path');
+    
+    try {
+        const scriptPath = path.join(__dirname, '..', '..', 'canon', 'start.bat');
+        console.log(`Starting Canon camera with script: ${scriptPath}`);
+        
+        const canonProcess = spawn(scriptPath, [], {
+            cwd: path.join(__dirname, '..', '..', 'canon'),
+            shell: true,
+            stdio: 'inherit'
+        });
+        
+        canonProcess.on('error', (error) => {
+            console.error('Failed to start Canon camera process:', error);
+        });
+        
+        canonProcess.on('exit', (code, signal) => {
+            console.log(`Canon camera process exited with code ${code} and signal ${signal}`);
+        });
+        
+        return true;
+    } catch (error) {
+        console.error('Error launching Canon camera:', error);
+        return false;
+    }
+}
+
 function updateDisplay(paramName) {
     const p = paramData[paramName];
     const container = document.getElementById(p.containerId);
@@ -416,3 +546,14 @@ async function reconnect() {
         console.error('Ошибка реконнекта:', error);
     }
 }
+
+module.exports = {
+    paramData,
+    startCamera,
+    takePicture,
+    getLiveView,
+    startLiveView,
+    endLiveView,
+    startCanonCamera,
+    localhost
+};

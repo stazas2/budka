@@ -3,8 +3,9 @@ const path = require('path');
 
 // Default configuration
 const defaultConfig = {
-  basePath: '/test/path', // Changed to match test expectations
-  logoPath: '/test/logo.png', // Changed to match test expectations
+  basePath: process.platform === 'win32' ? 'C:\\MosPhotoBooth2' : '/test/path',
+  logoPath: '{{basePath}}\\logo.png',
+  brandLogoPath: '',
   // Add any other default configuration values here
 };
 
@@ -15,15 +16,20 @@ const CONFIG_PATH = path.join(__dirname, '../config.json');
  * @returns {Object} The configuration object
  */
 function loadConfig() {
-  if (fs.existsSync(CONFIG_PATH)) {
-    try {
+  try {
+    // Check if config file exists
+    if (fs.existsSync(CONFIG_PATH)) {
       const configData = fs.readFileSync(CONFIG_PATH, 'utf8');
-      return JSON.parse(configData);
-    } catch (error) {
-      console.error('Error reading config file:', error);
+      const parsedConfig = JSON.parse(configData);
+      
+      // Process path templates
+      return processPathTemplates(parsedConfig);
+    } else {
+      console.log('Config file not found, creating default config');
       return createDefaultConfig();
     }
-  } else {
+  } catch (error) {
+    console.error('Error reading config file:', error);
     return createDefaultConfig();
   }
 }
@@ -34,12 +40,31 @@ function loadConfig() {
  */
 function createDefaultConfig() {
   try {
-    fs.writeFileSync(CONFIG_PATH, JSON.stringify(defaultConfig, null, 2));
-    return defaultConfig;
+    const config = {...defaultConfig};
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+    return processPathTemplates(config);
   } catch (error) {
     console.error('Error creating default config:', error);
-    return defaultConfig;
+    return processPathTemplates({...defaultConfig});
   }
+}
+
+/**
+ * Processes path templates in configuration
+ * @param {Object} config - Configuration object
+ * @returns {Object} Processed configuration
+ */
+function processPathTemplates(config) {
+  const processed = {...config};
+  
+  // Replace path templates for string properties
+  for (const key in processed) {
+    if (typeof processed[key] === 'string' && processed[key].includes('{{basePath}}')) {
+      processed[key] = processed[key].replace('{{basePath}}', processed.basePath);
+    }
+  }
+  
+  return processed;
 }
 
 /**
@@ -60,5 +85,6 @@ function saveConfig(config) {
 module.exports = {
   loadConfig,
   saveConfig,
-  defaultConfig
+  defaultConfig,
+  processPathTemplates
 };

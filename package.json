@@ -65,6 +65,10 @@
     "extraFiles": [
       {
         "from": "canon",
+        "to": "canon"
+      },
+      {
+        "from": "canon",
         "to": "canon",
         "filter": [
           "**/*",

@@ -15,7 +15,7 @@
   "visibilityAgree": true,
   "stylesDir": "{{basePath}}\\styles",
   "basePath": "C:\\MosPhotoBooth2",
-  "logoPath": "logo.png",
+  "logoPath": "{{basePath}}\\logo2.png",
   "logoPosition": "center",
   "animatedBackground": "linear-gradient(-45deg, #ed030c, #c5c4fa, #c4facd, #ab9aff)",
   "logoOffsetX": 30,
@@ -39,7 +39,8 @@
   "camera_rotation": 90,
   "final_image_rotation": 0,
   "send_image_rotation": 90,
-  "cameraMode": "pc",
+  "cameraMode": "canon",
+  "canonSoftwarePath": "D:/budka/canon/CameraControl.exe",
   "allowMultipleGenderSelection": false,
   "allowedGenders": [["man", "woman"], ["boy", "girl"], []],
   "isEvf": false

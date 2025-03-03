@@ -1,5 +1,7 @@
-const { config } = require('./config')
+const { config, brandLogoPath } = require('./config')
 const camera = require('./camera')
+const fs = require('fs')
+const path = require('path')
 
 // Track screen states
 let currentScreen = null
@@ -78,9 +80,9 @@ async function showScreen(screenId) {
     if (screenId === "camera-screen" || screenId === "result-screen") {
       logoContainer.style.display = "none"
     } else {
-      if (config.brandLogoPath) {
-        logoContainer.style.display = "block"
-      }
+      // Check if brandLogoPath has a valid value and the file exists
+      const showLogo = brandLogoPath && fs.existsSync(brandLogoPath)
+      logoContainer.style.display = showLogo ? "block" : "none"
     }
   } catch (error) {
     console.error(`Error in showScreen (${screenId}):`, error)

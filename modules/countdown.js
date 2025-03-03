@@ -1,7 +1,7 @@
-const { config } = require('./config')
+const { config } = require('./config');
 
 /**
- * Starts countdown before taking a photo
+ * Starts a countdown timer and triggers the photo capture when finished
  */
 function startCountdown() {
   try {
@@ -38,17 +38,39 @@ function startCountdown() {
  * Stops the countdown if it's running
  */
 function stopCountdown() {
-  if (window.countdownInterval) {
-    clearInterval(window.countdownInterval)
-    window.countdownInterval = null
-    const countdownElement = document.getElementById("countdown")
-    if (countdownElement) {
-      countdownElement.textContent = ""
+  try {
+    if (window.countdownInterval) {
+      clearInterval(window.countdownInterval);
+      window.countdownInterval = null;
+      
+      // Clear countdown text
+      const countdownElement = document.getElementById("countdown");
+      if (countdownElement) countdownElement.textContent = "";
+      
+      // Re-enable back button if it exists
+      const backButton = document.querySelector("#camera-screen .back-button");
+      if (backButton) {
+        backButton.disabled = false;
+        backButton.style.opacity = "1";
+      }
+      
+      console.log("Countdown stopped");
     }
+  } catch (error) {
+    console.error("Error in stopCountdown:", error);
   }
 }
+
+// Register event handlers
+document.addEventListener('start-countdown', () => {
+  startCountdown();
+});
+
+document.addEventListener('stop-countdown', () => {
+  stopCountdown();
+});
 
 module.exports = {
   startCountdown,
   stopCountdown
-}
+};

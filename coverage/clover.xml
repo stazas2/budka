@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1740841174747" clover="3.2.0">
-  <project timestamp="1740841174748" name="All files">
-    <metrics statements="119" coveredstatements="83" conditionals="26" coveredconditionals="13" methods="23" coveredmethods="13" elements="168" coveredelements="109" complexity="0" loc="119" ncloc="119" packages="3" files="3" classes="3"/>
+<coverage generated="1741006501131" clover="3.2.0">
+  <project timestamp="1741006501131" name="All files">
+    <metrics statements="125" coveredstatements="90" conditionals="30" coveredconditionals="18" methods="23" coveredmethods="14" elements="178" coveredelements="122" complexity="0" loc="125" ncloc="125" packages="3" files="3" classes="3"/>
     <package name="budka">
       <metrics statements="44" coveredstatements="35" conditionals="5" coveredconditionals="2" methods="8" coveredmethods="5"/>
       <file name="main.js" path="D:\budka\main.js">
@@ -110,33 +110,39 @@
       </file>
     </package>
     <package name="budka.utils">
-      <metrics statements="24" coveredstatements="21" conditionals="4" coveredconditionals="2" methods="4" coveredmethods="3"/>
+      <metrics statements="30" coveredstatements="28" conditionals="8" coveredconditionals="7" methods="4" coveredmethods="4"/>
       <file name="configLoader.js" path="D:\budka\utils\configLoader.js">
-        <metrics statements="24" coveredstatements="21" conditionals="4" coveredconditionals="2" methods="4" coveredmethods="3"/>
+        <metrics statements="30" coveredstatements="28" conditionals="8" coveredconditionals="7" methods="4" coveredmethods="4"/>
         <line num="1" count="1" type="stmt"/>
         <line num="2" count="1" type="stmt"/>
         <line num="5" count="1" type="stmt"/>
-        <line num="11" count="1" type="stmt"/>
-        <line num="18" count="3" type="cond" truecount="2" falsecount="0"/>
-        <line num="19" count="2" type="stmt"/>
-        <line num="20" count="2" type="stmt"/>
-        <line num="21" count="2" type="stmt"/>
-        <line num="23" count="1" type="stmt"/>
-        <line num="24" count="1" type="stmt"/>
-        <line num="27" count="1" type="stmt"/>
-        <line num="36" count="2" type="stmt"/>
-        <line num="37" count="2" type="stmt"/>
-        <line num="38" count="2" type="stmt"/>
-        <line num="40" count="0" type="stmt"/>
-        <line num="41" count="0" type="stmt"/>
-        <line num="51" count="2" type="stmt"/>
-        <line num="52" count="2" type="stmt"/>
-        <line num="53" count="1" type="stmt"/>
-        <line num="55" count="1" type="stmt"/>
-        <line num="56" count="1" type="stmt"/>
-        <line num="65" count="1" type="stmt"/>
-        <line num="67" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="70" count="1" type="stmt"/>
+        <line num="12" count="1" type="stmt"/>
+        <line num="19" count="3" type="stmt"/>
+        <line num="21" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="22" count="2" type="stmt"/>
+        <line num="23" count="2" type="stmt"/>
+        <line num="26" count="1" type="stmt"/>
+        <line num="28" count="1" type="stmt"/>
+        <line num="29" count="1" type="stmt"/>
+        <line num="32" count="1" type="stmt"/>
+        <line num="33" count="1" type="stmt"/>
+        <line num="42" count="2" type="stmt"/>
+        <line num="43" count="2" type="stmt"/>
+        <line num="44" count="2" type="stmt"/>
+        <line num="45" count="2" type="stmt"/>
+        <line num="47" count="0" type="stmt"/>
+        <line num="48" count="0" type="stmt"/>
+        <line num="58" count="3" type="stmt"/>
+        <line num="61" count="3" type="stmt"/>
+        <line num="62" count="8" type="cond" truecount="4" falsecount="0"/>
+        <line num="63" count="2" type="stmt"/>
+        <line num="67" count="3" type="stmt"/>
+        <line num="76" count="2" type="stmt"/>
+        <line num="77" count="2" type="stmt"/>
+        <line num="78" count="1" type="stmt"/>
+        <line num="80" count="1" type="stmt"/>
+        <line num="81" count="1" type="stmt"/>
+        <line num="85" count="1" type="stmt"/>
       </file>
     </package>
   </project>

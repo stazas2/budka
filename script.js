@@ -78,17 +78,32 @@ window.nameDisplay = nameDisplay
 window.selectedGenders = selectedGenders
 window.countdownInterval = countdownInterval
 
-brandLogo.src = config?.brandLogoPath
-brandLogo.style.transform = `scale(${config.mainLogoScale})`
+// Handle logo paths correctly
+if (config?.brandLogoPath) {
+  brandLogo.src = config.brandLogoPath;
+  brandLogo.style.transform = `scale(${config.mainLogoScale || 1})`;
+  
+  // Check if the file exists by requesting it
+  fetch(`file://${config.brandLogoPath}`)
+    .then(response => {
+      if (!response.ok) {
+        console.warn("Could not load brand logo:", config.brandLogoPath);
+        brandLogo.style.display = 'none';
+      }
+    })
+    .catch(err => {
+      console.error("Failed to load brand logo:", err);
+      brandLogo.style.display = 'none';
+    });
+} else {
+  brandLogo.style.display = 'none';
+}
+
 document.body.classList.add(`rotation-${config.camera_rotation}`)
 document.body.classList.add(`camera-${config.cameraMode}`)
 document.body.classList.add(
   `brandLogo-${config.brandLogoPath ? "true" : "false"}`
 )
-
-if (!fs.existsSync(brandLogo.src.replace(/^file:\/\/\//, ""))) {
-  config.brandLogoPath = ""
-}
 
 config?.showResultQrBtn
   ? (showResultQrBtn.style.display = "block")

@@ -1,5 +1,14 @@
 const { loadConfig } = require("./configLoader")
+const fs = require('fs');
+const path = require('path');
+const { promisify } = require('util');
+
 let config = loadConfig()
+
+// Convert callback-based fs methods to promise-based
+const writeFileAsync = promisify(fs.writeFile);
+const mkdirAsync = promisify(fs.mkdir);
+const copyFileAsync = promisify(fs.copyFile);
 
 function createDateFolders() {
   try {
@@ -33,94 +42,79 @@ function generateFileName() {
   }
 }
 
-async function saveImageWithUtils(folderType, urlImage) {
+/**
+ * Saves an image to the specified location
+ * @param {string} filename - Filename without extension
+ * @param {string} imageData - Base64 encoded image data
+ * @returns {Promise<string>} Path to the saved file
+ */
+async function saveImageWithUtils(filename, imageData) {
   try {
-    const { inputDir, outputDir } = createDateFolders()
-    const folderPath = folderType === "input" ? inputDir : outputDir
-    const fileName = generateFileName()
-    const filePath = path.join(folderPath, fileName)
-    let fileBuffer
-
-    // Если тип "input" или urlImage не является валидным HTTP/HTTPS URL, обрабатываем как base64
-    if (folderType === "input" || !/^https?:\/\//.test(urlImage)) {
-      const imageData = urlImage.replace(/^data:image\/\w+;base64,/, "")
-      buffer = Buffer.from(imageData, "base64") 
-
-      fileBuffer = await sharp(buffer)
-        .resize({ width: 1280, height: 720, fit: "inside" })
-        .toFormat("jpeg", { quality: 80 })
-        .toBuffer()
-    } else {
-      // Обработка изображения по URL
-      const response = await fetch(urlImage)
-      if (!response.ok) {
-        throw new Error(
-          `Не удалось загрузить изображение: ${response.statusText}`
-        )
-      }
-      const buffer = await response.arrayBuffer()
-      fileBuffer = Buffer.from(buffer)
+    // Create directory if it doesn't exist
+    const saveDir = path.join(__dirname, '..', 'SavedPhotos');
+    
+    if (!fs.existsSync(saveDir)) {
+      await mkdirAsync(saveDir, { recursive: true });
     }
-
-    // Если требуется копирование в HotFolder
-    if (folderType === "copyDirectory") {
-      const hotPath =
-        config?.HotFolderPath || "C:\\DNP\\Hot Folder\\Prints\\4x6"
-      if (!fs.existsSync(hotPath)) {
-        fs.mkdirSync(hotPath, { recursive: true })
-        console.log("Папка для копирования создана.")
-      }
-      const hotFilePath = path.join(hotPath, fileName)
-      if (hotFilePath) {
-        fs.writeFileSync(hotFilePath, fileBuffer)
-        console.log("▶️ Изображение скопировано:", hotFilePath)
-      } else {
-        console.error("Папки для hot-копирования не существует!")
-      }
+    
+    // Handle base64 data
+    let buffer;
+    if (imageData.startsWith('data:image')) {
+      // Remove base64 prefix if present
+      const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+      buffer = Buffer.from(base64Data, 'base64');
     } else {
-      // Сохраняем изображение в папку
-      fs.writeFileSync(filePath, fileBuffer)
-      console.log(`▶️ Изображение сохранено (${folderType}):`, filePath)
+      buffer = Buffer.from(imageData, 'base64');
     }
+    
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filePath = path.join(saveDir, `${filename}_${timestamp}.jpg`);
+    
+    await writeFileAsync(filePath, buffer);
+    console.log(`Image saved successfully to ${filePath}`);
+    
+    return filePath;
   } catch (error) {
-    console.error(`Ошибка в saveImage (${folderType}):`, error)
+    console.error('Error saving image:', error);
     throw error
   }
 }
 
-async function copyPhotoToDateFolder(imagesFolder, filepath) {
+/**
+ * Copies a photo to a date-organized folder structure
+ * @param {string} targetBasePath - Base path for archived photos
+ * @param {string} sourcePath - Source file path
+ * @returns {Promise<string>} Path to the copied file
+ */
+async function copyPhotoToDateFolder(targetBasePath, sourcePath) {
   try {
-    // Берём имя файла из пути и создаём папку в случае отсут-я
-    const filename = filepath.split("\\")[2]
-    const filePath = path.join(imagesFolder, filename)
-    const { inputDir } = createDateFolders()
-
-    // console.log(`📂 Оригинальный файл: ${filePath}`);
-    // console.log(`📁 Папка назначения: ${inputDir}`);
-
-    // Проверяем, существует ли файл перед копированием
-    try {
-      await fs.promises.access(filePath)
-    } catch (err) {
-      console.error(`❌ Файл ${filePath} не найден!`)
-      return null
-    }
-
-    // 🗂 Создаём папку, если её нет
-    await fs.promises.mkdir(inputDir, { recursive: true })
-
-    // 🏷 Генерируем новое имя файла
-    const newFileName = generateFileName()
-    const targetPath = path.join(inputDir, newFileName)
-
-    // 🎯 Копируем фото с новым именем
-    await fs.promises.copyFile(filePath, targetPath)
-    console.log(`▶️ Изображение сохранено (input): ${targetPath}`)
-
-    return targetPath // Возвращаем путь к новому файлу
+    const date = new Date();
+    const year = date.getFullYear().toString();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    
+    // Create year/month/day folder structure
+    const yearDir = path.join(targetBasePath, year);
+    const monthDir = path.join(yearDir, month);
+    const dayDir = path.join(monthDir, day);
+    
+    // Create directories if they don't exist
+    if (!fs.existsSync(yearDir)) await mkdirAsync(yearDir, { recursive: true });
+    if (!fs.existsSync(monthDir)) await mkdirAsync(monthDir, { recursive: true });
+    if (!fs.existsSync(dayDir)) await mkdirAsync(dayDir, { recursive: true });
+    
+    // Copy file with timestamp
+    const filename = path.basename(sourcePath);
+    const timestamp = Date.now();
+    const destPath = path.join(dayDir, `${timestamp}_${filename}`);
+    
+    await copyFileAsync(sourcePath, destPath);
+    console.log(`Photo archived to ${destPath}`);
+    
+    return destPath;
   } catch (error) {
-    console.error(`❌ Ошибка копирования фото: ${error.message}`)
-    return null
+    console.error('Error copying photo to date folder:', error);
+    throw error;
   }
 }
 

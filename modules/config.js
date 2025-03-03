@@ -1,48 +1,43 @@
 const fs = require("fs")
 const path = require("path")
-const { loadConfig } = require("../utils/configLoader")
+const os = require("os")
 
-// Load the configuration
-const config = loadConfig()
-
-// Path configurations
-const basePath = config.basePath
-const basePathName = path.basename(basePath)
-const baseDir = path.join(basePath, "SavedPhotos")
-const stylesDir = config.stylesDir.replace("{{basePath}}", basePath)
-const localhost = "http://localhost:5000"
+// Base paths
+const basePath = process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : '/var/local');
+const basePathName = path.basename(basePath);
+const baseDir = path.join(__dirname, '..');
+const stylesDir = path.join(baseDir, 'styles');
 const imagesFolder = `./canon/SavedPhotos/`
-const hotHolder = Boolean(config?.HotFolder)
+const canonPhotosPath = path.join(baseDir, 'canon', 'ArchivePhotos');
 
-// Determine canonical photos path based on environment
-let canonPhotosPath
-if (__dirname.includes("app.asar")) {
-  // Logic for build
-  let dir = __dirname
-  while (path.basename(dir) !== "resources" && dir !== path.parse(dir).root) {
-    dir = path.dirname(dir)
+// Server configuration
+const localhost = 'http://localhost:5000';
+
+// Hot folder configuration
+const hotHolder = path.join(baseDir, 'hotfolder');
+
+// Other static configuration
+const printLogo = true;
+const logo_scale = 0.4;
+const logo_pos_x = 1000;
+const logo_pos_y = 300;
+
+// Load local configuration from config.json if present
+const configFile = path.join(baseDir, 'config.json');
+let config = {};
+
+try {
+  // Check if config file exists
+  if (fs.existsSync(configFile)) {
+    console.log(`Loading configuration from ${configFile}`);
+    const configRaw = fs.readFileSync(configFile, 'utf8');
+    config = JSON.parse(configRaw);
   }
-
-  const resourcePath = path.dirname(dir)
-  canonPhotosPath = path.join(resourcePath, "canon", "SavedPhotos")
-} else {
-  // Local run
-  canonPhotosPath = path.join(path.dirname(__dirname), "canon", "SavedPhotos")
+} catch (error) {
+  console.error(`Error loading configuration: ${error.message}`);
 }
 
-// Create folder if it doesn't exist
-if (!fs.existsSync(canonPhotosPath)) {
-  fs.mkdirSync(canonPhotosPath, { recursive: true })
-  console.log(`Temporary location: \n${canonPhotosPath}`)
-}
-
-// Logo and style configurations
-const printLogo = config?.logoPath
-const logo_scale = config.logoScale
-const logo_pos_x = config.logo_pos_x
-const logo_pos_y = config.logo_pos_y
-
-// Export configuration and paths
+// Export everything
 module.exports = {
   config,
   basePath,
@@ -57,4 +52,4 @@ module.exports = {
   logo_scale,
   logo_pos_x,
   logo_pos_y
-}
+};

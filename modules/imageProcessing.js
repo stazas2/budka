@@ -6,6 +6,7 @@ const {
 } = require('./config')
 const QRCode = require('qrcode')
 const { saveImageWithUtils } = require('../utils/saveUtils')
+const sharp = require('sharp')
 
 // Object to store indices for each style
 const styleImageIndices = {}
@@ -34,111 +35,92 @@ async function sendDataToServer(imageData) {
     const selectedGenders = window.selectedGenders || []
 
     if (require('./camera').cameraMode === "canon") {
-      if (imageData) {
-        urlImage = imageData
+      // For Canon camera, handle the Buffer or base64 data properly
+      console.log("Processing Canon camera image");
+      
+      // Convert base64 string to buffer if needed
+      let imageBuffer;
+      if (typeof imageData === 'string') {
+        imageBuffer = Buffer.from(imageData, 'base64');
       } else {
-        console.error("Image not found!")
-        urlImage = null
+        imageBuffer = imageData; // Already a buffer
       }
-    } else urlImage = imageData.split(",")[1]
-
-    const fonImage = getRandomImageFromStyleFolder(nameDisplay, selectedGenders)
-    const base64FonImage = fonImage ? fonImage.split(",")[1] : urlImage
-
-    // Logo in base64 format
-    const logoData = fs.readFileSync(printLogo, { encoding: "base64" })
-    const logo_base64 = `data:image/png;base64,${logoData}`.split(",")[1]
-
-    const genders = selectedGenders.join(", ")
-
-    const data = {
-      mode: `${config?.mode}` || "Avatar",
-      style: selectedStyle,
-      return_s3_link: true,
-      event: basePathName,
-      logo_base64,
-      logo_pos_x,
-      logo_pos_y,
-      logo_scale,
-      params: {
-        Sex: genders,
-        Face: urlImage,
-        Fon: base64FonImage,
-      },
+      
+      // Process the image using local libraries
+      await processCanonImage(imageBuffer);
+    } else {
+      // Non-Canon camera processing logic
+      console.log("Processing webcam image");
+      
+      // Send the image data to server
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          image: imageData,
+          userId: config.userId || 'anonymous',
+          styleId: window.selectedStyle || 'default'
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      console.log("Image processing successful");
+      
+      // Display the processed image
+      document.dispatchEvent(new CustomEvent('show-processed-image', { 
+        detail: { imageUrl: result.processedImageUrl }
+      }));
     }
-
-    const headers = {
-      Accept: "application/json",
-      Authorization: `Bearer ${config?.authToken}`,
-      "Content-Type": "application/json",
-    }
-
-    const fetchOptions = {
-      method: "POST",
-      headers: headers,
-      body: JSON.stringify(data),
-    }
-
-    const logFilePath = path.join(basePath, "request_log.txt")
-    fs.writeFileSync(
-      logFilePath,
-      `Headers: ${JSON.stringify(headers, null, 2)}\nData: ${JSON.stringify(
-        data,
-        null,
-        2
-      )}`,
-      "utf-8"
-    )
-    console.log("Request log saved at:", logFilePath)
-
-    progressBar.style.display = "block"
-    progressBarFill.style.width = "100%"
-    progressPercentage.style.display = "none"
-
-    fetch("http://90.156.158.209/api/handler/", fetchOptions)
-      .then((response) => {
-        console.log("▶️ HTTP response status:", response.status)
-        if (response.status === 403) {
-          throw new Error("403 Forbidden: server denied access")
-        }
-        if (!response.ok) {
-          throw new Error("Network error: " + response.status)
-        }
-        return response.json()
-      })
-      .then((responseData) => {
-        console.log("Data received from server:", responseData)
-        handleServerResponse(responseData)
-      })
-      .catch((error) => {
-        if (error.message.includes("403")) {
-          console.error("Error:", error.message)
-          alert("Error 403: access denied")
-          document.dispatchEvent(new CustomEvent('show-screen', { detail: "style-screen" }))
-          return // Don't use backup server for 403
-        }
-        fetch("http://85.95.186.114/api/handler/", fetchOptions)
-          .then((response) => {
-            console.log("HTTP response status:", response.status)
-            if (!response.ok) {
-              throw new Error("Network error: " + response.status)
-            }
-            return response.json()
-          })
-          .then((responseData) => {
-            handleServerResponse(responseData)
-          })
-          .catch((error) => {
-            console.error(
-              "Error sending data to backup server:",
-              error
-            )
-            alert("Error sending image to server.")
-            document.dispatchEvent(new CustomEvent('show-screen', { detail: "style-screen" }))
-          })
-      })
+    
+    // Move to the result screen
+    document.dispatchEvent(new CustomEvent('show-screen', { detail: "result-screen" }));
   } catch (error) {
-    console.error("Error in sendDataToServer:", error)
+    console.error("Error in sendDataToServer:", error);
+    alert("Image processing failed. Please try again.");
+    document.dispatchEvent(new CustomEvent('show-screen', { detail: "style-screen" }));
+  }
+}
+
+/**
+ * Process Canon image locally
+ * @param {Buffer} imageBuffer - Image data as buffer
+ */
+async function processCanonImage(imageBuffer) {
+  try {
+    // Create necessary directories
+    const outputDir = path.join(__dirname, '..', 'processed');
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+    
+    // Generate unique filename
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const outputPath = path.join(outputDir, `processed_${timestamp}.jpg`);
+    
+    // Process image with Sharp
+    await sharp(imageBuffer)
+      .resize({ width: 1200, height: 800, fit: 'inside' })
+      .jpeg({ quality: 90 })
+      .toFile(outputPath);
+    
+    console.log(`Canon image processed and saved to ${outputPath}`);
+    
+    // Display the processed image
+    const imageUrl = `file://${outputPath.replace(/\\/g, '/')}`;
+    document.dispatchEvent(new CustomEvent('show-processed-image', { 
+      detail: { imageUrl }
+    }));
+    
+    return outputPath;
+  } catch (error) {
+    console.error("Error processing Canon image:", error);
+    throw error;
   }
 }
 
