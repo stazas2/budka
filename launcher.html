@@ -8,10 +8,41 @@
   <body>
     <div class="container">
       <h1>Application Launcher</h1>
+
+      <div class="folder-section">
+        <div class="folder-header">
+          <h2>Available Projects</h2>
+          <button
+            id="refreshFolders"
+            class="refresh-button"
+            title="Обновить список папок"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"
+              />
+            </svg>
+          </button>
+        </div>
+        <div class="folder-list" id="folderList">
+          <div class="loading">Loading folders...</div>
+        </div>
+      </div>
+
       <div class="buttons">
-        <button id="openMainWindow">Open Main Window</button>
-        <button id="openEmptyWindow">Open Empty Window</button>
-        <button id="closeApp">Exit Application</button>
+        <button id="openMainWindow">Фотобудка</button>
+        <button id="openEmptyWindow">Конфигуратор</button>
+        <button id="closeApp">Выход</button>
       </div>
     </div>
     <script src="launcher.js"></script>

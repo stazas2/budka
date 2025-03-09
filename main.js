@@ -17,17 +17,16 @@ const borderPrintImage = config.borderPrintImage
 /** Начало измерения времени запуска main процесса */
 const mainStartupTimeStart = Date.now()
 
-let mainWindow // new global variable
-let cameraCheckInterval // New global variable for interval
+let mainWindow 
+let cameraCheckInterval 
 
-// Keep window references to prevent garbage collection
 let launcherWindow = null;
 let emptyWindow = null;
 
 function createLauncherWindow() {
   launcherWindow = new BrowserWindow({
-    width: 400,
-    height: 350,
+    width: 900,
+    height: 800,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
@@ -35,23 +34,16 @@ function createLauncherWindow() {
   });
 
   launcherWindow.loadFile('launcher.html');
-  
-  // Uncomment this line to open dev tools for launcher window
-  // launcherWindow.webContents.openDevTools();
 
   launcherWindow.on('closed', () => {
-    // Close all windows when launcher is closed
     if (mainWindow) mainWindow.close();
     if (emptyWindow) emptyWindow.close();
     launcherWindow = null;
   });
 }
 
-// Your existing create main window function
-// Modify it to keep the window hidden until requested
 function createMainWindow() {
   mainWindow = new BrowserWindow({
-    // Your existing window settings
     width: 1080,
     height: 1440,
     show: false, // Don't show until requested
@@ -492,3 +484,10 @@ function monitorSystemLoad() {
     )
   }, 5000)
 }
+
+// Add handler for selected folder
+ipcMain.on('selected-folder', (event, folderPath) => {
+  console.log('Selected folder in main process:', folderPath);
+  // You can store this path or use it to configure the app
+  global.selectedFolderPath = folderPath;
+});

@@ -1,7 +1,7 @@
 @echo off
 REM Проверяем наличие файла pathExe.txt
 if exist "Server\pathExe.txt" (
-    start  "" "Server/Api.exe"
+    start /B "" "Server/Api.exe"
     timeout /t 2 /nobreak > nul
     echo Файл pathExe.txt найден. Отправляю запрос на localhost:5000/api/post/reconnect
     curl -X POST http://localhost:5000/api/post/reconnect
