@@ -1,9 +1,16 @@
 const { ipcRenderer } = require('electron');
 const fs = require('fs');
 const path = require('path');
+const { config } = require('process');
 
-// Folder path to scan
-const FOLDER_PATH = 'C:\\new';
+// !
+// const { loadConfig } = require("./utils/configLoader")
+// // Загружаем конфигурацию после импорта необходимых модулей
+// const config = loadConfig()
+// // Folder path to scan
+// const FOLDER_PATH = config.eventsPath;
+// !
+const FOLDER_PATH = "C:\\temp";
 
 // Function to format date
 function formatDate(date) {
@@ -17,6 +24,70 @@ function formatDate(date) {
     return date.toLocaleDateString('en-US', options);
 }
 
+// Check if the folder structure is valid
+function validateFolderStructure(basePath) {
+    try {
+        // Check if the base path exists
+        if (!fs.existsSync(basePath)) {
+            return {
+                valid: false,
+                message: `Директория ${basePath} не существует`
+            };
+        }
+        
+        // Get all items in the base directory
+        const items = fs.readdirSync(basePath);
+        
+        // Check for required files (.exe, .json)
+        const hasExeFile = items.some(item => {
+            return item.endsWith('.exe') && fs.statSync(path.join(basePath, item)).isFile();
+        });
+        
+        const hasJsonFile = items.some(item => {
+            return item.endsWith('.json') && fs.statSync(path.join(basePath, item)).isFile();
+        });
+        
+        // Check for UserFolder directory
+        const userFolderPath = path.join(basePath, 'UserFolder');
+        const hasUserFolder = fs.existsSync(userFolderPath) && 
+                             fs.statSync(userFolderPath).isDirectory();
+        
+        // Check for Events directory inside UserFolder
+        const eventsPath = path.join(userFolderPath, 'Events');
+        const hasEventsFolder = hasUserFolder && 
+                               fs.existsSync(eventsPath) && 
+                               fs.statSync(eventsPath).isDirectory();
+        
+        // Build validation result
+        const missingItems = [];
+        if (!hasExeFile) missingItems.push("*.exe файл");
+        if (!hasJsonFile) missingItems.push("*.json файл");
+        if (!hasUserFolder) missingItems.push("папка 'UserFolder'");
+        else if (!hasEventsFolder) missingItems.push("папка 'Events' внутри 'UserFolder'");
+        
+        if (missingItems.length > 0) {
+            return {
+                valid: false,
+                message: `Некорректная структура папки. Отсутствуют: ${missingItems.join(', ')}`
+            };
+        }
+        
+        return {
+            valid: true,
+            eventsPath: eventsPath
+        };
+    } catch (error) {
+        console.error('Ошибка при проверке структуры папки:', error);
+        return {
+            valid: false,
+            message: `Ошибка при проверке структуры папки: ${error.message}`
+        };
+    }
+}
+
+// Add global variable to track if a folder is selected
+let selectedFolderPath = null;
+
 // Get folders from the specified path
 async function getFolders() {
     const folderListElement = document.getElementById('folderList');
@@ -25,25 +96,34 @@ async function getFolders() {
     // Add spinning animation to refresh button
     refreshButton.classList.add('spinning');
     
+    // Reset selected folder and disable buttons when refreshing
+    selectedFolderPath = null;
+    updateButtonState();
+    
     try {
-        // Check if the directory exists
-        if (!fs.existsSync(FOLDER_PATH)) {
+        // Validate folder structure
+        const validation = validateFolderStructure(FOLDER_PATH);
+        
+        if (!validation.valid) {
             folderListElement.innerHTML = `
                 <div class="error-message">
-                    Directory ${FOLDER_PATH} does not exist
+                    ${validation.message}
                 </div>
             `;
             return;
         }
-
-        // Read directory contents
-        const items = fs.readdirSync(FOLDER_PATH);
+        
+        // Use the Events folder path
+        const eventsPath = validation.eventsPath;
+        
+        // Read Events directory contents
+        const items = fs.readdirSync(eventsPath);
         
         // Filter to only include directories and get their stats
         const folders = items
             .filter(item => {
                 try {
-                    return fs.statSync(path.join(FOLDER_PATH, item)).isDirectory();
+                    return fs.statSync(path.join(eventsPath, item)).isDirectory();
                 } catch (err) {
                     console.error(`Error checking if ${item} is directory:`, err);
                     return false;
@@ -51,11 +131,11 @@ async function getFolders() {
             })
             .map(folder => {
                 try {
-                    const stats = fs.statSync(path.join(FOLDER_PATH, folder));
+                    const stats = fs.statSync(path.join(eventsPath, folder));
                     return {
                         name: folder,
                         createdAt: stats.birthtime || stats.mtime, // Use mtime as fallback
-                        path: path.join(FOLDER_PATH, folder)
+                        path: path.join(eventsPath, folder)
                     };
                 } catch (err) {
                     console.error(`Error getting stats for ${folder}:`, err);
@@ -70,7 +150,7 @@ async function getFolders() {
         if (folders.length === 0) {
             folderListElement.innerHTML = `
                 <div class="empty-message">
-                    No folders found in ${FOLDER_PATH}
+                    Папка Events пуста. Создайте папку мероприятия.
                 </div>
             `;
         } else {
@@ -87,7 +167,11 @@ async function getFolders() {
             document.querySelectorAll('.folder-item').forEach(item => {
                 item.addEventListener('click', () => {
                     const folderPath = item.getAttribute('data-path');
-                    console.log('Selected folder:', folderPath);
+                    console.log('Selected event folder:', folderPath);
+                    
+                    // Store the selected folder path
+                    selectedFolderPath = folderPath;
+                    
                     // Optionally send the selected folder to main process
                     ipcRenderer.send('selected-folder', folderPath);
                     
@@ -95,6 +179,9 @@ async function getFolders() {
                     document.querySelectorAll('.folder-item').forEach(f => 
                         f.classList.remove('selected'));
                     item.classList.add('selected');
+                    
+                    // Enable the buttons after selection
+                    updateButtonState();
                 });
             });
         }
@@ -102,7 +189,7 @@ async function getFolders() {
         console.error('Error reading folders:', error);
         folderListElement.innerHTML = `
             <div class="error-message">
-                Error reading folders: ${error.message}
+                Ошибка чтения папок: ${error.message}
             </div>
         `;
     } finally {
@@ -113,10 +200,31 @@ async function getFolders() {
     }
 }
 
+// Function to update button state based on folder selection
+function updateButtonState() {
+    const openMainButton = document.getElementById('openMainWindow');
+    const openEmptyButton = document.getElementById('openEmptyWindow');
+    
+    if (selectedFolderPath) {
+        openMainButton.disabled = false;
+        openEmptyButton.disabled = false;
+        openMainButton.classList.remove('disabled');
+        openEmptyButton.classList.remove('disabled');
+    } else {
+        openMainButton.disabled = true;
+        openEmptyButton.disabled = true;
+        openMainButton.classList.add('disabled');
+        openEmptyButton.classList.add('disabled');
+    }
+}
+
 // Set up button event listeners
 document.addEventListener('DOMContentLoaded', () => {
     // Load folders
     getFolders();
+    
+    // Initialize buttons as disabled
+    updateButtonState();
     
     // Add refresh button functionality
     const refreshButton = document.getElementById('refreshFolders');
@@ -124,11 +232,15 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Add button functionalities
     document.getElementById('openMainWindow').addEventListener('click', () => {
-        ipcRenderer.send('open-main-window');
+        if (selectedFolderPath) {
+            ipcRenderer.send('open-main-window', selectedFolderPath);
+        }
     });
     
     document.getElementById('openEmptyWindow').addEventListener('click', () => {
-        ipcRenderer.send('open-empty-window');
+        if (selectedFolderPath) {
+            ipcRenderer.send('open-empty-window', selectedFolderPath);
+        }
     });
     
     document.getElementById('closeApp').addEventListener('click', () => {

@@ -35,6 +35,13 @@ button {
    transition: background-color 0.3s;
 }
 
+button.disabled {
+   opacity: 0.5;
+   cursor: not-allowed;
+   background-color: #cccccc;
+   color: #666666;
+}
+
 #openMainWindow {
    background-color: #4caf50;
    color: white;
@@ -71,6 +78,10 @@ button:hover {
    border: 1px solid #ddd;
    border-radius: 4px;
    padding: 0;
+}
+
+.folder-list-container {
+   position: relative;
 }
 
 .folder-item {
@@ -175,4 +186,12 @@ button:hover {
 
 .folder-item.selected {
    background-color: rgba(33, 150, 243, 0.1);
+}
+
+.selection-hint {
+   color: #999;
+   margin-top: 5px;
+   font-size: 14px;
+   font-style: italic;
+   text-align: center;
 }

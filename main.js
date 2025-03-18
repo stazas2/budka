@@ -54,19 +54,21 @@ function createMainWindow() {
     autoHideMenuBar: true,
   });
 
-  mainWindow.setMenuBarVisibility(false)
-  mainWindow.loadFile("index.html")
-  // const url = `file://${__dirname}/index.html?cache_bust=${Date.now()}`
-  // mainWindow.loadURL(url)
+  mainWindow.setMenuBarVisibility(false);
+  mainWindow.loadFile("index.html");
 
   mainWindow.webContents.on("did-finish-load", () => {
-    console.log("Окно успешно загружено")
-    mainWindow.webContents.setZoomFactor(1)
-  })
+    console.log("Окно фотобудки успешно загружено");
+    mainWindow.webContents.setZoomFactor(1);
+  });
+
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
 
   mainWindow.on("error", (error) => {
-    console.error("Ошибка окна:", error)
-  })
+    console.error("Ошибка окна фотобудки:", error);
+  });
 }
 
 function createEmptyWindow() {
@@ -119,14 +121,34 @@ app.on('window-all-closed', () => {
 });
 
 // IPC handlers for launcher buttons
-ipcMain.on('open-main-window', () => {
+ipcMain.on('open-main-window', (event, folderPath) => {
+  // Close emptyWindow if it's open
+  if (emptyWindow) {
+    emptyWindow.close();
+    emptyWindow = null;
+  }
+  
+  // Store the selected folder path for the app to use
+  global.selectedFolderPath = folderPath;
+  
+  // Create or show mainWindow
   if (mainWindow === null) {
     createMainWindow();
   }
   mainWindow.show();
 });
 
-ipcMain.on('open-empty-window', () => {
+ipcMain.on('open-empty-window', (event, folderPath) => {
+  // Close mainWindow if it's open
+  if (mainWindow) {
+    mainWindow.close();
+    mainWindow = null;
+  }
+  
+  // Store the selected folder path for the app to use
+  global.selectedFolderPath = folderPath;
+  
+  // Create or show emptyWindow
   if (emptyWindow === null) {
     createEmptyWindow();
   } else {
