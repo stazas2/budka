@@ -91,7 +91,6 @@ const hotHolder = !!config?.HotFolder
 let canonPhotosPath, countdownInterval
 
 
-console.log("КУКУСИКИ" + __dirname)
 // Если запущено ли приложение из asar-архива, то билд)
 if (__dirname.includes("app.asar")) {
   // Логика для билда

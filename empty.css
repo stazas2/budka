@@ -34,3 +34,38 @@ h1 {
 .action-button:hover {
    background-color: #45a049;
 }
+
+/* Tabs styles */
+.tabs {
+   display: flex;
+   justify-content: space-around;
+   margin-bottom: 20px;
+}
+
+.tab-button {
+   background: transparent;
+   border-radius: 40px;
+   padding: 10px 20px;
+   cursor: pointer;
+   border: none;
+}
+
+.tab-button.active,
+.tab-button:focus {
+   /* background: #e0e7ff; Slightly different background for active tab */
+   outline: 1px #ff3bff solid;
+   outline-offset: -1px;
+   background: #f3f6fe;
+}
+
+.tab-contents {
+   text-align: left;
+}
+
+.tab-content {
+   display: none;
+}
+
+.tab-content.active {
+   display: block;
+}

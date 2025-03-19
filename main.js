@@ -73,8 +73,8 @@ function createMainWindow() {
 
 function createEmptyWindow() {
   emptyWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1080,
+    height: 900,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
