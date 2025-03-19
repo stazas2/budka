@@ -120,18 +120,21 @@ app.on('window-all-closed', () => {
   }
 });
 
+// Centralized function to set the selected folder path
+function setSelectedFolder(folderPath) {
+  console.log('Setting selected folder:', folderPath);
+  global.selectedFolderPath = folderPath;
+}
+
 // IPC handlers for launcher buttons
 ipcMain.on('open-main-window', (event, folderPath) => {
-  // Close emptyWindow if it's open
   if (emptyWindow) {
     emptyWindow.close();
     emptyWindow = null;
   }
-  
-  // Store the selected folder path for the app to use
-  global.selectedFolderPath = folderPath;
-  
-  // Create or show mainWindow
+
+  setSelectedFolder(folderPath);
+
   if (mainWindow === null) {
     createMainWindow();
   }
@@ -139,21 +142,23 @@ ipcMain.on('open-main-window', (event, folderPath) => {
 });
 
 ipcMain.on('open-empty-window', (event, folderPath) => {
-  // Close mainWindow if it's open
   if (mainWindow) {
     mainWindow.close();
     mainWindow = null;
   }
-  
-  // Store the selected folder path for the app to use
-  global.selectedFolderPath = folderPath;
-  
-  // Create or show emptyWindow
+
+  setSelectedFolder(folderPath);
+
   if (emptyWindow === null) {
     createEmptyWindow();
   } else {
     emptyWindow.show();
   }
+});
+
+// Consolidated handler for selected folder
+ipcMain.on('selected-folder', (event, folderPath) => {
+  setSelectedFolder(folderPath);
 });
 
 ipcMain.on('close-app', () => {
@@ -507,9 +512,38 @@ function monitorSystemLoad() {
   }, 5000)
 }
 
-// Add handler for selected folder
-ipcMain.on('selected-folder', (event, folderPath) => {
-  console.log('Selected folder in main process:', folderPath);
-  // You can store this path or use it to configure the app
-  global.selectedFolderPath = folderPath;
+// Handler to retrieve the selected folder
+ipcMain.on('get-selected-folder', (event) => {
+  event.returnValue = global.selectedFolderPath;
+});
+
+// Handler to switch from photobooth to configurator
+ipcMain.on('switch-to-configurator', (event, folderPath) => {
+  // Close mainWindow if it's open
+  if (mainWindow) {
+    mainWindow.close();
+    mainWindow = null;
+  }
+  
+  // Create or show emptyWindow
+  if (emptyWindow === null) {
+    createEmptyWindow();
+  } else {
+    emptyWindow.show();
+  }
+});
+
+// Handler to switch from configurator to photobooth
+ipcMain.on('switch-to-photobooth', (event, folderPath) => {
+  // Close emptyWindow if it's open
+  if (emptyWindow) {
+    emptyWindow.close();
+    emptyWindow = null;
+  }
+  
+  // Create or show mainWindow
+  if (mainWindow === null) {
+    createMainWindow();
+  }
+  mainWindow.show();
 });

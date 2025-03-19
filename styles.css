@@ -308,7 +308,9 @@ body::before {
   min-width: 200px;
   /* background: rgba(255, 255, 255, 0.2); */
   /* backdrop-filter: blur(10px) saturate(180%); */
-  transition: transform 0.5s, box-shadow 0.5s;
+  transition:
+    transform 0.5s,
+    box-shadow 0.5s;
   transition: all 0.3s ease;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   transform: translateY(0);
@@ -448,11 +450,7 @@ button:active {
   transform: rotate(0deg);
 
   padding: 20px;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.05) 0%,
-    rgba(196, 213, 217, 0.7511379551820728) 100%
-  );
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(196, 213, 217, 0.7511379551820728) 100%);
   box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
   border-radius: 40px;
 }
@@ -546,7 +544,9 @@ button:active {
   display: inline-flex;
   padding: 10px;
   cursor: pointer;
-  transition: transform 0.5s, box-shadow 0.5s;
+  transition:
+    transform 0.5s,
+    box-shadow 0.5s;
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
@@ -725,7 +725,10 @@ input:checked + .slider:before {
   background: rgba(255, 255, 255, 0.25);
   color: var(--text-color);
   font-weight: 600;
-  transition: background-color 0.3s, transform 0.5s, box-shadow 0.5s;
+  transition:
+    background-color 0.3s,
+    transform 0.5s,
+    box-shadow 0.5s;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
   transform: translateY(0);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -916,7 +919,6 @@ input:checked + .slider:before {
 
 /* Горизонтальная ориентация */
 @media (orientation: landscape) {
-
   .rotation-90 #liveViewImage,
   .rotation-270 #liveViewImage {
     max-width: 65%;
@@ -928,7 +930,6 @@ input:checked + .slider:before {
   .rotation-270 #liveViewContainer {
     bottom: 61%;
   }
-
 
   /* todo */
   .camera-canon #countdown {
@@ -1059,13 +1060,13 @@ input:checked + .slider:before {
 }
 
 @media (max-width: 1000px) and (max-height: 1000px) {
-  .rotation-90 #video, .rotation-270 #video {
+  .rotation-90 #video,
+  .rotation-270 #video {
     max-height: 42vh;
   }
 }
 
 @media (max-width: 775px) {
-
   #style-buttons {
     /* grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); */
     /* gap: 10px; */
@@ -1474,11 +1475,7 @@ body.dark .custom-checkbox-qr {
 
 .modal-content {
   position: relative;
-  background: linear-gradient(
-    90deg,
-    rgba(85, 84, 84, 0.98) 0%,
-    rgba(196, 213, 217, 0.911379551820728) 100%
-  );
+  background: linear-gradient(90deg, rgba(85, 84, 84, 0.98) 0%, rgba(196, 213, 217, 0.911379551820728) 100%);
   margin: auto;
   border-radius: 10px;
   padding: 20px;
@@ -1514,4 +1511,26 @@ body.dark .custom-checkbox-qr {
 
 #show-qr-button {
   color: var(--text-color);
+}
+
+/* Стили для кнопки открытия конфигуратора */
+#open-configurator {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 10px 20px;
+  font-size: 1em;
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--text-color);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+#open-configurator:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
 }

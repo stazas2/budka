@@ -1880,3 +1880,18 @@ function monitorLiveView() {
     }
   }, 3000)
 }
+
+// Add event listener for the configurator button
+const openConfiguratorButton = document.getElementById('open-configurator');
+if (openConfiguratorButton) {
+    openConfiguratorButton.addEventListener('click', () => {
+        // Use ipcRenderer to communicate with main process
+        const { ipcRenderer } = require('electron');
+        
+        // Get the current folder path
+        const folderPath = ipcRenderer.sendSync('get-selected-folder');
+        
+        // Send message to main process to open configurator window
+        ipcRenderer.send('switch-to-configurator', folderPath);
+    });
+}

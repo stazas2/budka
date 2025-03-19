@@ -18,3 +18,19 @@ body {
 h1 {
    color: #333;
 }
+
+.action-button {
+   background-color: #4caf50;
+   color: white;
+   padding: 12px 20px;
+   border: none;
+   border-radius: 4px;
+   cursor: pointer;
+   font-size: 16px;
+   margin-top: 20px;
+   transition: background-color 0.3s;
+}
+
+.action-button:hover {
+   background-color: #45a049;
+}
