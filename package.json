@@ -42,7 +42,8 @@
       "!**/*.map",
       "!**/src/**/*.ts",
       "!**/typings/**/*.d.ts",
-      "!**/typings"
+      "!**/typings",
+      "!**/LICENSE.electron.txt"
     ],
     "win": {
       "target": [
@@ -58,7 +59,9 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "script": "build/installer.nsh",
+      "runAfterFinish": false
     },
     "extraFiles": [
       {
@@ -68,6 +71,14 @@
           "**/*",
           "!**/Server/pathExe.txt"
         ]
+      },
+      {
+        "from": "build/dependencies/dotnet-runtime-9.0.2-win-x64.exe",
+        "to": "resources/dotnet-runtime-9.0.2-win-x64.exe"
+      },
+      {
+        "from": "build/dependencies/aspnetcore-runtime-9.0.2-win-x64.exe",
+        "to": "resources/aspnetcore-runtime-9.0.2-win-x64.exe"
       }
     ]
   }
