@@ -42,8 +42,7 @@
       "!**/*.map",
       "!**/src/**/*.ts",
       "!**/typings/**/*.d.ts",
-      "!**/typings",
-      "!**/LICENSE.electron.txt"
+      "!**/typings"
     ],
     "win": {
       "target": [
