@@ -8,10 +8,14 @@ const { loadConfig } = require("./utils/configLoader")
 const si = require("systeminformation")
 const { exec, execSync } = require("child_process")
 
-// Загружаем конфигурацию после импорта необходимых модулей
-const config = loadConfig()
-const basePath = config.basePath
-const stylesDir = config.stylesDir.replace("{{basePath}}", basePath)
+// Define global variable for selected folder path
+global.selectedFolderPath = null;
+
+// Initialize config with null selectedFolderPath (uses only global config initially)
+let config = loadConfig()
+let basePath = config.basePath
+console.log("Initial basePath:", basePath)
+const stylesDir = config.stylesDir ? config.stylesDir.replace("{{basePath}}", basePath) : path.join(basePath, "styles")
 const borderPrintImage = config.borderPrintImage
 
 /** Начало измерения времени запуска main процесса */
@@ -124,6 +128,11 @@ app.on('window-all-closed', () => {
 function setSelectedFolder(folderPath) {
   console.log('Setting selected folder:', folderPath);
   global.selectedFolderPath = folderPath;
+  
+  // Reload config with the new selectedFolderPath to merge global and event configs
+  config = loadConfig(folderPath);
+  basePath = config.basePath;
+  console.log('Updated basePath:', basePath);
 }
 
 // IPC handlers for launcher buttons
@@ -546,4 +555,9 @@ ipcMain.on('switch-to-photobooth', (event, folderPath) => {
     createMainWindow();
   }
   mainWindow.show();
+});
+
+// Handler to get config for renderer processes
+ipcMain.handle('get-config', () => {
+  return config;
 });

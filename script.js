@@ -83,7 +83,8 @@ const translations = require("./translations.json")
 const basePath = config.basePath
 const basePathName = path.basename(basePath)
 const baseDir = path.join(basePath, "SavedPhotos")
-const stylesDir = config.stylesDir.replace("{{basePath}}", basePath)
+// Fixed: Use interpolated stylesDir from config
+const stylesDir = config.stylesDir || path.join(basePath, "styles")
 // const localhost = config.localhost
 const localhost = "http://localhost:5000"
 const imagesFolder = `./canon/SavedPhotos/`

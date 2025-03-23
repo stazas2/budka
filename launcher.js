@@ -2,15 +2,13 @@ const { ipcRenderer } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { config } = require('process');
+const { loadConfig } = require("./utils/configLoader");
 
-// !
-// const { loadConfig } = require("./utils/configLoader")
-// // Загружаем конфигурацию после импорта необходимых модулей
-// const config = loadConfig()
-// // Folder path to scan
-// const FOLDER_PATH = config.eventsPath;
-// !
-const FOLDER_PATH = "C:\\temp";
+// Load initial config - without a selected folder path
+const initialConfig = loadConfig();
+
+// Folder path to scan - use configured path or fallback
+const FOLDER_PATH = initialConfig.globalFolderPath || "C:\\temp";
 
 // Function to format date
 function formatDate(date) {
@@ -233,12 +231,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add button functionalities
     document.getElementById('openMainWindow').addEventListener('click', () => {
         if (selectedFolderPath) {
+            console.log('Opening main window with folder:', selectedFolderPath);
             ipcRenderer.send('open-main-window', selectedFolderPath);
         }
     });
     
     document.getElementById('openEmptyWindow').addEventListener('click', () => {
         if (selectedFolderPath) {
+            console.log('Opening empty window with folder:', selectedFolderPath);
             ipcRenderer.send('open-empty-window', selectedFolderPath);
         }
     });
