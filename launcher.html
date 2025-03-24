@@ -4,35 +4,60 @@
     <meta charset="UTF-8" />
     <title>Launcher</title>
     <link rel="stylesheet" href="launcher.css" />
+    <!-- Заменим CDN на локальные файлы -->
+    <script src="libs/datepicker.js"></script>
   </head>
   <body>
     <div class="container">
-      <h1>Application Launcher</h1>
+      <h1>Лаунчер</h1>
 
       <div class="folder-section">
         <div class="folder-header">
-          <h2>События (UserFolder/Events)</h2>
-          <button
-            id="refreshFolders"
-            class="refresh-button"
-            title="Обновить список папок"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+          <h2>События:</h2>
+          <div class="folder-actions">
+            <button
+              id="createEvent"
+              class="create-button"
+              title="Создать мероприятие"
             >
-              <path
-                d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"
-              />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Создать мероприятие
+            </button>
+            <button
+              id="refreshFolders"
+              class="refresh-button"
+              title="Обновить список папок"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
         <div class="folder-list" id="folderList">
           <div class="loading">Загрузка папок событий...</div>

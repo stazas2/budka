@@ -81,6 +81,16 @@ function applyConfig() {
     basePathName = path.basename(basePath);
     baseDir = path.join(basePath, "SavedPhotos");
     
+    if (!fs.existsSync(baseDir)) {
+      console.warn(`Warning: Styles directory does not exist: ${baseDir}...\nCreating it now.`);
+      // Try to create the directory
+      try {
+        fs.mkdirSync(baseDir, { recursive: true });
+      } catch (err) {
+        console.error("Failed to create styles directory:", err);
+      }
+    }
+
     // Ensure stylesDir is properly resolved
     if (config.stylesDir) {
       if (config.stylesDir.includes("{{basePath}}") && basePath) {
