@@ -173,16 +173,21 @@ async function getFolders() {
                 </div>
             `
     } else {
-      const foldersHTML = folders
+        const foldersHTML = folders
         .map(
-          (folder) => `
+          (folder) => {
+            // Split folder name into date and event name parts
+            const nameParts = folder.name.split('_');
+            const dateStr = nameParts[0] || '';
+            const eventName = nameParts.slice(1).join('_') || folder.name;
+
+            return `
                 <div class="folder-item" data-path="${folder.path}">
-                    <span class="folder-name">${folder.name}</span>
-                    <span class="folder-date">${formatDate(
-                      folder.createdAt
-                    )}</span>
+                    <span class="folder-name">${eventName}</span>
+                    <span class="folder-date">${dateStr}</span>
                 </div>
-            `
+            `;
+          }
         )
         .join("")
 

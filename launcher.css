@@ -84,6 +84,14 @@ button:hover {
    position: relative;
 }
 
+.folder-list_shell-text {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   font-weight: 800;
+   /* padding-bottom: 5px; */
+}
+
 .folder-item {
    padding: 12px 15px;
    border-bottom: 1px solid #eee;
@@ -106,6 +114,7 @@ button:hover {
 }
 
 .folder-date {
+   font-weight: 600;
    color: #666;
    font-size: 0.9em;
 }
@@ -220,7 +229,7 @@ button:hover {
 }
 
 .folder-item.selected {
-   background-color: rgba(33, 150, 243, 0.1);
+   background-color: rgba(43, 134, 207, 0.384);
 }
 
 .selection-hint {

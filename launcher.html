@@ -10,10 +10,9 @@
   <body>
     <div class="container">
       <h1>Лаунчер</h1>
-
       <div class="folder-section">
         <div class="folder-header">
-          <h2>События:</h2>
+          <!-- <h2>События:</h2> -->
           <div class="folder-actions">
             <button
               id="createEvent"
@@ -59,8 +58,14 @@
             </button>
           </div>
         </div>
-        <div class="folder-list" id="folderList">
-          <div class="loading">Загрузка папок событий...</div>
+        <div class="folder-list_shell">
+          <div class="folder-list_shell-text">
+            <p>Название</p>
+            <p>Дата мер-я</p>
+          </div>
+          <div class="folder-list" id="folderList">
+            <div class="loading">Загрузка папок событий...</div>
+          </div>
         </div>
         <div class="selection-hint">
           Выберите папку мероприятия для продолжения
