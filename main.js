@@ -17,7 +17,7 @@ let basePath = config.basePath
 console.log("Initial basePath:", basePath)
 const stylesDir = config.stylesDir ? config.stylesDir.replace("{{basePath}}", basePath) : path.join(basePath, "styles")
 const borderPrintImage = config.borderPrintImage
-
+console.log(Object.keys(config) + '\n\n' + config)
 /** Начало измерения времени запуска main процесса */
 const mainStartupTimeStart = Date.now()
 
@@ -46,14 +46,22 @@ function createLauncherWindow() {
   });
 }
 
-function createMainWindow() {
+// Make sure the createMainWindow function passes all necessary config
+function createMainWindow(folderPath) {
+  if (folderPath) {
+    // Make sure to set the folder path before creating the window
+    setSelectedFolder(folderPath);
+    console.log('Creating main window with folder path:', global.selectedFolderPath);
+  }
+
   mainWindow = new BrowserWindow({
     width: 1080,
     height: 1440,
     show: false, // Don't show until requested
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: false,
+      additionalArguments: [folderPath ? `--folder-path=${folderPath}` : '']
     },
     autoHideMenuBar: true,
   });
@@ -64,6 +72,19 @@ function createMainWindow() {
   mainWindow.webContents.on("did-finish-load", () => {
     console.log("Окно фотобудки успешно загружено");
     mainWindow.webContents.setZoomFactor(1);
+    
+    // Make sure camera_rotation is properly included
+    console.log('Sending config with camera_rotation:', config.camera_rotation);
+    
+    // Send the folder path to the renderer process after it's loaded
+    if (global.selectedFolderPath) {
+      mainWindow.webContents.send('selected-folder-path', global.selectedFolderPath);
+      console.log('Sent folder path to main window:', global.selectedFolderPath);
+      
+      // Also send the complete config to ensure it has all properties
+      mainWindow.webContents.send('config-update', config);
+      console.log('Sent complete config to main window');
+    }
   });
 
   mainWindow.on("closed", () => {
@@ -75,17 +96,32 @@ function createMainWindow() {
   });
 }
 
-function createEmptyWindow() {
+function createEmptyWindow(folderPath) {
+  if (folderPath) {
+    // Make sure to set the folder path before creating the window
+    setSelectedFolder(folderPath);
+    console.log('Creating empty window with folder path:', global.selectedFolderPath);
+  }
+
   emptyWindow = new BrowserWindow({
     width: 1080,
     height: 900,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: false,
+      additionalArguments: [folderPath ? `--folder-path=${folderPath}` : '']
     }
   });
 
   emptyWindow.loadFile('empty.html');
+  
+  emptyWindow.webContents.on("did-finish-load", () => {
+    // Send the folder path to the renderer process after it's loaded
+    if (folderPath) {
+      emptyWindow.webContents.send('selected-folder-path', folderPath);
+      console.log('Sent folder path to empty window:', folderPath);
+    }
+  });
 
   emptyWindow.on('closed', () => {
     emptyWindow = null;
@@ -125,14 +161,67 @@ app.on('window-all-closed', () => {
 });
 
 // Centralized function to set the selected folder path
+// Modify setSelectedFolder to be more robust
 function setSelectedFolder(folderPath) {
   console.log('Setting selected folder:', folderPath);
+  
+  if (!folderPath) {
+    console.warn('Attempted to set undefined folder path');
+    return;
+  }
+  
   global.selectedFolderPath = folderPath;
   
-  // Reload config with the new selectedFolderPath to merge global and event configs
-  config = loadConfig(folderPath);
-  basePath = config.basePath;
-  console.log('Updated basePath:', basePath);
+  try {
+    // Reload config with the new selectedFolderPath
+    reloadConfig(folderPath);
+    
+    // Log the app state for debugging
+    debugAppState();
+  } catch (error) {
+    console.error('Error loading config for folder:', error);
+  }
+}
+
+// Fix the ensureConfigDefaults function to properly set camera_rotation
+function ensureConfigDefaults() {
+  // Printing settings
+  config.PaperSizeX = Number(config.PaperSizeX) || 1212;
+  config.PaperSizeY = Number(config.PaperSizeY) || 1842;
+  config.PDForientation = config.PDForientation || "vertical";
+  config.borderPrintImage = config.borderPrintImage === true;
+  
+  // Basic settings with defaults
+  config.prePhotoTimer = config.prePhotoTimer || 5;
+  config.inactivityTimeout = config.inactivityTimeout || 60000;
+  config.showStyleNames = config.showStyleNames !== false;
+  config.visibilityAgree = config.visibilityAgree === true;
+  config.printButtonVisible = config.printButtonVisible !== false;
+  
+  // Camera settings - ensure we're properly setting and logging camera_rotation
+  config.camera_rotation = config.camera_rotation != null ? Number(config.camera_rotation) : 0;
+  config.send_image_rotation = config.send_image_rotation != null ? Number(config.send_image_rotation) : 0;
+  console.log('Camera rotation set to:', config.camera_rotation);
+  
+  // Logo and theme settings
+  config.mainLogoScale = Number(config.mainLogoScale) || 1;
+  config.logoScale = Number(config.logoScale) || 1;
+  config.logo_pos_x = Number(config.logo_pos_x) || 0;
+  config.logo_pos_y = Number(config.logo_pos_y) || 0;
+  config.theme = config.theme || "light";
+  config.backdropBlur = config.backdropBlur || "0px";
+  config.animationEnabled = config.animationEnabled === true;
+  
+  // Language settings
+  if (!config.language) {
+    config.language = { current: "ru", showSwitcher: false };
+  }
+  
+  // Gender settings
+  config.allowMultipleGenderSelection = config.allowMultipleGenderSelection === true;
+  if (!config.allowedGenders || !Array.isArray(config.allowedGenders) || config.allowedGenders.length === 0) {
+    config.allowedGenders = ["man", "woman", "boy", "girl", "group"];
+  }
 }
 
 // IPC handlers for launcher buttons
@@ -142,10 +231,12 @@ ipcMain.on('open-main-window', (event, folderPath) => {
     emptyWindow = null;
   }
 
-  setSelectedFolder(folderPath);
-
   if (mainWindow === null) {
-    createMainWindow();
+    createMainWindow(folderPath);
+  } else if (folderPath) {
+    // If window exists but folder path is changing, update it
+    setSelectedFolder(folderPath);
+    mainWindow.webContents.send('selected-folder-path', folderPath);
   }
   mainWindow.show();
 });
@@ -156,18 +247,26 @@ ipcMain.on('open-empty-window', (event, folderPath) => {
     mainWindow = null;
   }
 
-  setSelectedFolder(folderPath);
-
   if (emptyWindow === null) {
-    createEmptyWindow();
-  } else {
-    emptyWindow.show();
+    createEmptyWindow(folderPath);
+  } else if (folderPath) {
+    // If window exists but folder path is changing, update it
+    setSelectedFolder(folderPath);
+    emptyWindow.webContents.send('selected-folder-path', folderPath);
   }
+  emptyWindow.show();
 });
 
 // Consolidated handler for selected folder
 ipcMain.on('selected-folder', (event, folderPath) => {
+  console.log('selectedFolder handler received path:', folderPath);
   setSelectedFolder(folderPath);
+});
+
+// Handler to retrieve the selected folder
+ipcMain.on('get-selected-folder', (event) => {
+  console.log('get-selected-folder returning:', global.selectedFolderPath);
+  event.returnValue = global.selectedFolderPath;
 });
 
 ipcMain.on('close-app', () => {
@@ -180,52 +279,61 @@ ipcMain.handle("get-styles", async (event, genders) => {
     console.warn("Гендеры не указаны. Возвращаю пустой список стилей.")
     return []
   }
-  console.log(
-    `Загрузка стилей для гендеров "${(genders || []).join(
-      ", "
-    )}" из директории: ${stylesDir}`
-  )
+  
+  // Make sure stylesDir is properly resolved
+  let stylesDirectory = config.stylesDir;
+  if (!stylesDirectory) {
+    stylesDirectory = path.join(basePath, "styles");
+    console.warn(`No stylesDir configured, using default: ${stylesDirectory}`);
+  }
+  
+  console.log(`Loading styles for genders "${genders.join(", ")}" from directory: ${stylesDirectory}`);
+  
   try {
-    if (!genders || genders.length === 0) {
-      console.warn("Гендеры не указаны. Возвращаю пустой список стилей.")
-      return []
+    const styles = new Set();
+    
+    // Check if the styles directory exists
+    if (!fs.existsSync(stylesDirectory)) {
+      console.error(`Styles directory does not exist: ${stylesDirectory}`);
+      return [];
     }
-
-    const styles = new Set()
+    
     for (const gender of genders) {
-      const genderDir = path.join(stylesDir, gender)
+      const genderDir = path.join(stylesDirectory, gender);
+      
       if (!fs.existsSync(genderDir)) {
-        console.warn(`Директория для гендера не существует: ${genderDir}`)
-        continue
+        console.warn(`Gender directory does not exist: ${genderDir}`);
+        continue;
       }
 
-      const folders = fs
-        .readdirSync(genderDir, { encoding: "utf8" })
-        .filter((folder) => {
-          const folderPath = path.join(genderDir, folder)
-          return fs.statSync(folderPath).isDirectory()
-        })
+      // ...existing style loading code...
+
+      const folders = fs.readdirSync(genderDir, { encoding: "utf8" })
+        .filter(folder => {
+          const folderPath = path.join(genderDir, folder);
+          return fs.statSync(folderPath).isDirectory();
+        });
 
       for (const folder of folders) {
-        const folderPath = path.join(genderDir, folder)
-        const files = fs.readdirSync(folderPath, { encoding: "utf8" })
+        const folderPath = path.join(genderDir, folder);
+        const files = fs.readdirSync(folderPath, { encoding: "utf8" });
 
         const imageFiles = files.filter(
-          (file) =>
-            /\.(jpg|jpeg|png)$/i.test(file) && !file.startsWith(`1${folder}`)
-        )
+          file => /\.(jpg|jpeg|png)$/i.test(file) && !file.startsWith(`1${folder}`)
+        );
+        
         if (imageFiles.length > 0) {
-          styles.add({ originalName: folder, displayName: folder })
+          styles.add({ originalName: folder, displayName: folder });
         }
       }
     }
 
     if (styles.size === 0) {
-      console.warn("Не найдено стилей для указанных гендеров")
-      return []
+      console.warn(`No styles found for specified genders in ${stylesDirectory}`);
+      return [];
     }
 
-    return Array.from(styles)
+    return Array.from(styles);
   } catch (error) {
     console.error("Ошибка чтения директории стилей:", error)
     return []
@@ -561,3 +669,48 @@ ipcMain.on('switch-to-photobooth', (event, folderPath) => {
 ipcMain.handle('get-config', () => {
   return config;
 });
+
+// Add a debug function to log the state of the app
+function debugAppState() {
+  console.log('=== DEBUG APP STATE ===');
+  console.log('global.selectedFolderPath:', global.selectedFolderPath);
+  console.log('config.basePath:', config.basePath);
+  console.log('======================');
+}
+
+// Add an IPC handler to provide the current config
+ipcMain.handle('get-current-config', () => {
+  console.log('Sending current config to renderer');
+  return config;
+});
+
+// Fix the stylesDir resolution
+function reloadConfig(folderPath) {
+  config = loadConfig(folderPath);
+  basePath = config.basePath;
+  
+  // Ensure stylesDir is properly resolved
+  if (config.stylesDir && config.stylesDir.includes("{{basePath}}")) {
+    config.stylesDir = config.stylesDir.replace("{{basePath}}", basePath);
+  } else if (!config.stylesDir) {
+    config.stylesDir = path.join(basePath, "styles");
+  } else if (!path.isAbsolute(config.stylesDir)) {
+    // If stylesDir is relative, make it absolute
+    config.stylesDir = path.join(basePath, config.stylesDir);
+  }
+  
+  console.log("Updated configuration:");
+  console.log("- basePath:", basePath);
+  console.log("- stylesDir:", config.stylesDir);
+  
+  // Validate critical config properties
+  ensureConfigDefaults();
+  
+  // Log camera rotation for debugging
+  console.log('Camera rotation after reload:', config.camera_rotation);
+  
+  // When sending config to renderer, ensure camera_rotation is included
+  if (mainWindow && mainWindow.webContents) {
+    mainWindow.webContents.send('config-update', config);
+  }
+}

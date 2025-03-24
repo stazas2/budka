@@ -26,6 +26,182 @@ const {
 } = require("./utils/saveUtils")
 const QRCode = require("qrcode")
 
+// Function to extract folder path from command line arguments
+function getFolderPathFromArgs() {
+  const args = process.argv || [];
+  for (const arg of args) {
+    if (arg.startsWith('--folder-path=')) {
+      return arg.replace('--folder-path=', '');
+    }
+  }
+  return null;
+}
+
+// Get the folder path from multiple sources
+let selectedFolder = getFolderPathFromArgs();
+
+if (!selectedFolder) {
+  // Try the sync method if command line args don't have it
+  selectedFolder = ipcRenderer.sendSync('get-selected-folder');
+  console.log('Retrieved selected folder path (sync):', selectedFolder);
+}
+
+// Initialize with whatever we have, even if it's null
+let config = loadConfig(selectedFolder);
+console.log('Initially loaded config with path:', selectedFolder || 'none');
+
+// Listen for future updates to the folder path
+ipcRenderer.on('selected-folder-path', (event, folderPath) => {
+  console.log('Received updated folder path:', folderPath);
+  if (folderPath && folderPath !== selectedFolder) {
+    selectedFolder = folderPath;
+    
+    // Reload config with the new path
+    config = loadConfig(selectedFolder);
+    console.log('Updated config with new path:', selectedFolder);
+    console.log('Camera rotation from config:', config.camera_rotation);
+    
+    // Re-initialize the app with the new config
+    applyConfig();
+    applyRotationStyles();
+    updateTexts();
+    initGenderButtons();
+    setGenderImages();
+  }
+});
+
+// A proper initialization function
+function applyConfig() {
+  try {
+    console.log('Applying configuration with basePath:', config.basePath);
+    
+    // === PATHS AND CORE SETTINGS ===
+    // Set up important paths and properties
+    basePath = config.basePath;
+    basePathName = path.basename(basePath);
+    baseDir = path.join(basePath, "SavedPhotos");
+    
+    // Ensure stylesDir is properly resolved
+    if (config.stylesDir) {
+      if (config.stylesDir.includes("{{basePath}}") && basePath) {
+        stylesDir = config.stylesDir.replace("{{basePath}}", basePath);
+      } else if (!path.isAbsolute(config.stylesDir) && basePath) {
+        stylesDir = path.join(basePath, config.stylesDir);
+      } else {
+        stylesDir = config.stylesDir;
+      }
+    } else {
+      stylesDir = path.join(basePath, "styles");
+    }
+    
+    console.log("Using styles directory:", stylesDir);
+    
+    // Check if styles directory exists
+    if (!fs.existsSync(stylesDir)) {
+      console.warn(`Warning: Styles directory does not exist: ${stylesDir}`);
+      // Try to create the directory
+      try {
+        fs.mkdirSync(stylesDir, { recursive: true });
+        console.log(`Created styles directory: ${stylesDir}`);
+      } catch (err) {
+        console.error("Failed to create styles directory:", err);
+      }
+    }
+    
+    // === LOGO SETTINGS ===
+    // Apply logo settings
+    printLogo = config?.logoPath;
+    logo_scale = config.logoScale || 1;
+    logo_pos_x = config.logo_pos_x || 0;
+    logo_pos_y = config.logo_pos_y || 0;
+    
+    // === BRAND LOGO SETTINGS ===
+    if (config.brandLogoPath && brandLogo) {
+      brandLogo.src = config.brandLogoPath;
+      brandLogo.style.transform = `scale(${config.mainLogoScale || 1})`;
+      
+      // Verify the brand logo path is valid
+      if (!fs.existsSync(brandLogo.src.replace(/^file:\/\/\//, ""))) {
+        console.warn("Brand logo file not found:", config.brandLogoPath);
+        config.brandLogoPath = "";
+      }
+    }
+    
+    // === CAMERA AND ROTATION SETTINGS ===
+    // Clear existing rotation classes first
+    document.body.className = document.body.className
+      .split(' ')
+      .filter(cls => !cls.startsWith('rotation-') && !cls.startsWith('camera-'))
+      .join(' ');
+      
+    // Make sure camera_rotation is a number, defaulting to 0
+    const cameraRotation = Number(config.camera_rotation) || 0;
+    document.body.classList.add(`rotation-${cameraRotation}`);
+    document.body.classList.add(`camera-${config.cameraMode || "pc"}`);
+    document.body.classList.add(`brandLogo-${config.brandLogoPath ? "true" : "false"}`);
+    cameraMode = config.cameraMode || "pc";
+    
+    console.log(`Camera rotation set to: ${cameraRotation} degrees`);
+    
+    // === UI SETTINGS ===
+    // QR button visibility
+    if (showResultQrBtn) {
+      showResultQrBtn.style.display = config?.showResultQrBtn ? "block" : "none";
+    }
+    
+    // Print button visibility
+    updatePrintButtonVisibility();
+    
+    // Agreement visibility
+    if (startText && !config.visibilityAgree) {
+      startText.style.display = "none";
+    }
+    
+    // Language settings
+    if (languageSwitcher) {
+      currentLanguage = config.language?.current || "ru";
+      languageSwitcher.style.display = config.language?.showSwitcher ? "block" : "none";
+      updateTexts(); // Update all texts based on language
+    }
+    
+    // === THEME SETTINGS ===
+    applyTheme(config.theme || "light");
+    applySettings(); // Applies animation and other theme-related settings
+    
+    // === TIMING SETTINGS ===
+    // Update inactivity timer with the new timeout value
+    if (inactivityTimer) {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        showScreen("splash-screen");
+        selectedStyle = "";
+        resultImage.src = "";
+        stopCamera();
+      }, config.inactivityTimeout || 60000);
+    }
+    
+    console.log("Configuration successfully applied");
+  } catch (error) {
+    console.error("Error applying configuration:", error);
+  }
+}
+
+// Call applyConfig at startup
+document.addEventListener("DOMContentLoaded", () => {
+  // Apply the configuration
+  applyConfig();
+  applyRotationStyles();
+  
+  // Continue with the rest of initialization
+  if (config.cameraMode !== "canon") {
+    showScreen("splash-screen");
+  }
+  
+  updateTexts();
+  initGenderButtons();
+  setGenderImages();
+});
+
 //* ================ DOM ELEMENTS ================
 const styleScreen = document.getElementById("style-screen")
 const genderScreen = document.getElementById("gender-screen")
@@ -78,17 +254,16 @@ let selectedGenders = []
 // let resultShowStyle = ""
 // let hasBrackets = false
 
-let config = loadConfig()
 const translations = require("./translations.json")
-const basePath = config.basePath
-const basePathName = path.basename(basePath)
-const baseDir = path.join(basePath, "SavedPhotos")
+let basePath = config.basePath
+let basePathName = path.basename(basePath)
+let baseDir = path.join(basePath, "SavedPhotos")
 // Fixed: Use interpolated stylesDir from config
-const stylesDir = config.stylesDir || path.join(basePath, "styles")
+let stylesDir = config.stylesDir || path.join(basePath, "styles")
 // const localhost = config.localhost
 const localhost = "http://localhost:5000"
-const imagesFolder = `./canon/SavedPhotos/`
-const hotHolder = !!config?.HotFolder
+let imagesFolder = `./canon/SavedPhotos/`
+let hotHolder = !!config?.HotFolder
 let canonPhotosPath, countdownInterval
 
 
@@ -113,8 +288,8 @@ if (!fs.existsSync(canonPhotosPath)) {
   console.log(`Временное расположение: \n${canonPhotosPath}`)
 }
 
-const printLogo = config?.logoPath
-const logo_scale = config.logoScale
+let printLogo = config?.logoPath
+let logo_scale = config.logoScale
 brandLogo.src = config?.brandLogoPath
 brandLogo.style.transform = `scale(${config.mainLogoScale})`
 document.body.classList.add(`rotation-${config.camera_rotation}`)
@@ -122,8 +297,8 @@ document.body.classList.add(`camera-${config.cameraMode}`)
 document.body.classList.add(
   `brandLogo-${config.brandLogoPath ? "true" : "false"}`
 )
-const logo_pos_x = config.logo_pos_x
-const logo_pos_y = config.logo_pos_y
+let logo_pos_x = config.logo_pos_x
+let logo_pos_y = config.logo_pos_y
 
 if (!fs.existsSync(brandLogo.src.replace(/^file:\/\/\//, ""))) {
   config.brandLogoPath = ""
@@ -152,9 +327,11 @@ function applyRotationStyles() {
   try {
     const videoElement = document.getElementById("video")
     if (videoElement) {
-      videoElement.style.transform = `rotate(${config.camera_rotation}deg)`
+      // Make sure camera_rotation is a number, defaulting to 0
+      const cameraRotation = Number(config.camera_rotation) || 0;
+      videoElement.style.transform = `rotate(${cameraRotation}deg)`;
       console.log(
-        `▶️ Поворот камеры установлен на ${config.camera_rotation} градусов`
+        `▶️ Поворот камеры установлен на ${cameraRotation} градусов`
       )
     }
   } catch (error) {
@@ -276,20 +453,40 @@ function initStyleButtons(parsedStyles) {
 }
 
 // Запрашивает доступные стили с сервера
+let isFetchingStyles = false;
 function fetchStyles() {
+  // Prevent multiple simultaneous style fetches
+  if (isFetchingStyles) {
+    console.log("Already fetching styles, request ignored");
+    return;
+  }
+  
   try {
+    isFetchingStyles = true;
+    console.log(`Fetching styles for genders: ${selectedGenders.join(", ")}`);
+    console.log(`Using styles directory: ${stylesDir}`);
+    
+    // Clear any existing style buttons first to prevent duplicates
+    if (styleButtonsContainer) {
+      styleButtonsContainer.innerHTML = "";
+    }
+    
     ipcRenderer
       .invoke("get-styles", selectedGenders)
       .then((styles) => {
-        console.log("Получены стили:", styles)
-        initStyleButtons(styles)
+        console.log(`Received ${styles.length} styles:`, styles);
+        initStyleButtons(styles);
       })
       .catch((error) => {
-        console.error("Ошибка при загрузке стилей:", error)
-        alert("Не удалось загрузить стили. Попробуйте позже.")
+        console.error("Ошибка при загрузке стилей:", error);
+        alert("Не удалось загрузить стили. Попробуйте позже.");
       })
+      .finally(() => {
+        isFetchingStyles = false;
+      });
   } catch (error) {
-    console.error("Ошибка в fetchStyles:", error)
+    console.error("Ошибка в fetchStyles:", error);
+    isFetchingStyles = false;
   }
 }
 
@@ -298,56 +495,86 @@ function fetchStyles() {
 // Инициализирует кнопки выбора пола и их обработчики
 function initGenderButtons() {
   try {
-    continueButton.disabled = true
+    // Clear any existing handlers from gender buttons first
+    continueButton.disabled = true;
     continueButton.style.display = config.allowMultipleGenderSelection
       ? "block"
-      : "none"
-
-    genderButtons.forEach((item, index) => {
-      item.style.animationDelay = `${index * 0.3}s`
-      item.classList.add("animate")
-      // Удаляем старые обработчики
-      item.replaceAllListeners?.("click")
-
-      item.addEventListener("click", () => {
-        const button = item.querySelector(".button")
-        const gender = button.getAttribute("data-gender")
+      : "none";
+    
+    // Remove any existing event listeners by cloning and replacing elements
+    genderButtons.forEach((item) => {
+      const newItem = item.cloneNode(true);
+      if (item.parentNode) {
+        item.parentNode.replaceChild(newItem, item);
+      }
+    });
+    
+    // Get the fresh elements after replacement
+    const freshGenderButtons = document.querySelectorAll("#gender-buttons .button-row_item");
+    
+    freshGenderButtons.forEach((item, index) => {
+      item.style.animationDelay = `${index * 0.3}s`;
+      item.classList.add("animate");
+      
+      // Add a single click handler to each button
+      item.addEventListener("click", function genderButtonClickHandler(event) {
+        // Prevent event bubbling
+        event.stopPropagation();
+        
+        const button = item.querySelector(".button");
+        const gender = button.getAttribute("data-gender");
+        console.log(`Gender button clicked: ${gender}`);
 
         if (config.allowMultipleGenderSelection) {
-          const index = selectedGenders.indexOf(gender)
+          const index = selectedGenders.indexOf(gender);
           if (index === -1) {
-            selectedGenders.push(gender)
-            item.classList.add("selected")
-            continueButton.disabled = false
+            selectedGenders.push(gender);
+            item.classList.add("selected");
+            continueButton.disabled = false;
           } else {
-            selectedGenders.splice(index, 1)
-            item.classList.remove("selected")
+            selectedGenders.splice(index, 1);
+            item.classList.remove("selected");
           }
           if (selectedGenders.length < 1) {
-            continueButton.disabled = true
+            continueButton.disabled = true;
           }
 
-          console.log("▶️ Выбранный(e) пол(ы): ", selectedGenders)
-          // continueButton.style.display = selectedGenders.length > 0 ? "block" : "none";
+          console.log("▶️ Выбранные полы: ", selectedGenders);
         } else {
           // Режим одиночного выбора
-          genderButtons.forEach((btn) => btn.classList.remove("selected"))
-          selectedGenders = [gender]
-          console.log("▶️ Выбранный пол: " + selectedGenders[0])
-          showScreen("style-screen")
-          fetchStyles()
+          freshGenderButtons.forEach((btn) => btn.classList.remove("selected"));
+          item.classList.add("selected");
+          selectedGenders = [gender];
+          console.log("▶️ Выбранный пол: " + selectedGenders[0]);
+          
+          // Use a small timeout to prevent multiple rapid transitions
+          setTimeout(() => {
+            showScreen("style-screen");
+            fetchStyles();
+          }, 10);
         }
-      })
-    })
+      });
+    });
 
-    continueButton.addEventListener("click", () => {
+    // Replace the continue button with a fresh one to remove old event listeners
+    if (continueButton && continueButton.parentNode) {
+      const newContinueButton = continueButton.cloneNode(true);
+      continueButton.parentNode.replaceChild(newContinueButton, continueButton);
+      continueButton = newContinueButton;
+    }
+    
+    // Add a single click handler to the continue button
+    continueButton.addEventListener("click", function continueButtonClickHandler(event) {
+      // Prevent event bubbling
+      event.stopPropagation();
+      
       if (selectedGenders.length > 0) {
-        showScreen("style-screen")
-        fetchStyles()
+        showScreen("style-screen");
+        fetchStyles();
       }
-    })
+    });
   } catch (error) {
-    console.error("Ошибка в initGenderButtons:", error)
+    console.error("Ошибка в initGenderButtons:", error);
   }
 }
 
@@ -889,18 +1116,26 @@ function getRandomImageFromStyleFolder(style) {
 //* ================ UI NAVIGATION MODULE ================
 // === Навигация по экранам ===
 // Переключает видимость экранов приложения
+let isTransitioningScreen = false;
 async function showScreen(screenId) {
   try {
-    console.log(`➩ Переключение на экран: ${screenId}`)
+    // Prevent multiple simultaneous transitions
+    if (isTransitioningScreen) {
+      console.log(`Screen transition to ${screenId} ignored - already transitioning`);
+      return;
+    }
+    
+    isTransitioningScreen = true;
+    console.log(`➩ Переключение на экран: ${screenId}`);
 
-    const currentActive = document.querySelector(".screen.active")
+    const currentActive = document.querySelector(".screen.active");
     if (currentActive) {
-      currentActive.classList.remove("active")
+      currentActive.classList.remove("active");
     }
 
-    const targetScreen = document.getElementById(screenId)
+    const targetScreen = document.getElementById(screenId);
     if (targetScreen) {
-      targetScreen.classList.add("active")
+      targetScreen.classList.add("active");
 
       if (screenId === "style-screen") {
         styleButtonsContainer.classList.add("hide-scrollbar")
@@ -981,8 +1216,15 @@ async function showScreen(screenId) {
         logoContainer.style.display = "block"
       }
     }
+    
+    // At the end of the function
+    setTimeout(() => {
+      isTransitioningScreen = false;
+    }, 300); // Allow time for transitions to complete
+    
   } catch (error) {
-    console.error(`Ошибка в showScreen (${screenId}):`, error)
+    console.error(`Ошибка в showScreen (${screenId}):`, error);
+    isTransitioningScreen = false;
   }
 }
 
@@ -1230,21 +1472,22 @@ function applySettings() {
     const appTheme =
       config.theme === "light" ? config.lightTheme : config.darkTheme
 
+    // Apply animation settings
     if (config.animationEnabled) {
       document.body.classList.add("animated-background")
       document.body.style.setProperty(
         "--animated-background",
-        config.animatedBackground
-          ? config.animatedBackground
-          : appTheme.backgroundColor
+        config.animatedBackground || appTheme.backgroundColor || "#000000"
       )
     } else {
       document.body.classList.remove("animated-background")
     }
+    
+    // Apply backdrop blur from config
     document.documentElement.style.setProperty(
       "--backdrop-blur",
-      config.backdropBlur
-    )
+      config.backdropBlur || "0px"
+    );
   } catch (error) {
     console.error("Ошибка в applySettings:", error)
   }
@@ -1301,44 +1544,62 @@ document.addEventListener("DOMContentLoaded", () => {
 // }
 // const startupTimeStart = performance.now()
 
-backButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const currentScreen = document.querySelector(".screen.active")
-    switch (currentScreen.id) {
-      case "style-screen":
-        selectedGenders = []
-        genderButtons.forEach((item) => {
-          item.classList.remove("selected")
-        })
-        showScreen("gender-screen")
-        break
-      case "gender-screen":
-        selectedGenders = []
-        genderButtons.forEach((item) => {
-          item.classList.remove("selected")
-        })
-        showScreen("splash-screen")
-        break
-      case "camera-screen":
-        if (!button.disabled && amountOfStyles > 1) {
-          if (countdownInterval) {
-            clearInterval(countdownInterval)
-            countdownInterval = null
-          }
-          countdownElement.textContent = ""
-          stopCamera()
-          showScreen("style-screen")
-        } else if (amountOfStyles === 1) {
-          selectedGenders = []
-          genderButtons.forEach((item) => {
-            item.classList.remove("selected")
-          })
-          showScreen("gender-screen")
-        }
-        break
+document.addEventListener("DOMContentLoaded", function() {
+  // ...existing code...
+  
+  // Remove existing back button handlers and add fresh ones
+  backButtons.forEach((button) => {
+    // Clone and replace to remove existing handlers
+    const newButton = button.cloneNode(true);
+    if (button.parentNode) {
+      button.parentNode.replaceChild(newButton, button);
     }
-  })
-})
+  });
+  
+  // Get fresh references after replacement
+  const freshBackButtons = document.querySelectorAll(".back-button");
+  freshBackButtons.forEach((button) => {
+    button.addEventListener("click", (event) => {
+      // Prevent event bubbling
+      event.stopPropagation();
+      
+      const currentScreen = document.querySelector(".screen.active");
+      switch (currentScreen.id) {
+        case "style-screen":
+          selectedGenders = [];
+          document.querySelectorAll("#gender-buttons .button-row_item").forEach((item) => {
+            item.classList.remove("selected");
+          });
+          showScreen("gender-screen");
+          break;
+        case "gender-screen":
+          selectedGenders = [];
+          document.querySelectorAll("#gender-buttons .button-row_item").forEach((item) => {
+            item.classList.remove("selected");
+          });
+          showScreen("splash-screen");
+          break;
+        case "camera-screen":
+          if (!button.disabled && amountOfStyles > 1) {
+            if (countdownInterval) {
+              clearInterval(countdownInterval);
+              countdownInterval = null;
+            }
+            countdownElement.textContent = "";
+            stopCamera();
+            showScreen("style-screen");
+          } else if (amountOfStyles === 1) {
+            selectedGenders = [];
+            document.querySelectorAll("#gender-buttons .button-row_item").forEach((item) => {
+              item.classList.remove("selected");
+            });
+            showScreen("gender-screen");
+          }
+          break;
+      }
+    });
+  });
+});
 
 window.addEventListener("resize", handleOrientationChange)
 
@@ -1360,10 +1621,8 @@ handleOrientationChange()
 
 // Управляет видимостью кнопки печати
 function updatePrintButtonVisibility() {
-  if (config.printButtonVisible) {
-    printPhotoButton.style.display = "block"
-  } else {
-    printPhotoButton.style.display = "none"
+  if (printPhotoButton) {
+    printPhotoButton.style.display = config.printButtonVisible ? "block" : "none";
   }
 }
 
@@ -1895,3 +2154,14 @@ if (openConfiguratorButton) {
         ipcRenderer.send('switch-to-configurator', folderPath);
     });
 }
+
+// Also listen for config updates specifically
+ipcRenderer.on('config-update', (event, updatedConfig) => {
+  console.log('Received updated config:', updatedConfig);
+  if (updatedConfig) {
+    config = updatedConfig;
+    console.log('Camera rotation from updated config:', config.camera_rotation);
+    applyConfig();
+    applyRotationStyles();
+  }
+});

@@ -170,8 +170,14 @@ async function getFolders() {
                     // Store the selected folder path
                     selectedFolderPath = folderPath;
                     
-                    // Optionally send the selected folder to main process
+                    // Send the selected folder to main process
                     ipcRenderer.send('selected-folder', folderPath);
+                    
+                    // Verify the path was set correctly
+                    setTimeout(() => {
+                        const verifiedPath = ipcRenderer.sendSync('get-selected-folder');
+                        console.log('Verified selected folder in main process:', verifiedPath);
+                    }, 100);
                     
                     // Highlight selected folder
                     document.querySelectorAll('.folder-item').forEach(f => 
