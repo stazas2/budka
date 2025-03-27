@@ -173,29 +173,48 @@ async function getFolders() {
                 </div>
             `
     } else {
-        const foldersHTML = folders
-        .map(
-          (folder) => {
-            // Split folder name into date and event name parts
-            const nameParts = folder.name.split('_');
-            const dateStr = nameParts[0] || '';
-            const eventName = nameParts.slice(1).join('_') || folder.name;
-
-            return `
-                <div class="folder-item" data-path="${folder.path}">
-                    <span class="folder-name">${eventName}</span>
-                    <span class="folder-date">${dateStr}</span>
-                </div>
-            `;
-          }
-        )
-        .join("")
-
-      folderListElement.innerHTML = foldersHTML
+      // Clear existing folder list
+      folderListElement.innerHTML = '';
+      
+      // Get the template
+      const template = document.getElementById('folder-item-template');
+      
+      // Create a document fragment to improve performance
+      const fragment = document.createDocumentFragment();
+      
+      // Create folder items using the template
+      folders.forEach(folder => {
+        // Split folder name into date and event name parts
+        const nameParts = folder.name.split('_');
+        const dateStr = nameParts[0] || '';
+        const eventName = nameParts.slice(1).join('_') || folder.name;
+        
+        // Clone the template content
+        const folderItem = template.content.cloneNode(true).querySelector('.folder-item');
+        
+        // Set data attributes
+        folderItem.setAttribute('data-path', folder.path);
+        folderItem.setAttribute('data-name', folder.name);
+        
+        // Fill in the content
+        folderItem.querySelector('.folder-name').textContent = eventName;
+        folderItem.querySelector('.folder-date').textContent = dateStr;
+        
+        // Add to fragment
+        fragment.appendChild(folderItem);
+      });
+      
+      // Add all items to the DOM at once
+      folderListElement.appendChild(fragment);
 
       // Add click event to folder items
       document.querySelectorAll(".folder-item").forEach((item) => {
-        item.addEventListener("click", () => {
+        item.addEventListener("click", (event) => {
+          // Ignore clicks on the delete button
+          if (event.target.closest('.delete-event-button')) {
+            return;
+          }
+          
           const folderPath = item.getAttribute("data-path")
           console.log("Selected event folder:", folderPath)
 
@@ -224,6 +243,18 @@ async function getFolders() {
           updateButtonState()
         })
       })
+
+      // Add delete button functionality
+      document.querySelectorAll(".delete-event-button").forEach((button) => {
+        button.addEventListener("click", (event) => {
+          event.stopPropagation(); // Prevent folder selection
+          const folderItem = button.closest('.folder-item');
+          const folderPath = folderItem.getAttribute("data-path");
+          const folderName = folderItem.getAttribute("data-name");
+          
+          showDeleteConfirmation(folderPath, folderName);
+        });
+      });
     }
   } catch (error) {
     console.error("Error reading folders:", error)
@@ -419,50 +450,19 @@ function initDatePicker() {
 
 // Function to show event creation modal
 function showEventModal() {
-  // Create modal element if it doesn't exist
-  let modal = document.getElementById('createEventModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'createEventModal';
-    modal.className = 'modal';
-    
-    modal.innerHTML = `
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Создание мероприятия</h2>
-          <span class="close-modal">&times;</span>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label for="eventDate">Дата мероприятия (ДД.ММ.ГГГГ):</label>
-            <div class="date-input-container">
-              <input type="text" id="eventDate" placeholder="01.01.2024">
-              <button type="button" id="calendarToggle" class="calendar-button">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="16" y1="2" x2="16" y2="6"></line>
-                  <line x1="8" y1="2" x2="8" y2="6"></line>
-                  <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-              </button>
-            </div>
-            <div id="eventDateError" class="error-message"></div>
-          </div>
-          <div class="form-group">
-            <label for="eventName">Название мероприятия:</label>
-            <input type="text" id="eventName" placeholder="Мероприятие">
-            <div id="eventNameError" class="error-message"></div>
-          </div>
-          <div class="form-actions">
-            <button id="createEventButton" class="button">Создать</button>
-            <button id="cancelEventButton" class="button secondary">Отмена</button>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
+  const modal = document.getElementById('createEventModal');
+  
+  // Reset form
+  document.getElementById('eventDate').value = '';
+  document.getElementById('eventName').value = '';
+  document.getElementById('eventDateError').textContent = '';
+  document.getElementById('eventNameError').textContent = '';
+  
+  // Show modal
+  modal.style.display = 'flex';
+  
+  // Set up event listeners if they haven't been set up
+  if (!window.eventModalInitialized) {
     // Close button event
     const closeButton = modal.querySelector('.close-modal');
     closeButton.addEventListener('click', () => {
@@ -519,21 +519,98 @@ function showEventModal() {
       modal.style.display = 'none';
     });
     
-    // Initialize date picker after modal is created
+    // Initialize date picker
     initDatePicker();
-  } else {
-    // Reinitialize datepicker when reusing the modal
-    initDatePicker();
+    
+    // Mark as initialized
+    window.eventModalInitialized = true;
   }
+}
+
+// Function to show delete confirmation modal
+function showDeleteConfirmation(folderPath, folderName) {
+  const confirmModal = document.getElementById('deleteConfirmModal');
   
-  // Reset form
-  document.getElementById('eventDate').value = '';
-  document.getElementById('eventName').value = '';
-  document.getElementById('eventDateError').textContent = '';
-  document.getElementById('eventNameError').textContent = '';
+  // Set the folder name in the confirmation message
+  document.getElementById('eventToDelete').textContent = folderName;
   
-  // Show modal
-  modal.style.display = 'flex';
+  // Show the confirmation modal
+  confirmModal.style.display = 'flex';
+  
+  // Store the folder info for deletion
+  confirmModal.setAttribute('data-path', folderPath);
+  confirmModal.setAttribute('data-name', folderName);
+  
+  // Set up event listeners if they haven't been set up
+  if (!window.deleteModalInitialized) {
+    // Handle confirm button
+    const confirmButton = document.getElementById('confirmDeleteButton');
+    confirmButton.addEventListener('click', () => {
+      const path = confirmModal.getAttribute('data-path');
+      const name = confirmModal.getAttribute('data-name');
+      deleteEventFolder(path, name);
+      confirmModal.style.display = 'none';
+    });
+    
+    // Handle cancel button
+    const cancelButton = document.getElementById('cancelDeleteButton');
+    cancelButton.addEventListener('click', () => {
+      confirmModal.style.display = 'none';
+    });
+    
+    // Mark as initialized
+    window.deleteModalInitialized = true;
+  }
+}
+
+// Function to delete event folder
+function deleteEventFolder(folderPath, folderName) {
+  try {
+    if (!fs.existsSync(folderPath)) {
+      showNotification('Папка мероприятия не найдена.', 'error');
+      return;
+    }
+    
+    // If this is the selected folder, deselect it
+    if (selectedFolderPath === folderPath) {
+      selectedFolderPath = null;
+      updateButtonState();
+      // Notify main process that no folder is selected
+      ipcRenderer.send("selected-folder", null);
+    }
+    
+    // Delete the folder and its contents
+    deleteFolderRecursive(folderPath);
+    
+    // Show success notification
+    showNotification(`Мероприятие "${folderName}" успешно удалено!`, 'success');
+    
+    // Refresh folder list
+    getFolders();
+    
+  } catch (error) {
+    console.error('Ошибка при удалении мероприятия:', error);
+    showNotification(`Ошибка при удалении мероприятия: ${error.message}`, 'error');
+  }
+}
+
+// Function to delete folder and its contents recursively
+function deleteFolderRecursive(folderPath) {
+  if (fs.existsSync(folderPath)) {
+    fs.readdirSync(folderPath).forEach((file) => {
+      const curPath = path.join(folderPath, file);
+      if (fs.lstatSync(curPath).isDirectory()) {
+        // Recursive call for directories
+        deleteFolderRecursive(curPath);
+      } else {
+        // Delete file
+        fs.unlinkSync(curPath);
+      }
+    });
+    
+    // Delete the empty directory
+    fs.rmdirSync(folderPath);
+  }
 }
 
 // Set up button event listeners

@@ -98,6 +98,33 @@ button:hover {
    display: flex;
    justify-content: space-between;
    cursor: pointer;
+   position: relative;
+}
+
+.folder-item-content {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   width: 100%;
+}
+
+.delete-event-button {
+   width: 30px;
+   height: 30px;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   background-color: #ff4d4d;
+   color: white;
+   margin-left: 10px;
+   cursor: pointer;
+   font-size: 18px;
+   font-weight: bold;
+   transition: background 0.3s;
+}
+
+.delete-event-button:hover {
+   background-color: #e60000;
 }
 
 .folder-item:last-child {
@@ -483,4 +510,63 @@ button:hover {
 /* Make sure the date picker shows above other content */
 .flatpickr-calendar.open {
    z-index: 1000;
+}
+
+/* Confirmation modal */
+.confirm-modal {
+   display: none;
+   position: fixed;
+   z-index: 200;
+   left: 0;
+   top: 0;
+   width: 100%;
+   height: 100%;
+   background-color: rgba(0, 0, 0, 0.5);
+   justify-content: center;
+   align-items: center;
+}
+
+.confirm-modal-content {
+   background-color: white;
+   padding: 25px;
+   border-radius: 6px;
+   width: 400px;
+   max-width: 90%;
+   text-align: center;
+   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.confirm-modal-title {
+   margin-top: 0;
+   color: #333;
+   font-size: 18px;
+}
+
+.confirm-modal-message {
+   margin-bottom: 20px;
+   color: #555;
+}
+
+.confirm-modal-actions {
+   display: flex;
+   justify-content: center;
+   gap: 15px;
+}
+
+.confirm-modal-actions button {
+   padding: 8px 20px;
+   border: none;
+   border-radius: 4px;
+   font-size: 14px;
+   cursor: pointer;
+}
+
+.confirm-modal-actions .confirm-delete {
+   background-color: #f44336;
+   color: white;
+}
+
+.confirm-modal-actions .cancel-delete {
+   background-color: #ccc;
+   color: #333;
 }
