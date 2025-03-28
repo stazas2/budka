@@ -2,17 +2,16 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Launcher</title>
+    <title>Лаунчер Фотобудки</title>
     <link rel="stylesheet" href="launcher.css" />
     <!-- Заменим CDN на локальные файлы -->
     <script src="utils/datepicker.js"></script>
   </head>
   <body>
     <div class="container">
-      <h1>Лаунчер</h1>
+      <h1>Фотобудка Лаунчер</h1>
       <div class="folder-section">
         <div class="folder-header">
-          <!-- <h2>События:</h2> -->
           <div class="folder-actions">
             <button
               id="createEvent"
@@ -64,7 +63,7 @@
             <p>Дата мер-я</p>
           </div>
           <div class="folder-list" id="folderList">
-            <div class="loading">Загрузка папок событий...</div>
+            <div class="loading">Загрузка папок событий</div>
           </div>
         </div>
         <div class="selection-hint">
@@ -86,7 +85,9 @@
           <span class="folder-name"></span>
           <span class="folder-date"></span>
         </div>
-        <button class="delete-event-button" title="Удалить мероприятие">&times;</button>
+        <button class="delete-event-button" title="Удалить мероприятие">
+          &times;
+        </button>
       </div>
     </template>
 
@@ -102,7 +103,7 @@
             <label for="eventDate">Дата мероприятия (ДД.ММ.ГГГГ):</label>
             <div class="date-input-container">
               <input type="text" id="eventDate" placeholder="01.01.2024" />
-              <button type="button" id="calendarToggle" class="calendar-button">
+              <button id="calendarToggle" class="calendar-button">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="16"

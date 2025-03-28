@@ -425,7 +425,7 @@ function initDatePicker() {
         } else if (!isValidDate(dateStr)) {
           dateError.textContent = 'Неверный формат даты. Используйте ДД.ММ.ГГГГ';
         } else {
-          dateError.textContent = '';
+          dateError.textContent = ''; // Clear error message
         }
       }
     }
@@ -440,7 +440,7 @@ function initDatePicker() {
   dateInput.addEventListener('input', function() {
     const dateError = document.getElementById('eventDateError');
     if (dateError) {
-      dateError.textContent = '';
+      dateError.textContent = ''; // Clear error message
     }
   });
 
