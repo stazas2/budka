@@ -714,3 +714,29 @@ function reloadConfig(folderPath) {
     mainWindow.webContents.send('config-update', config);
   }
 }
+
+// Handler for reloading open windows with a new folder
+ipcMain.on('reload-open-windows', (event, folderPath) => {
+  console.log('Handling folder selection with path:', folderPath);
+  
+  if (!folderPath) {
+    console.warn('No folder path provided');
+    return;
+  }
+  
+  // Update the global selected folder path
+  setSelectedFolder(folderPath);
+  
+  // Close any open windows
+  if (mainWindow) {
+    console.log('Closing main window');
+    mainWindow.close();
+    mainWindow = null;
+  }
+  
+  if (emptyWindow) {
+    console.log('Closing empty window');
+    emptyWindow.close();
+    emptyWindow = null;
+  }
+});

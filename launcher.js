@@ -224,14 +224,8 @@ async function getFolders() {
           // Send the selected folder to main process
           ipcRenderer.send("selected-folder", folderPath)
 
-          // Verify the path was set correctly
-          setTimeout(() => {
-            const verifiedPath = ipcRenderer.sendSync("get-selected-folder")
-            console.log(
-              "Verified selected folder in main process:",
-              verifiedPath
-            )
-          }, 100)
+          // Close any currently open windows related to previous selections
+          ipcRenderer.send('reload-open-windows', folderPath);
 
           // Highlight selected folder
           document
