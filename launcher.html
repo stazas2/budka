@@ -60,7 +60,7 @@
         <div class="folder-list_shell">
           <div class="folder-list_shell-text">
             <p>Название</p>
-            <p>Дата мер-я</p>
+            <p>Дата мероприятия</p>
           </div>
           <div class="folder-list" id="folderList">
             <div class="loading">Загрузка папок событий</div>
@@ -83,11 +83,21 @@
       <div class="folder-item">
         <div class="folder-item-content">
           <span class="folder-name"></span>
-          <span class="folder-date"></span>
+          <div class="folder-right-section">
+            <div class="folder-item-btns">
+              <button
+                class="edit-event-button"
+                title="Редактировать конфигурацию"
+              >
+                ✏️
+              </button>
+              <button class="delete-event-button" title="Удалить мероприятие">
+                &times;
+              </button>
+            </div>
+            <span class="folder-date"></span>
+          </div>
         </div>
-        <button class="delete-event-button" title="Удалить мероприятие">
-          &times;
-        </button>
       </div>
     </template>
 
@@ -155,6 +165,30 @@
             Удалить
           </button>
           <button class="cancel-delete" id="cancelDeleteButton">Отмена</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Модальное окно редактирования конфигурации -->
+    <div id="configEditorModal" class="config-editor-modal">
+      <div class="config-editor-content">
+        <div class="config-editor-header">
+          <h2>
+            Редактирование конфигурации: <span id="configEventName"></span>
+          </h2>
+          <span class="close-modal" id="closeConfigEditor">&times;</span>
+        </div>
+        <div class="config-editor-body" id="configEditorBody">
+          <!-- Config properties will be generated here -->
+          <div class="loading">Загрузка конфигурации...</div>
+        </div>
+        <div class="config-editor-footer">
+          <button id="saveConfigButton" class="config-editor-button save">
+            Сохранить
+          </button>
+          <button id="cancelConfigButton" class="config-editor-button cancel">
+            Отмена
+          </button>
         </div>
       </div>
     </div>

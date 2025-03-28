@@ -207,11 +207,11 @@ async function getFolders() {
       // Add all items to the DOM at once
       folderListElement.appendChild(fragment);
 
-      // Add click event to folder items
+      // Add click event to folder items and buttons
       document.querySelectorAll(".folder-item").forEach((item) => {
         item.addEventListener("click", (event) => {
-          // Ignore clicks on the delete button
-          if (event.target.closest('.delete-event-button')) {
+          // Ignore clicks on the buttons
+          if (event.target.closest('.delete-event-button') || event.target.closest('.edit-event-button')) {
             return;
           }
           
@@ -253,6 +253,18 @@ async function getFolders() {
           const folderName = folderItem.getAttribute("data-name");
           
           showDeleteConfirmation(folderPath, folderName);
+        });
+      });
+
+      // Add edit button functionality
+      document.querySelectorAll(".edit-event-button").forEach((button) => {
+        button.addEventListener("click", (event) => {
+          event.stopPropagation(); // Prevent folder selection
+          const folderItem = button.closest('.folder-item');
+          const folderPath = folderItem.getAttribute("data-path");
+          const folderName = folderItem.getAttribute("data-name");
+          
+          openConfigEditor(folderPath, folderName);
         });
       });
     }
@@ -610,6 +622,219 @@ function deleteFolderRecursive(folderPath) {
     
     // Delete the empty directory
     fs.rmdirSync(folderPath);
+  }
+}
+
+// Function to open config editor
+function openConfigEditor(folderPath, folderName) {
+  const configEditorModal = document.getElementById('configEditorModal');
+  const configEditorBody = document.getElementById('configEditorBody');
+  
+  // Set event name in the modal header
+  document.getElementById('configEventName').textContent = folderName;
+  
+  // Show loading state
+  configEditorBody.innerHTML = '<div class="loading">Загрузка конфигурации...</div>';
+  
+  // Store the folder path for later use
+  configEditorModal.setAttribute('data-path', folderPath);
+  
+  // Show the modal
+  configEditorModal.style.display = 'flex';
+  
+  // Try to load the config file
+  try {
+    const configPath = path.join(folderPath, 'config.json');
+    if (!fs.existsSync(configPath)) {
+      configEditorBody.innerHTML = `
+        <div class="config-error">
+          Файл конфигурации не найден в папке мероприятия.
+        </div>
+      `;
+      return;
+    }
+    
+    // Read and parse the config file
+    const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    
+    // Generate form fields for config properties
+    renderConfigEditor(configData, configEditorBody);
+    
+  } catch (error) {
+    console.error('Ошибка при загрузке конфигурации:', error);
+    configEditorBody.innerHTML = `
+      <div class="config-error">
+        Ошибка при загрузке конфигурации: ${error.message}
+      </div>
+    `;
+  }
+  
+  // Set up event listeners if they haven't been set up
+  if (!window.configEditorInitialized) {
+    // Close button event
+    const closeButton = document.getElementById('closeConfigEditor');
+    closeButton.addEventListener('click', () => {
+      configEditorModal.style.display = 'none';
+    });
+    
+    // Save button event
+    const saveButton = document.getElementById('saveConfigButton');
+    saveButton.addEventListener('click', () => {
+      saveConfig(configEditorModal);
+    });
+    
+    // Cancel button event
+    const cancelButton = document.getElementById('cancelConfigButton');
+    cancelButton.addEventListener('click', () => {
+      configEditorModal.style.display = 'none';
+    });
+    
+    // Mark as initialized
+    window.configEditorInitialized = true;
+  }
+}
+
+// Function to render config editor form
+function renderConfigEditor(configData, container) {
+  // Clear container
+  container.innerHTML = '';
+  
+  // Store original config for reference
+  container.setAttribute('data-original-config', JSON.stringify(configData));
+  
+  // Create form for editing config
+  Object.entries(configData).forEach(([key, value]) => {
+    const propertyType = typeof value;
+    const propertyContainer = document.createElement('div');
+    propertyContainer.className = 'config-property';
+    
+    // Create property header
+    const propertyHeader = document.createElement('div');
+    propertyHeader.className = 'config-property-header';
+    
+    const propertyName = document.createElement('div');
+    propertyName.className = 'config-property-name';
+    propertyName.textContent = key;
+    
+    const propertyTypeSpan = document.createElement('div');
+    propertyTypeSpan.className = 'config-property-type';
+    propertyTypeSpan.textContent = propertyType;
+    
+    propertyHeader.appendChild(propertyName);
+    propertyHeader.appendChild(propertyTypeSpan);
+    propertyContainer.appendChild(propertyHeader);
+    
+    // Create input based on property type
+    let input;
+    
+    if (propertyType === 'boolean') {
+      // Create checkbox for boolean values
+      input = document.createElement('input');
+      input.type = 'checkbox';
+      input.checked = value;
+      input.id = `config-${key}`;
+      
+      const label = document.createElement('label');
+      label.htmlFor = input.id;
+      label.textContent = value ? 'Включено' : 'Отключено';
+      
+      input.addEventListener('change', () => {
+        label.textContent = input.checked ? 'Включено' : 'Отключено';
+      });
+      
+      const wrapper = document.createElement('div');
+      wrapper.appendChild(input);
+      wrapper.appendChild(label);
+      propertyContainer.appendChild(wrapper);
+      
+    } else if (propertyType === 'number') {
+      // Create number input for numeric values
+      input = document.createElement('input');
+      input.type = 'number';
+      input.value = value;
+      propertyContainer.appendChild(input);
+      
+    } else if (propertyType === 'string') {
+      // Create text input for string values
+      input = document.createElement('input');
+      input.type = 'text';
+      input.value = value;
+      propertyContainer.appendChild(input);
+      
+    } else if (propertyType === 'object' && value !== null) {
+      // Handle array or object (display as JSON string)
+      input = document.createElement('textarea');
+      input.value = JSON.stringify(value, null, 2);
+      input.style.width = '100%';
+      input.style.minHeight = '100px';
+      input.style.fontFamily = 'monospace';
+      propertyContainer.appendChild(input);
+      
+    } else {
+      // Fallback for other types
+      input = document.createElement('input');
+      input.type = 'text';
+      input.value = String(value);
+      propertyContainer.appendChild(input);
+    }
+    
+    input.setAttribute('data-key', key);
+    input.setAttribute('data-type', propertyType);
+    
+    container.appendChild(propertyContainer);
+  });
+}
+
+// Function to save config
+function saveConfig(modal) {
+  const folderPath = modal.getAttribute('data-path');
+  const configPath = path.join(folderPath, 'config.json');
+  const configEditorBody = document.getElementById('configEditorBody');
+  
+  try {
+    // Get original config
+    const originalConfig = JSON.parse(configEditorBody.getAttribute('data-original-config'));
+    const updatedConfig = {...originalConfig};
+    
+    // Collect values from all inputs
+    configEditorBody.querySelectorAll('input, textarea').forEach(input => {
+      const key = input.getAttribute('data-key');
+      const type = input.getAttribute('data-type');
+      
+      if (!key) return;
+      
+      let value;
+      
+      if (type === 'boolean') {
+        value = input.checked;
+      } else if (type === 'number') {
+        value = Number(input.value);
+      } else if (type === 'object') {
+        try {
+          value = JSON.parse(input.value);
+        } catch (e) {
+          console.error(`Ошибка при разборе JSON для поля ${key}:`, e);
+          value = originalConfig[key]; // Keep original on error
+        }
+      } else {
+        value = input.value;
+      }
+      
+      updatedConfig[key] = value;
+    });
+    
+    // Write the updated config back to the file
+    fs.writeFileSync(configPath, JSON.stringify(updatedConfig, null, 2), 'utf8');
+    
+    // Show success notification
+    showNotification(`Конфигурация успешно сохранена`, 'success');
+    
+    // Close the modal
+    modal.style.display = 'none';
+    
+  } catch (error) {
+    console.error('Ошибка при сохранении конфигурации:', error);
+    showNotification(`Ошибка при сохранении конфигурации: ${error.message}`, 'error');
   }
 }
 
