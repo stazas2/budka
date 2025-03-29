@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require("electron")
+const { app, BrowserWindow, ipcMain, dialog } = require("electron")
 const path = require("path")
 const fs = require("fs")
 const os = require("os")
@@ -714,6 +714,14 @@ function reloadConfig(folderPath) {
     mainWindow.webContents.send('config-update', config);
   }
 }
+
+ipcMain.on('select-file', (event, options) => {
+  const result = dialog.showOpenDialogSync(options);
+  event.returnValue = {
+    canceled: !result,
+    filePaths: result || []
+  };
+});
 
 // Handler for reloading open windows with a new folder
 ipcMain.on('reload-open-windows', (event, folderPath) => {
