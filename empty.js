@@ -69,6 +69,24 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error loading branding config:', error);
         }
     });
+
+    // Load print settings when tab4 is clicked
+    document.querySelector('[data-tab="tab4"]').addEventListener('click', async () => {
+        if (!currentFolderPath) return;
+        
+        try {
+            const configPath = path.join(currentFolderPath, 'config.json');
+            if (fs.existsSync(configPath)) {
+                const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+                
+                // Load printers first, then load print settings
+                await loadAvailablePrinters();
+                loadPrintSettings(configData);
+            }
+        } catch (error) {
+            console.error('Error loading print config:', error);
+        }
+    });
     
     // File selection buttons - updated to use the new approach
     const fileSelectors = {
@@ -154,6 +172,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveBrandingButton = document.getElementById('save-branding-config');
     if (saveBrandingButton) {
         saveBrandingButton.addEventListener('click', saveConfigSettings);
+    }
+
+    // Add event listener for the save print config button
+    const savePrintButton = document.getElementById('save-print-config');
+    if (savePrintButton) {
+        savePrintButton.addEventListener('click', saveConfigSettings);
     }
 });
 
@@ -448,6 +472,76 @@ function saveBrandingSettings(configData) {
     return configData;
 }
 
+// Function to load print settings
+function loadPrintSettings(configData) {
+    // Set selected printer
+    const printerSelect = document.getElementById('defaultPrinter');
+    if (printerSelect) {
+        const selectedPrinter = configData.defaultPrinter || '';
+        
+        // Check if the printer exists in the dropdown
+        let printerExists = false;
+        for (let i = 0; i < printerSelect.options.length; i++) {
+            if (printerSelect.options[i].value === selectedPrinter) {
+                printerExists = true;
+                break;
+            }
+        }
+        
+        // Set selected printer if it exists, otherwise default to empty
+        printerSelect.value = printerExists ? selectedPrinter : '';
+    }
+    
+    // Border Print Image
+    document.getElementById('borderPrintImage').checked = configData.borderPrintImage || false;
+    
+    // Print Button Visibility
+    document.getElementById('printButtonVisible').checked = configData.printButtonVisible !== false; // Default to true if undefined
+    
+    // Orientation
+    document.getElementById('orientation').value = configData.orientation || '';
+    
+    // Additional settings (might not be in original config, so setting defaults)
+    if (document.getElementById('printCopies')) {
+        document.getElementById('printCopies').value = configData.printCopies || 1;
+    }
+    
+    if (document.getElementById('confirmPrint')) {
+        document.getElementById('confirmPrint').checked = configData.confirmPrint || false;
+    }
+    
+    showNotification('Print settings loaded successfully', 'success');
+}
+
+// Function to load available printers
+async function loadAvailablePrinters() {
+    const printerSelect = document.getElementById('defaultPrinter');
+    if (!printerSelect) return;
+    
+    try {
+        // Get printers list from main process
+        const printers = await ipcRenderer.invoke('get-printers');
+        
+        // Clear existing options, keeping only the default option
+        while (printerSelect.options.length > 1) {
+            printerSelect.remove(1);
+        }
+        
+        // Add printers to dropdown
+        printers.forEach(printer => {
+            const option = document.createElement('option');
+            option.value = printer.name;
+            option.textContent = printer.name;
+            printerSelect.appendChild(option);
+        });
+        
+        console.log(`Loaded ${printers.length} printers`);
+    } catch (error) {
+        console.error('Error loading printers:', error);
+        showNotification('Error loading printers: ' + error.message, 'error');
+    }
+}
+
 // Function to save config settings
 function saveConfigSettings() {
     if (!currentFolderPath) {
@@ -464,43 +558,73 @@ function saveConfigSettings() {
             configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
         }
         
-        // Update the config with form values
-        configData.prePhotoTimer = parseInt(document.getElementById('prePhotoTimer').value, 10);
+        // Update the config with form values based on active tab
         
-        // Convert seconds back to milliseconds for inactivityTimeout
-        configData.inactivityTimeout = parseInt(document.getElementById('inactivityTimeout').value, 10) * 1000;
+        // Interface tab (tab2) settings
+        if (document.getElementById('tab2').classList.contains('active')) {
+            configData.prePhotoTimer = parseInt(document.getElementById('prePhotoTimer').value, 10);
         
-        // Language settings
-        configData.language = {
-            current: document.getElementById('languageCurrent').value,
-            showSwitcher: document.getElementById('showLanguageSwitcher').checked
-        };
-        
-        // Boolean settings
-        configData.showResultQrBtn = document.getElementById('showResultQrBtn').checked;
-        configData.showStyleNames = document.getElementById('showStyleNames').checked;
-        configData.visibilityAgree = document.getElementById('visibilityAgree').checked;
-        configData.allowMultipleGenderSelection = document.getElementById('allowMultipleGenderSelection').checked;
-        
-        // Allowed genders - create the nested array structure expected by the config
-        const allowedGenders = [[], [], []];
-        
-        // Adults in first array
-        if (document.getElementById('genderMale').checked) allowedGenders[0].push('man');
-        if (document.getElementById('genderFemale').checked) allowedGenders[0].push('woman');
-        
-        // Children in second array
-        if (document.getElementById('genderBoy').checked) allowedGenders[1].push('boy');
-        if (document.getElementById('genderGirl').checked) allowedGenders[1].push('girl');
-        
-        // Third array remains empty since we removed the "Other" option
-        
-        configData.allowedGenders = allowedGenders;
-        
-        // If branding tab is active, save branding settings
-        if (document.getElementById('tab3').classList.contains('active') || 
-            document.querySelector('[data-tab="tab3"]').classList.contains('active')) {
+            // Convert seconds back to milliseconds for inactivityTimeout
+            configData.inactivityTimeout = parseInt(document.getElementById('inactivityTimeout').value, 10) * 1000;
+            
+            // Language settings
+            configData.language = {
+                current: document.getElementById('languageCurrent').value,
+                showSwitcher: document.getElementById('showLanguageSwitcher').checked
+            };
+            
+            // Boolean settings
+            configData.showResultQrBtn = document.getElementById('showResultQrBtn').checked;
+            configData.showStyleNames = document.getElementById('showStyleNames').checked;
+            configData.visibilityAgree = document.getElementById('visibilityAgree').checked;
+            configData.allowMultipleGenderSelection = document.getElementById('allowMultipleGenderSelection').checked;
+            
+            // Allowed genders - create the nested array structure expected by the config
+            const allowedGenders = [[], [], []];
+            
+            // Adults in first array
+            if (document.getElementById('genderMale').checked) allowedGenders[0].push('man');
+            if (document.getElementById('genderFemale').checked) allowedGenders[0].push('woman');
+            
+            // Children in second array
+            if (document.getElementById('genderBoy').checked) allowedGenders[1].push('boy');
+            if (document.getElementById('genderGirl').checked) allowedGenders[1].push('girl');
+            
+            // Third array remains empty since we removed the "Other" option
+            
+            configData.allowedGenders = allowedGenders;
+        }
+
+        // Branding tab (tab3) settings
+        if (document.getElementById('tab3').classList.contains('active')) {
             configData = saveBrandingSettings(configData);
+        }
+        
+        // Print tab (tab4) settings
+        if (document.getElementById('tab4').classList.contains('active')) {
+            // Default Printer
+            const printerSelect = document.getElementById('defaultPrinter');
+            if (printerSelect) {
+                configData.defaultPrinter = printerSelect.value;
+            }
+            
+            // Border Print Image
+            configData.borderPrintImage = document.getElementById('borderPrintImage').checked;
+            
+            // Print Button Visibility
+            configData.printButtonVisible = document.getElementById('printButtonVisible').checked;
+            
+            // Orientation
+            configData.orientation = document.getElementById('orientation').value;
+            
+            // Additional settings
+            if (document.getElementById('printCopies')) {
+                configData.printCopies = parseInt(document.getElementById('printCopies').value, 10);
+            }
+            
+            if (document.getElementById('confirmPrint')) {
+                configData.confirmPrint = document.getElementById('confirmPrint').checked;
+            }
         }
         
         // Write the updated config back to file

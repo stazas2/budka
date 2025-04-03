@@ -186,17 +186,18 @@ function setSelectedFolder(folderPath) {
 // Fix the ensureConfigDefaults function to properly set camera_rotation
 function ensureConfigDefaults() {
   // Printing settings
-  config.PaperSizeX = Number(config.PaperSizeX) || 1212;
-  config.PaperSizeY = Number(config.PaperSizeY) || 1842;
+  config.PaperSizeX = Number(config.paperSizeWidth) || 1212;
+  config.PaperSizeY = Number(config.paperSizeHeight) || 1842;
   config.PDForientation = config.PDForientation || "vertical";
   config.borderPrintImage = config.borderPrintImage === true;
+  config.printButtonVisible = config.printButtonVisible !== false;
+  config.defaultPrinter = config.defaultPrinter || ""; // Ensure defaultPrinter exists
   
   // Basic settings with defaults
   config.prePhotoTimer = config.prePhotoTimer || 5;
   config.inactivityTimeout = config.inactivityTimeout || 60000;
   config.showStyleNames = config.showStyleNames !== false;
   config.visibilityAgree = config.visibilityAgree === true;
-  config.printButtonVisible = config.printButtonVisible !== false;
   
   // Camera settings - ensure we're properly setting and logging camera_rotation
   config.camera_rotation = config.camera_rotation != null ? Number(config.camera_rotation) : 0;
@@ -375,6 +376,14 @@ ipcMain.on("print-photo", async (event, data) => {
     const printOptions = {
       scale: "fit",
       silent: true,
+    }
+    
+    // Check if there is a defaultPrinter specified in config
+    if (config.defaultPrinter) {
+      console.log(`Using specified printer: ${config.defaultPrinter}`);
+      printOptions.printer = config.defaultPrinter;
+    } else {
+      console.log('Using system default printer');
     }
 
     // Печать PDF
@@ -746,5 +755,17 @@ ipcMain.on('reload-open-windows', (event, folderPath) => {
     console.log('Closing empty window');
     emptyWindow.close();
     emptyWindow = null;
+  }
+});
+
+// Add a new IPC handler to get available printers
+ipcMain.handle('get-printers', async () => {
+  try {
+    // Get list of printers using pdf-to-printer module
+    const printers = await require('pdf-to-printer').getPrinters();
+    return printers;
+  } catch (error) {
+    console.error('Error getting printers:', error);
+    return [];
   }
 });

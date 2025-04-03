@@ -438,7 +438,80 @@
             </div>
           </div>
         </div>
-        <div id="tab4" class="tab-content">Содержимое вкладки 4</div>
+        <div id="tab4" class="tab-content">
+          <h2>Настройки печати</h2>
+          <div class="config-form">
+            <div class="config-section">
+              <h3>Основные настройки печати</h3>
+
+              <div class="form-group">
+                <label for="defaultPrinter">Принтер:</label>
+                <select id="defaultPrinter">
+                  <option value="">Принтер по умолчанию</option>
+                  <!-- Printer options will be populated dynamically -->
+                </select>
+              </div>
+
+              <div class="form-group toggle-group">
+                <label for="borderPrintImage"
+                  >Добавить рамку к печатаемому изображению</label
+                >
+                <label class="toggle-switch">
+                  <input type="checkbox" id="borderPrintImage" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div class="form-group toggle-group">
+                <label for="printButtonVisible">Показывать кнопку печати</label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="printButtonVisible" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div class="form-group">
+                <label for="orientation">Ориентация печати:</label>
+                <select id="orientation">
+                  <option value="">Автоматически</option>
+                  <option value="portrait">Портретная</option>
+                  <option value="landscape">Альбомная</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="config-section">
+              <h3>Дополнительные настройки</h3>
+
+              <div class="form-group">
+                <label for="printCopies">Количество копий по умолчанию:</label>
+                <input
+                  type="number"
+                  id="printCopies"
+                  min="1"
+                  max="10"
+                  value="1"
+                />
+              </div>
+
+              <div class="form-group toggle-group">
+                <label for="confirmPrint"
+                  >Запрашивать подтверждение печати</label
+                >
+                <label class="toggle-switch">
+                  <input type="checkbox" id="confirmPrint" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="button-group">
+              <button id="save-print-config" class="action-button">
+                Сохранить настройки
+              </button>
+            </div>
+          </div>
+        </div>
         <div id="tab5" class="tab-content">Содержимое вкладки 5</div>
         <div id="tab6" class="tab-content">Содержимое вкладки 6</div>
       </div>
