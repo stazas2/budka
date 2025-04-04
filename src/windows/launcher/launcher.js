@@ -1,14 +1,17 @@
-const { ipcRenderer } = require("electron")
-const fs = require("fs")
-const path = require("path")
-const { config } = require("process")
-const { loadConfig } = require("./utils/configLoader")
+const IpcRendererService = require("../../renderer/services/IpcRendererService")
 
-// Load initial config - without a selected folder path
-const initialConfig = loadConfig()
+const NotificationManager = require("../../renderer/components/Notification")
 
-// Folder path to scan - use configured path or fallback
-const FOLDER_PATH = initialConfig.globalFolderPath || "C:\\temp"
+let FOLDER_PATH = "C:\\temp"
+
+;(async () => {
+  try {
+    const config = await IpcRendererService.getConfig()
+    FOLDER_PATH = config.globalFolderPath || "C:\\temp"
+  } catch (e) {
+    console.error("Failed to load config:", e)
+  }
+})()
 
 // Function to format date
 function formatDate(date) {
@@ -23,72 +26,27 @@ function formatDate(date) {
 }
 
 // Check if the folder structure is valid
-function validateFolderStructure(basePath) {
+async function validateFolderStructure(basePath) {
   try {
-    // Check if the base path exists
-    if (!fs.existsSync(basePath)) {
+    const response = await IpcRendererService.invoke(window.IpcChannels.VALIDATE_FOLDER_STRUCTURE, {
+      basePath
+    });
+
+    if (response.success) {
+      return response.result;
+    } else {
+      console.error("Folder validation error:", response.error);
       return {
         valid: false,
-        message: `Директория ${basePath} не существует`,
-      }
-    }
-
-    // Get all items in the base directory
-    const items = fs.readdirSync(basePath)
-
-    // Check for required files (.exe, .json)
-    const hasExeFile = items.some((item) => {
-      return (
-        item.endsWith(".exe") && fs.statSync(path.join(basePath, item)).isFile()
-      )
-    })
-
-    const hasJsonFile = items.some((item) => {
-      return (
-        item.endsWith(".json") &&
-        fs.statSync(path.join(basePath, item)).isFile()
-      )
-    })
-
-    // Check for UserFolder directory
-    const userFolderPath = path.join(basePath, "UserFolder")
-    const hasUserFolder =
-      fs.existsSync(userFolderPath) && fs.statSync(userFolderPath).isDirectory()
-
-    // Check for Events directory inside UserFolder
-    const eventsPath = path.join(userFolderPath, "Events")
-    const hasEventsFolder =
-      hasUserFolder &&
-      fs.existsSync(eventsPath) &&
-      fs.statSync(eventsPath).isDirectory()
-
-    // Build validation result
-    const missingItems = []
-    if (!hasExeFile) missingItems.push("*.exe файл")
-    if (!hasJsonFile) missingItems.push("*.json файл")
-    if (!hasUserFolder) missingItems.push("папка 'UserFolder'")
-    else if (!hasEventsFolder)
-      missingItems.push("папка 'Events' внутри 'UserFolder'")
-
-    if (missingItems.length > 0) {
-      return {
-        valid: false,
-        message: `Некорректная структура папки. Отсутствуют: ${missingItems.join(
-          ", "
-        )}`,
-      }
-    }
-
-    return {
-      valid: true,
-      eventsPath: eventsPath,
+        message: response.error || "Unknown error during folder validation"
+      };
     }
   } catch (error) {
-    console.error("Ошибка при проверке структуры папки:", error)
+    console.error("Ошибка при проверке структуры папки:", error);
     return {
       valid: false,
-      message: `Ошибка при проверке структуры папки: ${error.message}`,
-    }
+      message: `Ошибка при проверке структуры папки: ${error.message}`
+    };
   }
 }
 
@@ -182,12 +140,19 @@ async function getFolders() {
       // Create a document fragment to improve performance
       const fragment = document.createDocumentFragment();
       
+      console.log('Event folders received:', folders);
       // Create folder items using the template
       folders.forEach(folder => {
         // Split folder name into date and event name parts
         const nameParts = folder.name.split('_');
-        const dateStr = nameParts[0] || '';
+        let dateStr = nameParts[0];
         const eventName = nameParts.slice(1).join('_') || folder.name;
+
+        // If no date prefix, fallback to folder creation date
+        if (!dateStr || !/^\d{2}\.\d{2}\.\d{4}$/.test(dateStr)) {
+            const createdAt = folder.createdAt ? new Date(folder.createdAt) : null;
+            dateStr = createdAt ? createdAt.toLocaleDateString('ru-RU') : '';
+        }
         
         // Clone the template content
         const folderItem = template.content.cloneNode(true).querySelector('.folder-item');
@@ -221,11 +186,8 @@ async function getFolders() {
           // Store the selected folder path
           selectedFolderPath = folderPath
 
-          // Send the selected folder to main process
-          ipcRenderer.send("selected-folder", folderPath)
-
-          // Close any currently open windows related to previous selections
-          ipcRenderer.send('reload-open-windows', folderPath);
+          IpcRendererService.setSelectedFolder(folderPath)
+          // IpcRendererService.reloadWindows(folderPath)  // Disabled to prevent app from closing
 
           // Highlight selected folder
           document
@@ -298,7 +260,7 @@ function updateButtonState() {
 // Function to create a new event folder
 function createEventFolder(eventDate, eventName) {
   if (!eventsBasePath) {
-    showNotification('Ошибка: путь к папке мероприятий не найден.', 'error');
+    NotificationManager.show('Ошибка: путь к папке мероприятий не найден.', 'error');
     return false;
   }
 
@@ -309,7 +271,7 @@ function createEventFolder(eventDate, eventName) {
     
     // Check if folder already exists
     if (fs.existsSync(eventFolderPath)) {
-      showNotification('Папка с таким именем уже существует!', 'error');
+      NotificationManager.show('Папка с таким именем уже существует!', 'error');
       return false;
     }
 
@@ -323,7 +285,7 @@ function createEventFolder(eventDate, eventName) {
       copyFolderContents(defaultFolderPath, eventFolderPath);
     }
     
-    showNotification(`Мероприятие "${folderName}" успешно создано!`, 'success');
+    NotificationManager.show(`Мероприятие "${folderName}" успешно создано!`, 'success');
     
     // Refresh folder list
     getFolders();
@@ -331,7 +293,7 @@ function createEventFolder(eventDate, eventName) {
     return true;
   } catch (error) {
     console.error('Ошибка при создании мероприятия:', error);
-    showNotification(`Ошибка при создании мероприятия: ${error.message}`, 'error');
+    NotificationManager.show(`Ошибка при создании мероприятия: ${error.message}`, 'error');
     return false;
   }
 }
@@ -367,26 +329,6 @@ function copyFolderContents(sourceFolderPath, targetFolderPath) {
 }
 
 // Function to show notification
-function showNotification(message, type = 'info') {
-  const notification = document.createElement('div');
-  notification.className = `notification ${type}`;
-  notification.textContent = message;
-  
-  document.body.appendChild(notification);
-  
-  // Show notification with animation
-  setTimeout(() => {
-    notification.classList.add('show');
-  }, 10);
-  
-  // Hide and remove after 3 seconds
-  setTimeout(() => {
-    notification.classList.remove('show');
-    setTimeout(() => {
-      document.body.removeChild(notification);
-    }, 300);
-  }, 3000);
-}
 
 // Function to validate date format (DD.MM.YYYY)
 function isValidDate(dateStr) {
@@ -573,7 +515,7 @@ function showDeleteConfirmation(folderPath, folderName) {
 function deleteEventFolder(folderPath, folderName) {
   try {
     if (!fs.existsSync(folderPath)) {
-      showNotification('Папка мероприятия не найдена.', 'error');
+      NotificationManager.show('Папка мероприятия не найдена.', 'error');
       return;
     }
     
@@ -582,21 +524,21 @@ function deleteEventFolder(folderPath, folderName) {
       selectedFolderPath = null;
       updateButtonState();
       // Notify main process that no folder is selected
-      ipcRenderer.send("selected-folder", null);
+      IpcRendererService.setSelectedFolder(null);
     }
     
     // Delete the folder and its contents
     deleteFolderRecursive(folderPath);
     
     // Show success notification
-    showNotification(`Мероприятие "${folderName}" успешно удалено!`, 'success');
+    NotificationManager.show(`Мероприятие "${folderName}" успешно удалено!`, 'success');
     
     // Refresh folder list
     getFolders();
     
   } catch (error) {
     console.error('Ошибка при удалении мероприятия:', error);
-    showNotification(`Ошибка при удалении мероприятия: ${error.message}`, 'error');
+    NotificationManager.show(`Ошибка при удалении мероприятия: ${error.message}`, 'error');
   }
 }
 
@@ -821,14 +763,14 @@ function saveConfig(modal) {
     fs.writeFileSync(configPath, JSON.stringify(updatedConfig, null, 2), 'utf8');
     
     // Show success notification
-    showNotification(`Конфигурация успешно сохранена`, 'success');
+    NotificationManager.show(`Конфигурация успешно сохранена`, 'success');
     
     // Close the modal
     modal.style.display = 'none';
     
   } catch (error) {
     console.error('Ошибка при сохранении конфигурации:', error);
-    showNotification(`Ошибка при сохранении конфигурации: ${error.message}`, 'error');
+    NotificationManager.show(`Ошибка при сохранении конфигурации: ${error.message}`, 'error');
   }
 }
 
@@ -854,18 +796,18 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("openMainWindow").addEventListener("click", () => {
     if (selectedFolderPath) {
       console.log("Opening main window with folder:", selectedFolderPath)
-      ipcRenderer.send("open-main-window", selectedFolderPath)
+      IpcRendererService.openMainWindow(selectedFolderPath)
     }
   })
 
   document.getElementById("openEmptyWindow").addEventListener("click", () => {
     if (selectedFolderPath) {
       console.log("Opening empty window with folder:", selectedFolderPath)
-      ipcRenderer.send("open-empty-window", selectedFolderPath)
+      IpcRendererService.openConfiguratorWindow(selectedFolderPath)
     }
   })
 
   document.getElementById("closeApp").addEventListener("click", () => {
-    ipcRenderer.send("close-app")
+    IpcRendererService.closeApp()
   })
 })

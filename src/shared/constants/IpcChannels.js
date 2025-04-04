@@ -22,7 +22,23 @@ const IpcChannels = {
     GET_PRINTERS: 'get-printers',
     CONFIG_UPDATED: 'config-updated',
     CAMERA_MODE_CHANGED: 'camera-mode-changed',
-    SAVE_EVENT_CONFIG: 'save-event-config'
+    SAVE_EVENT_CONFIG: 'save-event-config',
+    SAVE_IMAGE: 'save-image',
+    ENSURE_FOLDER_EXISTS: 'ensure-folder-exists',
+
+    // New channels for refactored IPC
+    VALIDATE_FOLDER_STRUCTURE: 'validate-folder-structure',
+    LIST_EVENT_FOLDERS: 'list-event-folders',
+    LIST_EVENT_FOLDER_NAMES: 'list-event-folder-names',
+    GET_EVENT_CONFIG: 'get-event-config',
+    SAVE_EVENT_CONFIG: 'save-event-config',
+    DELETE_PHOTO: 'delete-photo',
+    GET_STYLE_FILES: 'get-style-files',
+    GET_STYLE_IMAGE_DATA: 'get-style-image-data',
+    GET_CANON_IMAGE: 'get-canon-image',
+    LIST_PHOTOS: 'list-photos',
+    GET_TRANSLATIONS: 'get-translations',
+    GET_RANDOM_STYLE_IMAGE: 'get-random-style-image'
 };
 
 // Use module.exports for compatibility with require in Electron

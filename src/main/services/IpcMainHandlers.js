@@ -1,266 +1,263 @@
-const { ipcMain, dialog, BrowserWindow } = require("electron");
-const path = require("path");
-const fs = require("fs");
-const { print, getPrinters } = require("pdf-to-printer");
-const PDFDocument = require("pdfkit");
-const os = require("os");
+const { ipcMain, app, dialog } = require('electron');
+const IpcChannels = require('../../shared/constants/IpcChannels');
+const ConfigurationService = require('./ConfigurationService');
+const PrintService = require('./PrintService');
+const WindowManager = require('./WindowManager');
+const CanonCameraService = require('./CanonCameraService');
 
-const ConfigurationService = require("./ConfigurationService");
-const IpcChannels = require("../../shared/constants/IpcChannels");
+class IpcMainHandlers {
+    constructor() {
+        this.setupHandlers();
+        console.log('[IpcMain] IPC handlers initialized');
+    }
 
-async function createPdf(tempImagePath, tempPdfPath, isLandscape, config) {
-    console.log("Creating PDF with image...");
-    return new Promise((resolve, reject) => {
-        try {
-            const PaperSizeX = Number(config.paperSizeWidth) || 105; // mm
-            const PaperSizeY = Number(config.paperSizeHeight) || 148; // mm
-            const MM_TO_PT = 2.83465; // Convert mm to points (1pt = 1/72 inch, 1 inch = 25.4 mm)
-            const A6WidthPt = PaperSizeX * MM_TO_PT;
-            const A6HeightPt = PaperSizeY * MM_TO_PT;
+    setupHandlers() {
+        ipcMain.handle(IpcChannels.GET_CURRENT_CONFIG, () => 
+            ConfigurationService.getCurrentConfig());
+            
+        ipcMain.handle(IpcChannels.SAVE_EVENT_CONFIG, (event, {folderPath, config}) =>
+            ConfigurationService.saveEventConfig(folderPath, config));
+            
+        ipcMain.handle(IpcChannels.SAVE_GLOBAL_CONFIG, (event, config) => 
+            ConfigurationService.saveGlobalConfig(config));
 
-            const A6 = [A6WidthPt, A6HeightPt];
-            const A6Landscape = [A6HeightPt, A6WidthPt];
+        ipcMain.on(IpcChannels.OPEN_MAIN_WINDOW, (event, folderPath) => {
+            WindowManager.createPhotoboothWindow(folderPath);
+        });
 
-            const pdfOrientation = config.orientation === "landscape" ? "horizon" : "vertical";
-            const pageSize = pdfOrientation === "horizon" ? A6Landscape : A6;
+        ipcMain.on(IpcChannels.OPEN_EMPTY_WINDOW, (event, folderPath) => {
+            WindowManager.createConfiguratorWindow(folderPath);
+        });
 
-            const doc = new PDFDocument({
-                size: pageSize,
-                margins: { top: 0, bottom: 0, left: 0, right: 0 },
-            });
+        ipcMain.on(IpcChannels.CLOSE_APP, () => {
+            app.quit();
+        });
 
-            const writeStream = fs.createWriteStream(tempPdfPath);
-            doc.pipe(writeStream);
+        ipcMain.on(IpcChannels.SWITCH_TO_PHOTOBOOTH, (event, folderPath) => {
+            WindowManager.createPhotoboothWindow(folderPath);
+        });
 
-            const extension = path.extname(tempImagePath).toLowerCase();
-            if (extension !== ".jpg" && extension !== ".jpeg" && extension !== ".png") {
-                throw new Error(`Unsupported image format: ${extension}`);
-            }
+        ipcMain.on(IpcChannels.SWITCH_TO_CONFIGURATOR, (event, folderPath) => {
+            WindowManager.createConfiguratorWindow(folderPath);
+        });
 
-            const rotateImage = (pdfOrientation === "horizon" && !isLandscape) ||
-                              (pdfOrientation === "vertical" && isLandscape);
+        ipcMain.on(IpcChannels.RELOAD_OPEN_WINDOWS, (event, folderPath) => {
+            WindowManager.closeAllWindows();
+            WindowManager.createLauncherWindow();
+        });
 
-            const borderPrintImage = config.borderPrintImage === true;
+        ipcMain.handle(IpcChannels.PRINT_PHOTO, async (event, {imageData, isLandscape}) => {
+            const config = ConfigurationService.getCurrentConfig();
+            return PrintService.printPhoto(imageData, config, isLandscape);
+        });
 
-            if (!borderPrintImage) {
-                // "cover" logic
-                const pageW = pageSize[0];
-                const pageH = pageSize[1];
-                let targetW = pageW, targetH = pageH;
-
-                if (rotateImage) {
-                    targetW = pageH;
-                    targetH = pageW;
-                }
-
-                const img = doc.openImage(tempImagePath);
-                const imgW = img.width;
-                const imgH = img.height;
-                let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
-
-                const targetRatio = targetW / targetH;
-                const imgRatio = imgW / imgH;
-
-                if (imgRatio > targetRatio) {
-                    drawHeight = targetH;
-                    drawWidth = imgRatio * drawHeight;
-                    offsetX = -(drawWidth - targetW) / 2;
-                } else {
-                    drawWidth = targetW;
-                    drawHeight = drawWidth / imgRatio;
-                    offsetY = -(drawHeight - targetH) / 2;
-                }
-
-                doc.save();
-                doc.rect(0, 0, targetW, targetH).clip();
-
-                if (rotateImage) {
-                    const centerX = targetW / 2;
-                    const centerY = targetH / 2;
-                    doc.translate(centerX, centerY);
-                    doc.rotate(90);
-                    doc.translate(-centerX, -centerY);
-
-                    if (imgRatio > targetRatio) {
-                        offsetY = -(drawWidth - targetW) / 2;
-                        offsetX = 0;
-                    } else {
-                        offsetX = -(drawHeight - targetH) / 2;
-                        offsetY = 0;
-                    }
-                    doc.image(tempImagePath, offsetX, offsetY, { width: drawWidth, height: drawHeight });
-                } else {
-                    doc.image(tempImagePath, offsetX, offsetY, { width: drawWidth, height: drawHeight });
-                }
-                doc.restore();
-            } else {
-                // "fit" logic (legacy)
-                if (rotateImage) {
-                    const pageW = pageSize[0], pageH = pageSize[1];
-                    const centerX = pageW / 2, centerY = pageH / 2;
-                    doc.rotate(90, { origin: [centerX, centerY] });
-                    doc.image(tempImagePath, 0, -pageW, { fit: [pageH, pageW], align: "center", valign: "center" });
-                    doc.rotate(-90, { origin: [centerX, centerY] });
-                } else {
-                    doc.image(tempImagePath, 0, 0, { fit: pageSize, align: "center", valign: "center" });
-                }
-            }
-
-            doc.end();
-
-            writeStream.on("finish", () => {
-                console.log(`PDF created successfully: ${tempPdfPath}`);
-                resolve(tempPdfPath);
-            });
-
-            writeStream.on("error", (err) => {
-                console.error("Error writing PDF:", err);
-                reject(err);
-            });
-        } catch (error) {
-            console.error("Failed to create PDF:", error);
-            reject(error);
-        }
-    });
-}
-
-function initializeIpcHandlers() {
-    console.log("[IPC] Initializing Main Handlers...");
-
-    ipcMain.handle(IpcChannels.GET_CURRENT_CONFIG, () => {
-        return ConfigurationService.getCurrentConfig();
-    });
-
-    ipcMain.on(IpcChannels.GET_SELECTED_FOLDER, (event) => {
-        event.returnValue = global.selectedFolderPath || null;
-    });
-
-    ipcMain.on(IpcChannels.SELECTED_FOLDER, (event, folderPath) => {
-        if (global.setSelectedFolder) {
-            global.setSelectedFolder(folderPath);
-        } else {
-            console.error("[IPC] global.setSelectedFolder is not defined in main.js!");
-        }
-    });
-
-    ipcMain.on(IpcChannels.SELECT_FILE, (event, options) => {
-        const window = BrowserWindow.fromWebContents(event.sender);
-        const result = dialog.showOpenDialogSync(window, options);
-        event.returnValue = {
-            canceled: !result,
-            filePaths: result || []
-        };
-    });
-
-    ipcMain.handle(IpcChannels.GET_PRINTERS, async () => {
-        try {
-            const printers = await getPrinters();
-            return printers;
-        } catch (error) {
-            console.error('[IPC] Error getting printers:', error);
+        ipcMain.handle(IpcChannels.GET_PRINTERS, () => {
+            // TODO: Integrate printer listing
             return [];
-        }
-    });
+        });
 
-    ipcMain.on(IpcChannels.CONFIG_UPDATED, (event, folderPath) => {
-        console.log(`[IPC] Received ${IpcChannels.CONFIG_UPDATED} for: ${folderPath}`);
-        if (folderPath && folderPath === global.selectedFolderPath) {
-            console.log(`[IPC] Reloading config for active folder: ${folderPath}`);
-            const newConfig = ConfigurationService.loadConfigForEvent(folderPath);
-            if (global.notifyWindowsOfConfigUpdate) {
-                global.notifyWindowsOfConfigUpdate(newConfig);
-            }
-        } else {
-            console.log(`[IPC] Config update for inactive folder (${folderPath}), ignoring reload.`);
-        }
-    });
-
-    ipcMain.handle(IpcChannels.SAVE_EVENT_CONFIG, async (event, folderPath, configData) => {
-        try {
-            await ConfigurationService.saveEventConfig(folderPath, configData);
-            return true;
-        } catch (error) {
-            console.error('[IPC] Error saving event config:', error);
-            return false;
-        }
-    });
-
-    ipcMain.on(IpcChannels.CAMERA_MODE_CHANGED, (event, cameraMode) => {
-        console.log(`[IPC] Received ${IpcChannels.CAMERA_MODE_CHANGED}: ${cameraMode}`);
-        ConfigurationService.currentConfig.cameraMode = cameraMode;
-        if (global.handleCameraModeChange) {
-            global.handleCameraModeChange(cameraMode);
-        }
-    });
-
-    ipcMain.on(IpcChannels.PRINT_PHOTO, async (event, data) => {
-        const config = ConfigurationService.getCurrentConfig();
-
-        if (!data || !data.imageData) {
-            console.error("[PrintService] Error: imageData not provided or invalid.");
-            event.reply(IpcChannels.PRINT_PHOTO_RESPONSE, false);
-            return;
-        }
-
-        const { imageData, isLandscape } = data;
-        console.log(`[PrintService] Image orientation: ${isLandscape ? "landscape" : "portrait"}`);
-
-        let tempDir = null;
-        try {
-            tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "print-"));
-            const imageFileName = "image.jpg";
-            const pdfFileName = "print.pdf";
-            const tempImagePath = path.join(tempDir, imageFileName);
-            const tempPdfPath = path.join(tempDir, pdfFileName);
-
-            let buffer;
-            if (imageData.startsWith('http')) {
-                const response = await fetch(imageData);
-                if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
-                const arrayBuffer = await response.arrayBuffer();
-                buffer = Buffer.from(arrayBuffer);
-            } else if (imageData.startsWith('data:image')) {
-                buffer = Buffer.from(imageData.split(",")[1], 'base64');
-            } else {
-                throw new Error("Unsupported image data format for printing.");
-            }
-
-            fs.writeFileSync(tempImagePath, buffer);
-            console.log(`[PrintService] Image saved: ${tempImagePath}`);
-
-            const generatedPdfPath = await createPdf(tempImagePath, tempPdfPath, isLandscape, config);
-            console.log(`[PrintService] Generated PDF path: ${generatedPdfPath}`);
-
-            const printOptions = {
-                scale: "fit",
-                silent: true
+        ipcMain.handle(IpcChannels.SELECT_FILE, (event, options) => {
+            const win = event.sender.getOwnerBrowserWindow();
+            const result = dialog.showOpenDialogSync(win, options);
+            return {
+                canceled: !result,
+                filePaths: result || []
             };
+        });
 
-            if (config.defaultPrinter) {
-                console.log(`[PrintService] Using specified printer: ${config.defaultPrinter}`);
-                printOptions.printer = config.defaultPrinter;
-            }
+        ipcMain.handle(IpcChannels.GET_SELECTED_FOLDER, () => {
+            return global.appState?.selectedFolderPath || null;
+        });
 
-            await print(generatedPdfPath, printOptions);
-            console.log("[PrintService] Print initiated.");
-            event.reply(IpcChannels.PRINT_PHOTO_RESPONSE, true);
+        ipcMain.handle(IpcChannels.GET_CONFIG, () => {
+            return ConfigurationService.getCurrentConfig();
+        });
 
-        } catch (error) {
-            console.error("[PrintService] Error during printing:", error);
-            event.reply(IpcChannels.PRINT_PHOTO_RESPONSE, false);
-        } finally {
-            if (tempDir && fs.existsSync(tempDir)) {
-                try {
-                    fs.rmSync(tempDir, { recursive: true, force: true });
-                    console.log("[PrintService] Temporary files cleaned up.");
-                } catch (cleanupError) {
-                    console.error("[PrintService] Error cleaning up temporary files:", cleanupError);
+        ipcMain.handle(IpcChannels.ENSURE_FOLDER_EXISTS, async (event, folderPath) => {
+            const fs = require('fs');
+            const path = require('path');
+            try {
+                if (!fs.existsSync(folderPath)) {
+                    fs.mkdirSync(folderPath, { recursive: true });
                 }
+                return { success: true };
+            } catch (error) {
+                console.error('Failed to ensure folder exists:', error);
+                return { success: false, error: error.message };
             }
-        }
-    });
+        });
 
-    console.log("[IPC] Main Handlers Initialized.");
+        ipcMain.handle(IpcChannels.GET_STYLES, async (event, genders) => {
+            const fs = require('fs').promises;
+            const path = require('path');
+            const config = ConfigurationService.getCurrentConfig();
+            // Resolve stylesDir correctly, handling potential template and relative paths
+            let stylesDir = config?.stylesDir || '';
+            if (stylesDir.includes("{{basePath}}") && config.basePath) {
+                stylesDir = stylesDir.replace("{{basePath}}", config.basePath);
+            } else if (!path.isAbsolute(stylesDir) && config.basePath) {
+                stylesDir = path.join(config.basePath, stylesDir);
+            } else if (!stylesDir && config.basePath) {
+                stylesDir = path.join(config.basePath, 'styles');
+            }
+
+            if (!stylesDir) {
+                console.error('Styles directory not configured or basePath missing.');
+                return [];
+            }
+
+            let availableStyles = [];
+            try {
+                for (const gender of genders) {
+                    const genderPath = path.join(stylesDir, gender);
+                    try {
+                        const entries = await fs.readdir(genderPath, { withFileTypes: true });
+                        const directories = entries
+                            .filter(dirent => dirent.isDirectory())
+                            .map(dirent => ({
+                                originalName: dirent.name,
+                                displayName: dirent.name // TODO: Read display name from metadata if needed
+                            }));
+                        availableStyles = availableStyles.concat(directories);
+                    } catch (err) {
+                        // Ignore if gender directory doesn't exist
+                        if (err.code !== 'ENOENT') {
+                            console.error(`Error reading styles for gender ${gender} in ${genderPath}:`, err);
+                        } else {
+                            console.log(`Directory not found for gender ${gender}: ${genderPath}`);
+                        }
+                    }
+                }
+                // Remove duplicates based on originalName
+                const uniqueStyles = availableStyles.filter((style, index, self) =>
+                    index === self.findIndex((s) => s.originalName === style.originalName)
+                );
+                console.log(`[IpcMain] Found styles for genders [${genders.join(', ')}]:`, uniqueStyles.map(s => s.originalName));
+                return uniqueStyles;
+            } catch (error) {
+                console.error('Error fetching styles:', error);
+                return []; // Return empty array on error
+            }
+        });
+
+        const ImageSaveService = require('./ImageSaveService');
+        ipcMain.handle(IpcChannels.SAVE_IMAGE, async (event, {folderType, imageData}) => {
+            return await ImageSaveService.saveImage(folderType, imageData);
+        });
+
+        ipcMain.on(IpcChannels.CONFIG_UPDATED, (event, folderPath) => {
+            console.log(`[IpcMain] Config updated for ${folderPath}`);
+            // TODO: Notify windows
+        });
+
+        ipcMain.on(IpcChannels.CAMERA_MODE_CHANGED, (event, mode) => {
+            if (mode === 'canon') {
+                CanonCameraService.start();
+            } else {
+                CanonCameraService.stop();
+                ipcMain.handle(IpcChannels.LIST_EVENT_FOLDER_NAMES, async (event, { eventsBasePath }) => {
+                    const fs = require('fs');
+                    const path = require('path');
+                    try {
+                        if (!fs.existsSync(eventsBasePath)) {
+                            return { success: true, items: [] };
+                        }
+                        const items = fs.readdirSync(eventsBasePath);
+                        const folders = items
+                            .filter(item => {
+                                try {
+                                    return fs.statSync(path.join(eventsBasePath, item)).isDirectory();
+                                } catch {
+                                    return false;
+                                }
+                            })
+                            .map(folderName => {
+                                try {
+                                    const folderPath = path.join(eventsBasePath, folderName);
+                                    const stats = fs.statSync(folderPath);
+                                    return {
+                                        name: folderName,
+                                        createdAt: stats.birthtime || stats.mtime,
+                                        path: folderPath
+                                    };
+                                } catch {
+                                    return null;
+                                }
+                            })
+                            .filter(f => f !== null)
+                            .sort((a, b) => b.createdAt - a.createdAt);
+                        return { success: true, items: folders };
+                    } catch (error) {
+                        console.error('Error listing event folders:', error);
+                        return { success: false, error: error.message };
+                    }
+                });
+            }
+        });
+        ipcMain.handle(IpcChannels.VALIDATE_FOLDER_STRUCTURE, async (event, { basePath }) => {
+            const fs = require('fs');
+            const path = require('path');
+            try {
+                if (!fs.existsSync(basePath)) {
+                    return {
+                        success: true,
+                        result: {
+                            valid: false,
+                            message: `Директория ${basePath} не существует`
+                        }
+                    };
+                }
+
+                const items = fs.readdirSync(basePath);
+
+                const hasExeFile = items.some(item =>
+                    item.endsWith('.exe') && fs.statSync(path.join(basePath, item)).isFile()
+                );
+
+                const hasJsonFile = items.some(item =>
+                    item.endsWith('.json') && fs.statSync(path.join(basePath, item)).isFile()
+                );
+
+                const userFolderPath = path.join(basePath, 'UserFolder');
+                const hasUserFolder = fs.existsSync(userFolderPath) && fs.statSync(userFolderPath).isDirectory();
+
+                const eventsPath = path.join(userFolderPath, 'Events');
+                const hasEventsFolder = hasUserFolder &&
+                    fs.existsSync(eventsPath) &&
+                    fs.statSync(eventsPath).isDirectory();
+
+                const missingItems = [];
+                if (!hasExeFile) missingItems.push('*.exe файл');
+                if (!hasJsonFile) missingItems.push('*.json файл');
+                if (!hasUserFolder) missingItems.push("папка 'UserFolder'");
+                else if (!hasEventsFolder) missingItems.push("папка 'Events' внутри 'UserFolder'");
+
+                if (missingItems.length > 0) {
+                    return {
+                        success: true,
+                        result: {
+                            valid: false,
+                            message: `Некорректная структура папки. Отсутствуют: ${missingItems.join(', ')}`
+                        }
+                    };
+                }
+
+                return {
+                    success: true,
+                    result: {
+                        valid: true,
+                        eventsPath
+                    }
+                };
+            } catch (error) {
+                console.error('Error in validate-folder-structure:', error);
+                return {
+                    success: false,
+                    error: error.message
+                };
+            }
+        });
+    }
 }
 
-module.exports = { initializeIpcHandlers };
+module.exports = new IpcMainHandlers();

@@ -1,58 +1,38 @@
-# Refactoring Status
+# Refactoring Status (Updated)
 
 ## Phase 1: Initial Setup ✅
 
-Completed on 2025-04-04
+## Phase 2: IPC Infrastructure ✅
 
-- ✅ Created base directory structure
-- ✅ Moved files to new locations
-- ✅ Updated package.json main entry point
-- ✅ Created core services
-- ✅ Set up documentation
+## Phase 3: Configuration Service ✅
 
-## Phase 2: IPC Infrastructure 🔄
+## Phase 4: Main Process Reorganization ✅
 
-In Progress
+## Phase 5: Renderer Updates ✅
 
-- ✅ Created IpcChannels.js with channel definitions
-- ✅ Implemented IpcMainHandlers.js
-- ⏳ Create IpcRendererService.js
-- ⏳ Update all IPC calls to use constants
+- launcher.js, configurator.js, photobooth.js обновлены
+- IPC вызовы заменены на сервис
+- saveUtils перенесен в main через IPC
+- sharp удален из renderer
 
-## Remaining Phases
+## Phase 6: Build System Updates 🚧 _In Progress_
 
-### Phase 3: Configuration Service 📝
+- package.json build config обновлен
+- ресурсы и пути проверены
+- сборка требует тестирования
 
-Not Started
+## Phase 7: Testing & Verification 🚧 _In Progress_
 
-- Setup planned for next sprint
+- checklist создан
+- приложение запускается, окна открываются
+- исправлены ошибки с путями и импортами
+- требуется полное тестирование
 
-### Phase 4: Main Process Reorganization 📝
+---
 
-Not Started
+## Summary:
 
-- Dependencies on Phase 2 & 3
-
-### Phase 5: Renderer Updates 📝
-
-Not Started
-
-- Waiting for component implementations
-
-### Phase 6: Build System Updates 📝
-
-Not Started
-
-- Final phase after all implementations
-
-## Next Steps
-
-1. Complete IPC infrastructure by implementing IpcRendererService
-2. Update all window files to use new IPC system
-3. Begin implementing configuration service updates
-
-## Known Issues
-
-- Need to verify all file paths in HTML files
-- Need to test Canon camera integration with new structure
-- Need to implement component templates
+- Архитектура переведена на сервисы и IPC
+- Renderer и main разделены
+- Ошибки с путями и импортами устранены
+- Следующий этап — тестирование и сборка

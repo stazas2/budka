@@ -15,60 +15,62 @@
 // EVENT LISTENERS
 // CANON MODULE
 
+//* ================ VARIABLE DECLARATIONS ================
+let selectedFolder = null;
+let config = {};
+let basePath = '';
+let basePathName = '';
+let baseDir = '';
+let stylesDir = '';
+let isTransitioningScreen = false;
+let currentLanguage = 'ru'; // Default, will be updated from config
+let translations = {};
+
 //* ================ IMPORTS AND REQUIREMENTS ================
-const { ipcRenderer } = require("electron")
-const fs = require("fs")
-const path = require("path")
-const { loadConfig } = require("./utils/configLoader")
-const {
-  saveImageWithUtils,
-  copyPhotoToDateFolder,
-} = require("./utils/saveUtils")
+const IpcRendererService = require("../../renderer/services/IpcRendererService")
+const NotificationManager = require("../../renderer/components/Notification")
 const QRCode = require("qrcode")
+const IpcChannels = require("../../shared/constants/IpcChannels")
 
-// Function to extract folder path from command line arguments
-function getFolderPathFromArgs() {
-  const args = process.argv || [];
-  for (const arg of args) {
-    if (arg.startsWith('--folder-path=')) {
-      return arg.replace('--folder-path=', '');
-    }
-  }
-  return null;
-}
+// Already moved to declarations section
 
-// Get the folder path from multiple sources
-let selectedFolder = getFolderPathFromArgs();
+;(async () => {
+  try {
+    selectedFolder = await IpcRendererService.getSelectedFolder();
+    config = await IpcRendererService.getConfig();
+    console.log('Loaded config:', config);
 
-if (!selectedFolder) {
-  // Try the sync method if command line args don't have it
-  selectedFolder = ipcRenderer.sendSync('get-selected-folder');
-  console.log('Retrieved selected folder path (sync):', selectedFolder);
-}
+    // Update dependent variables after config is loaded
+    basePath = config?.basePath || '';
+    basePathName = basePath ? basePath.split(/[\\/]/).pop() : '';
+    baseDir = basePath ? `${basePath}/SavedPhotos` : '';
+    stylesDir = config?.stylesDir ?
+      config.stylesDir.replace("{{basePath}}", basePath) :
+      basePath ? `${basePath}/styles` : '';
+    currentLanguage = config.language?.current || 'ru';
 
-// Initialize with whatever we have, even if it's null
-let config = loadConfig(selectedFolder);
-console.log('Initially loaded config with path:', selectedFolder || 'none');
-
-// Listen for future updates to the folder path
-ipcRenderer.on('selected-folder-path', (event, folderPath) => {
-  console.log('Received updated folder path:', folderPath);
-  if (folderPath && folderPath !== selectedFolder) {
-    selectedFolder = folderPath;
-    
-    // Reload config with the new path
-    config = loadConfig(selectedFolder);
-    console.log('Updated config with new path:', selectedFolder);
-    console.log('Camera rotation from config:', config.camera_rotation);
-    
-    // Re-initialize the app with the new config
     applyConfig();
     applyRotationStyles();
     updateTexts();
     initGenderButtons();
     setGenderImages();
+  } catch (e) {
+    console.error("Failed to load config:", e);
   }
-});
+})();
+
+IpcRendererService.on('selected-folder-path', (folderPath) => {
+  console.log('Received updated folder path:', folderPath)
+  selectedFolder = folderPath
+  IpcRendererService.getConfig().then(cfg => {
+    config = cfg
+    applyConfig()
+    applyRotationStyles()
+    updateTexts()
+    initGenderButtons()
+    setGenderImages()
+  })
+})
 
 // A proper initialization function
 function applyConfig() {
@@ -78,45 +80,35 @@ function applyConfig() {
     // === PATHS AND CORE SETTINGS ===
     // Set up important paths and properties
     basePath = config.basePath;
-    basePathName = path.basename(basePath);
-    baseDir = path.join(basePath, "SavedPhotos");
-    
-    if (!fs.existsSync(baseDir)) {
-      console.warn(`Warning: Styles directory does not exist: ${baseDir}...\nCreating it now.`);
-      // Try to create the directory
-      try {
-        fs.mkdirSync(baseDir, { recursive: true });
-      } catch (err) {
-        console.error("Failed to create styles directory:", err);
+    basePathName = basePath.split(/[\\/]/).pop();
+    baseDir = basePath + "/SavedPhotos";
+
+    IpcRendererService.ensureFolderExists(baseDir).then((result) => {
+      if (!result.success) {
+        console.error("Failed to create SavedPhotos directory:", result.error);
       }
-    }
+    });
 
     // Ensure stylesDir is properly resolved
     if (config.stylesDir) {
       if (config.stylesDir.includes("{{basePath}}") && basePath) {
         stylesDir = config.stylesDir.replace("{{basePath}}", basePath);
-      } else if (!path.isAbsolute(config.stylesDir) && basePath) {
-        stylesDir = path.join(basePath, config.stylesDir);
+      } else if (!config.stylesDir.startsWith("/") && !config.stylesDir.match(/^[a-zA-Z]:[\\/]/) && basePath) {
+        stylesDir = basePath + "/" + config.stylesDir;
       } else {
         stylesDir = config.stylesDir;
       }
     } else {
-      stylesDir = path.join(basePath, "styles");
+      stylesDir = basePath + "/styles";
     }
-    
+
     console.log("Using styles directory:", stylesDir);
-    
-    // Check if styles directory exists
-    if (!fs.existsSync(stylesDir)) {
-      console.warn(`Warning: Styles directory does not exist: ${stylesDir}`);
-      // Try to create the directory
-      try {
-        fs.mkdirSync(stylesDir, { recursive: true });
-        console.log(`Created styles directory: ${stylesDir}`);
-      } catch (err) {
-        console.error("Failed to create styles directory:", err);
+
+    IpcRendererService.ensureFolderExists(stylesDir).then((result) => {
+      if (!result.success) {
+        console.error("Failed to create styles directory:", result.error);
       }
-    }
+    });
     
     // === LOGO SETTINGS ===
     // Apply logo settings
@@ -131,10 +123,7 @@ function applyConfig() {
       brandLogo.style.transform = `scale(${config.mainLogoScale || 1})`;
       
       // Verify the brand logo path is valid
-      if (!fs.existsSync(brandLogo.src.replace(/^file:\/\/\//, ""))) {
-        console.warn("Brand logo file not found:", config.brandLogoPath);
-        config.brandLogoPath = "";
-      }
+      // Skipping file existence check in renderer for brand logo
     }
     
     // === CAMERA AND ROTATION SETTINGS ===
@@ -198,8 +187,8 @@ function applyConfig() {
 
 // Call applyConfig at startup
 document.addEventListener("DOMContentLoaded", () => {
-  // Apply the configuration
-  applyConfig();
+  // Apply the configuration - This is now handled by the async config load
+  // applyConfig();
   applyRotationStyles();
   
   // Continue with the rest of initialization
@@ -218,7 +207,7 @@ const genderScreen = document.getElementById("gender-screen")
 const cameraScreen = document.getElementById("camera-screen")
 const processingScreen = document.getElementById("processing-screen")
 const resultScreen = document.getElementById("result-screen")
-const sharp = require("sharp")
+
 
 const resultTitle = resultScreen.querySelector("h1")
 resultTitle.style.display = "none"
@@ -264,42 +253,57 @@ let selectedGenders = []
 // let resultShowStyle = ""
 // let hasBrackets = false
 
-const translations = require("./translations.json")
-let basePath = config.basePath
-let basePathName = path.basename(basePath)
-let baseDir = path.join(basePath, "SavedPhotos")
-// Fixed: Use interpolated stylesDir from config
-let stylesDir = config.stylesDir || path.join(basePath, "styles")
+// translations already declared above
+
+async function loadTranslations() {
+    try {
+        translations = await IpcRendererService.invoke(IpcChannels.GET_TRANSLATIONS);
+        console.log("Translations loaded");
+    } catch (error) {
+        console.error("Failed to load translations:", error);
+        NotificationManager.show("Failed to load translations", "error");
+    }
+}
+
+loadTranslations();
+// Initialize with null checks
+basePath = config?.basePath || '';
+basePathName = basePath ? basePath.split(/[\\/]/).pop() : '';
+baseDir = basePath ? `${basePath}/SavedPhotos` : '';
+stylesDir = config?.stylesDir ?
+  config.stylesDir.replace("{{basePath}}", basePath) :
+  basePath ? `${basePath}/styles` : '';
 // const localhost = config.localhost
 const localhost = "http://localhost:5000"
 let imagesFolder = `./canon/SavedPhotos/`
 
-let hotHolder = !!config?.hotFolder["enabled"]
+// hotHolder declared later with null checks
 let canonPhotosPath, countdownInterval
 
 
 // Если запущено ли приложение из asar-архива, то билд)
 if (__dirname.includes("app.asar")) {
   // Логика для билда
-  let dir = __dirname
-  while (path.basename(dir) !== "resources" && dir !== path.parse(dir).root) {
-    dir = path.dirname(dir)
+  let dir = __dirname;
+  while (dir.split(/[\\/]/).pop() !== "resources" && dir !== "/") {
+    dir = dir.split(/[\\/]/).slice(0, -1).join('/');
   }
 
-  const resourcePath = path.dirname(dir)
-  canonPhotosPath = path.join(resourcePath, "canon", "SavedPhotos")
+  const resourcePath = dir.split(/[\\/]/).slice(0, -1).join('/');
+  canonPhotosPath = `${resourcePath}/canon/SavedPhotos`;
 } else {
   // Локальный запуск
-  canonPhotosPath = path.join(__dirname, "canon", "SavedPhotos")
+  canonPhotosPath = `${__dirname}/canon/SavedPhotos`;
 }
 
 // Создаём папку, если её нет
-if (!fs.existsSync(canonPhotosPath)) {
-  fs.mkdirSync(canonPhotosPath, { recursive: true })
-  console.log(`Временное расположение: \n${canonPhotosPath}`)
-}
+// if (!fs.existsSync(canonPhotosPath)) {
+//   fs.mkdirSync(canonPhotosPath, { recursive: true })
+//   console.log(`Временное расположение: \n${canonPhotosPath}`)
+// }
 
-let printLogo = config?.logoPath
+const hotHolder = config?.hotFolder && typeof config.hotFolder === 'object' && config.hotFolder.enabled;
+printLogo = config?.logoPath || '';
 let logo_scale = config.logoScale
 brandLogo.src = config?.brandLogoPath
 brandLogo.style.transform = `scale(${config.mainLogoScale})`
@@ -311,9 +315,9 @@ document.body.classList.add(
 let logo_pos_x = config.logoOffsetX
 let logo_pos_y = config.logoOffsetY
 
-if (!fs.existsSync(brandLogo.src.replace(/^file:\/\/\//, ""))) {
-  config.brandLogoPath = ""
-}
+// if (!fs.existsSync(brandLogo.src.replace(/^file:\/\/\//, ""))) {
+//   config.brandLogoPath = ""
+// }
 
 config?.showResultQrBtn
   ? (showResultQrBtn.style.display = "block")
@@ -353,14 +357,14 @@ applyRotationStyles()
 
 //* ================ STYLE HANDLING MODULE ================
 // Инициализирует кнопки стилей на основе полученных данных
-function initStyleButtons(parsedStyles) {
+async function initStyleButtons(parsedStyles) {
   try {
-    // Filter out duplicate styles based on style.originalName
+    // Filter out duplicate styles
     const uniqueStyles = parsedStyles.filter(
       (style, index, self) =>
         index === self.findIndex((s) => s.originalName === style.originalName)
     )
-    console.log("▶️ Отфильтрованные стили: ", uniqueStyles)
+    console.log("▶️ Filtered styles: ", uniqueStyles)
     amountOfStyles = uniqueStyles.length
 
     if (!styleButtonsContainer) {
@@ -369,12 +373,9 @@ function initStyleButtons(parsedStyles) {
     }
     styleButtonsContainer.innerHTML = ""
 
-    // console.log(uniqueStyles)
-
     if (amountOfStyles > 1) {
-      uniqueStyles.forEach((style, index) => {
+      for (const [index, style] of uniqueStyles.entries()) {
         const button = document.createElement("div")
-
         button.classList.add("button")
         button.setAttribute("data-style", style.originalName)
 
@@ -384,82 +385,73 @@ function initStyleButtons(parsedStyles) {
           .replace(/\s+/g, "_")
           .replace(/[^\w\-]+/g, "")
 
-        let imagePath = null
-        for (const gender of selectedGenders) {
-          const styleFolderPath = path.join(
-            stylesDir,
-            gender,
-            style.originalName
-          )
-          const imageFileNamePrefix = `1${sanitizedDisplayName}`
-          const extensions = [".jpg", ".png", ".jpeg"]
-          for (const ext of extensions) {
-            const possiblePath = path.join(
-              styleFolderPath,
-              imageFileNamePrefix + ext
-            )
-            if (fs.existsSync(possiblePath)) {
-              imagePath = possiblePath
-              break
+        try {
+          // Get preview image path through IPC
+          const previewImage = await IpcRendererService.invoke(
+            IpcChannels.GET_STYLE_PREVIEW_IMAGE,
+            {
+              style: style.originalName,
+              sanitizedName: sanitizedDisplayName,
+              genders: selectedGenders
             }
-          }
-          if (imagePath) {
-            break
-          }
+          );
+          
+          img.src = previewImage || "../../renderer/assets/icons/default-style.png"
+        } catch (error) {
+          console.error(`Failed to load preview for style: ${style.originalName}`, error)
+          img.src = "../../renderer/assets/icons/default-style.png"
         }
 
-        if (imagePath) {
-          img.src = imagePath
-        } else {
-          console.error(`Image not found for style: ${style.originalName}`)
-          // Изображение по умолчанию
-          img.src = `${stylesDir}/default.png`
-        }
         img.alt = style.displayName
         const label = document.createElement("div")
         const match = style.displayName.match(/\(([^)]+)\)/)
 
-        // Скрыть названия стилей
+        // Show/hide style names based on config
         if (config.showStyleNames) {
           label.textContent = match ? match[1] : style.displayName
-        } else label.textContent = ""
+        }
 
         button.appendChild(img)
         button.appendChild(label)
-        console.log(`Кнопка стиля создана: ${style}`)
+        console.log(`Style button created: ${style.originalName}`)
 
-        button.addEventListener("click", () => {
+        button.addEventListener("click", async () => {
           selectedStyle = style.originalName.replace(/\s*\(.*?\)/g, "")
           nameDisplay = style.originalName
-          // hasBrackets = /\(.*?\)/.test(style.originalName)
-          // if (hasBrackets) {
-          //   resultShowStyle = style.originalName.match(/\((.*?)\)/)
-          // }
 
-          if (fs.existsSync(printLogo)) {
+          // Verify logo exists through IPC
+          const logoExists = await IpcRendererService.invoke(IpcChannels.CHECK_LOGO_EXISTS);
+          if (logoExists) {
             showScreen("camera-screen")
-            console.log(`▶️ Выбранный стиль: ${selectedStyle}`)
+            console.log(`▶️ Selected style: ${selectedStyle}`)
           } else {
-            alert("Логотип не найден. Пожалуйста, добавьте логотип.")
+            NotificationManager.show("Logo not found. Please add a logo.", "error")
             showScreen("style-screen")
           }
         })
 
         button.style.animationDelay = `${index * 0.3}s`
         styleButtonsContainer.appendChild(button)
-      })
+      }
     } else if (amountOfStyles === 0) {
-      alert(`Не найдено стилей для ${selectedGenders}`)
+      NotificationManager.show(`No styles found for ${selectedGenders.join(", ")}`, "error")
       showScreen("gender-screen")
     } else {
       selectedStyle = uniqueStyles[0].originalName.replace(/\s*\(.*?\)/g, "")
       nameDisplay = uniqueStyles[0].originalName
 
-      showScreen("camera-screen")
-      console.log(`Style selected: ${selectedStyle}`)
+      const logoExists = await IpcRendererService.invoke(IpcChannels.CHECK_LOGO_EXISTS);
+      if (logoExists) {
+        showScreen("camera-screen")
+        console.log(`Style selected: ${selectedStyle}`)
+      } else {
+        NotificationManager.show("Logo not found. Please add a logo.", "error")
+        showScreen("style-screen")
+      }
     }
   } catch (error) {
-    console.error("Ошибка в initStyleButtons:", error)
+    console.error("Error in initStyleButtons:", error)
+    NotificationManager.show("Failed to initialize style buttons", "error")
   }
 }
 
@@ -482,15 +474,15 @@ function fetchStyles() {
       styleButtonsContainer.innerHTML = "";
     }
     
-    ipcRenderer
-      .invoke("get-styles", selectedGenders)
+    IpcRendererService
+      .invoke(IpcChannels.GET_STYLES, selectedGenders) // Use constant and service
       .then((styles) => {
         console.log(`Received ${styles.length} styles:`, styles);
         initStyleButtons(styles);
       })
       .catch((error) => {
         console.error("Ошибка при загрузке стилей:", error);
-        alert("Не удалось загрузить стили. Попробуйте позже.");
+        NotificationManager.show("Не удалось загрузить стили. Попробуйте позже.", "error");
       })
       .finally(() => {
         isFetchingStyles = false;
@@ -719,13 +711,15 @@ async function takePicture() {
       try {
         let errorImages = []
         try {
-          fs.readdir(imagesFolder, (err, files) => {
-            if (err) {
-              console.error(err)
-              return
-            }
-            errorImages = [...files]
-          })
+          const response = await IpcRendererService.invoke(IpcChannels.LIST_ERROR_IMAGES, {
+            folderPath: imagesFolder
+          });
+          
+          if (response.success) {
+            errorImages = response.files;
+          } else {
+            console.error("Failed to list error images:", response.error);
+          }
 
           const apiResponse = await capture()
           imageData = await getUniquePhotoBase64(
@@ -741,7 +735,7 @@ async function takePicture() {
             )
         } catch (error) {
           console.error("Ошибка в takePicture:", error)
-          alert("Не удалось сделать снимок.")
+          NotificationManager.show("Не удалось сделать снимок.", "error")
         }
 
         if (imageData) {
@@ -750,7 +744,7 @@ async function takePicture() {
         } else showScreen("style-screen")
       } catch (error) {
         console.error("Ошибка в takePicture:", error)
-        alert("Не удалось сделать снимок.")
+        NotificationManager.show("Не удалось сделать снимок.", "error")
         showScreen("style-screen")
       }
     } else {
@@ -793,7 +787,7 @@ async function takePicture() {
       console.log("Фото сделано успешно.")
 
       try {
-        await saveImageWithUtils("input", imageData)
+        await await IpcRendererService.saveImage("input", imageData)
         console.log("Входящее фото сохранено успешно.")
       } catch (error) {
         console.error("Ошибка при сохранении input-фото:", error)
@@ -803,7 +797,7 @@ async function takePicture() {
     }
   } catch (error) {
     console.error("Ошибка в takePicture:", error)
-    alert("Не удалось сделать снимок.")
+    NotificationManager.show("Не удалось сделать снимок.", "error")
     showScreen("style-screen")
   }
 }
@@ -941,7 +935,7 @@ async function sendDateToServer(imageData) {
       body: JSON.stringify(data),
     }
 
-    const logFilePath = path.join(basePath, "request_log.txt")
+    const logFilePath = `${basePath}/request_log.txt`;
     fs.writeFileSync(
       logFilePath,
       `Headers: ${JSON.stringify(headers, null, 2)}\nData: ${JSON.stringify(
@@ -975,7 +969,7 @@ async function sendDateToServer(imageData) {
       .catch((error) => {
         if (error.message.includes("403")) {
           console.error("Ошибка:", error.message)
-          alert("Ошибка 403: отказано в доступе")
+          NotificationManager.show("Ошибка 403: отказано в доступе", "error")
           showScreen("style-screen")
           return // В случае 403 резервный сервер не вызываем
         }
@@ -995,7 +989,7 @@ async function sendDateToServer(imageData) {
               "Ошибка при отправке данных на резервный сервер:",
               error
             )
-            alert("Ошибка при отправке изображения на сервер.")
+            NotificationManager.show("Ошибка при отправке изображения на сервер.", "error")
             showScreen("style-screen")
           })
       })
@@ -1024,7 +1018,7 @@ async function handleServerResponse(responseData) {
 
       // todo: добавить проверку
       resultImage.src = cleanedURL
-      await saveImageWithUtils("output", resultImage.src)
+      await await IpcRendererService.saveImage("output", resultImage.src)
 
       resultImage.onload = () => {
         console.log("▶️ Фото загружено успешно.")
@@ -1045,7 +1039,7 @@ async function handleServerResponse(responseData) {
         console.error("Ошибка в getQrDate:", error)
       }
     } else {
-      alert("Не удалось получить обработанное изображение.")
+      NotificationManager.show("Не удалось получить обработанное изображение.", "error")
       showScreen("style-screen")
     }
   } catch (error) {
@@ -1054,11 +1048,14 @@ async function handleServerResponse(responseData) {
 }
 
 // Выбирает случайный фон из папки стиля
-function getRandomImageFromStyleFolder(style) {
+async function getRandomImageFromStyleFolder(style) {
   try {
-    const styleFolderPath = path.join(stylesDir, selectedGenders[0], style)
+    const exists = await IpcRendererService.invoke(IpcChannels.CHECK_STYLE_PATH_EXISTS, {
+      style,
+      gender: selectedGenders[0]
+    });
 
-    if (!fs.existsSync(styleFolderPath)) {
+    if (!exists) {
       console.warn(
         `\x1b[41m[Warning]\x1b[0m Папки для Стиля "${style}" и Поля "${selectedGenders[0]}" не существует.`
       )
@@ -1075,17 +1072,19 @@ function getRandomImageFromStyleFolder(style) {
       `1${cleanedStyle}.png`,
     ]
 
-    const files = fs
-      .readdirSync(styleFolderPath)
-      .filter((file) => /\.(jpg|jpeg|png)$/i.test(file)) // Оставляем только изображения
-      .filter((file) => {
-        const isExcluded = excludeList.includes(file)
-        // Раскомментировать для отладки
-        // console.log(
-        //   `Checking exclusion: ${file}, Exclude List: ${excludeList}, Excluded: ${isExcluded}`
-        // )
-        return !isExcluded // Исключаем файл
-      })
+    // Get filtered files through IPC
+    const response = await IpcRendererService.invoke(IpcChannels.GET_STYLE_FILES, {
+      style,
+      gender: selectedGenders[0],
+      excludeList
+    });
+
+    if (!response.success) {
+      console.warn(`[Warning] Failed to get style files: ${response.error}`);
+      return null;
+    }
+
+    const files = response.files;
 
     if (files.length === 0) {
       console.warn(
@@ -1109,17 +1108,27 @@ function getRandomImageFromStyleFolder(style) {
     styleImageIndices[style] = (currentIndex + 1) % files.length
 
     console.log(`▶️ Выбранный фон: ${fileName}`)
-    const filePath = path.join(styleFolderPath, fileName)
+    const filePath = `${styleFolderPath}/${fileName}`;
 
-    const imageData = fs.readFileSync(filePath, { encoding: "base64" })
-    const mimeType = fileName.endsWith(".png") ? "image/png" : "image/jpeg"
+    // Get image data through IPC
+    const imageResponse = await IpcRendererService.invoke(IpcChannels.GET_STYLE_IMAGE_DATA, {
+      style,
+      gender: selectedGenders[0],
+      fileName
+    });
 
-    return `data:${mimeType};base64,${imageData}`
+    if (!imageResponse.success) {
+      console.warn(`[Warning] Failed to get image data: ${imageResponse.error}`);
+      return null;
+    }
+
+    return imageResponse.dataUrl;
   } catch (error) {
     console.error(
-      `Ошибка в getRandomImageFromStyleFolder для стиля "${style}":`,
+      `Error in getRandomImageFromStyleFolder for style "${style}":`,
       error
-    )
+    );
+    NotificationManager.show("Failed to load style image", "error");
     return null
   }
 }
@@ -1127,7 +1136,7 @@ function getRandomImageFromStyleFolder(style) {
 //* ================ UI NAVIGATION MODULE ================
 // === Навигация по экранам ===
 // Переключает видимость экранов приложения
-let isTransitioningScreen = false;
+// isTransitioningScreen already declared above
 async function showScreen(screenId) {
   try {
     // Prevent multiple simultaneous transitions
@@ -1201,7 +1210,7 @@ async function showScreen(screenId) {
               startCountdown()
             })
             .catch((err) => {
-              alert("Unable to access the webcam.")
+              NotificationManager.show("Не удалось получить доступ к веб-камере.", "error")
               console.log("Error: " + err)
               amountOfStyles === 1
                 ? showScreen("gender-screen")
@@ -1290,16 +1299,19 @@ if (printPhotoButton) {
       const imageData = resultImage.src
       const isLandscape = resultImage.width > resultImage.height
       if (hotHolder) {
-        await saveImageWithUtils("copyDirectory", imageData)
+        await await IpcRendererService.saveImage("copyDirectory", imageData)
       } else {
         console.log(
           `isLandscape: ${isLandscape}: ${resultImage.width}x${resultImage.height}`
         )
 
-        ipcRenderer.send("print-photo", {
+        await IpcRendererService.printPhoto({
           imageData: imageData,
           isLandscape,
-        })
+        }.imageData, {
+          imageData: imageData,
+          isLandscape,
+        }.isLandscape)
       }
     } else {
       console.error("Нет фото для печати.")
@@ -1308,7 +1320,7 @@ if (printPhotoButton) {
 }
 
 // todo
-ipcRenderer.on("print-photo-response", (event, success) => {
+IpcRendererService.on(IpcChannels.PRINT_PHOTO_RESPONSE, (success) => {
   if (success) {
     console.log("▶️ Печать выполнена успешно.")
   } else {
@@ -1444,20 +1456,20 @@ function applyTheme(theme) {
       )
 
       // if (config.theme === "light") {
-      //   if (!fs.existsSync(path.join(basePath, config.lightTheme.backgroundImage))) {
+      //   if (!fs.existsSync(`${basePath}/${config.lightTheme.backgroundImage}`)) {
       //     config.animationEnabled = true
       //   }
-      // } else if (!fs.existsSync(path.join(basePath, config.darkTheme.backgroundImage))) {
+      // } else if (!fs.existsSync(`${basePath}/${config.darkTheme.backgroundImage}`)) {
       //   config.animationEnabled = true
       // }
 
       // Проверяем тему, если нет картинки и цвета, либо неправильны, то включаем анимацию
       if (
         (config.theme === "light" &&
-          !fs.existsSync(config.lightTheme.backgroundImage) &&
+          /* !fs.existsSync(config.lightTheme.backgroundImage) && */
           config.lightTheme.backgroundColor === "") ||
         (config.theme === "dark" &&
-          !fs.existsSync(config.darkTheme.backgroundImage) &&
+          /* !fs.existsSync(config.darkTheme.backgroundImage) && */
           config.darkTheme.backgroundColor === "")
       ) {
         config.animationEnabled = true
@@ -1664,7 +1676,7 @@ if (startButton) {
   })
 }
 
-let currentLanguage = config.language?.current || "ru"
+currentLanguage = config.language?.current || "ru"; // Update from config
 if (languageSwitcher) {
   languageSwitcher.style.display = config.language?.showSwitcher
     ? "block"
@@ -1673,7 +1685,7 @@ if (languageSwitcher) {
     currentLanguage = currentLanguage === "ru" ? "kz" : "ru"
     config.language.current = currentLanguage
     fs.writeFileSync(
-      path.join(__dirname, "config.json"),
+      `${__dirname}/config.json`,
       JSON.stringify(config, null, 2)
     )
     updateTexts()
@@ -1709,7 +1721,7 @@ fullscreenToggleButton.addEventListener("click", function () {
   }
 })
 
-let loaderMessages = translations[currentLanguage].loaderMessages || []
+let loaderMessages = translations[currentLanguage]?.loaderMessages || [];
 
 // Создает анимированный текст во время обработки
 function createFloatingText(message) {
@@ -1943,55 +1955,72 @@ async function getUniquePhotoBase64(apiResponse, folderPath, error_images) {
       throw new Error("API-ответ не пришёл.")
     }
 
-    // 📂 Получаем список файлов в папке
-    let photos = []
-    try {
-      photos = await fs.promises.readdir(folderPath)
-    } catch (err) {
-      console.error("Ошибка чтения папки:", err)
-      throw err
+    // Get list of photos through IPC
+    const listResponse = await IpcRendererService.invoke(IpcChannels.LIST_PHOTOS, {
+      folderPath
+    });
+
+    if (!listResponse.success) {
+      console.error("Error reading folder:", listResponse.error);
+      throw new Error(listResponse.error);
     }
 
-    console.log("📸 Найденные файлы:", photos)
+    const photos = listResponse.files;
+    console.log("📸 Found files:", photos);
 
     if (error_images.length > 0) {
-      console.log("🚫 Исключенные файлы (ошибочные):", error_images)
+      console.log("🚫 Excluded files (errors):", error_images);
     }
 
-    // 🔍 Оставляем только файлы, которых нет в error_images
-    const uniqueFiles = photos.filter((file) => !error_images.includes(file))
+    // Filter out error images
+    const uniqueFiles = photos.filter((file) => !error_images.includes(file));
 
     if (uniqueFiles.length !== 1) {
       console.error(
-        "⚠ Ошибка: найдено не ровно одно уникальное фото!",
+        "⚠ Error: Found more than one unique photo!",
         uniqueFiles
-      )
-      throw new Error("Не найден ровно один уникальный файл")
+      );
+      throw new Error("Exactly one unique file was not found");
     }
 
-    // 🏷 Формируем полный путь к файлу
-    const uniqueFilePath = path.join(folderPath, uniqueFiles[0])
-    console.log(`📂 Файл найден: ${uniqueFiles[0]}`)
+    console.log(`📂 File found: ${uniqueFiles[0]}`);
 
-    // ⏳ Ждём, пока файл запишется полностью
-    await waitForFileReady(uniqueFilePath)
-    const base64Image = await getBase64Image(uniqueFilePath)
+    // Get image data through IPC
+    const imageResponse = await IpcRendererService.invoke(IpcChannels.GET_CANON_IMAGE, {
+      folderPath,
+      fileName: uniqueFiles[0]
+    });
 
-    // remove image from uniqueFilePath
-    if (base64Image) {
+    if (!imageResponse.success) {
+      console.error("Failed to get image data:", imageResponse.error);
+      throw new Error(imageResponse.error);
+    }
+
+    // Delete the file through IPC after successful retrieval
+    if (imageResponse.dataUrl) {
       try {
-        await fs.promises.unlink(uniqueFilePath)
-        console.log(`Файл успешно удалён.`)
+        const deleteResponse = await IpcRendererService.invoke(IpcChannels.DELETE_PHOTO, {
+          folderPath,
+          fileName: uniqueFiles[0]
+        });
+
+        if (deleteResponse.success) {
+          console.log(`File successfully deleted.`);
+        } else {
+          console.error("Failed to delete file:", deleteResponse.error);
+        }
       } catch (err) {
-        console.error(`❌ Ошибка при удалении файла ${uniqueFilePath}:`, err)
+        console.error(`Error while deleting file:`, err);
       }
+
+      return imageResponse.dataUrl;
     }
 
-    // 🖼 Преобразуем в base64
-    return base64Image
+    return null;
   } catch (error) {
-    console.error("❌ Ошибка в getUniquePhotoBase64:", error)
-    return null
+    console.error("Error in getUniquePhotoBase64:", error);
+    NotificationManager.show("Failed to process photo", "error");
+    return null;
   }
 }
 
@@ -2046,7 +2075,7 @@ async function getBase64Image(filePath) {
         .toFormat("jpeg", { quality: 80 })
         .toBuffer()
 
-      await copyPhotoToDateFolder(canonPhotosPath, filePath)
+      await IpcRendererService.saveImage('input', data.toString("base64"))
 
       return data.toString("base64")
     } catch (err) {
@@ -2068,7 +2097,7 @@ async function getBase64Image(filePath) {
   return null
 }
 
-ipcRenderer.on("camera-control-status", (event, isRunning) => {
+IpcRendererService.on(IpcChannels.CAMERA_CONTROL_STATUS, (isRunning) => {
   console.log("CameraControl.exe в состоянии:", isRunning)
   window.cameraControlActive = isRunning
   if (isRunning) {
@@ -2105,8 +2134,8 @@ ipcRenderer.on("camera-control-status", (event, isRunning) => {
               monitorLiveView()
             } catch (err) {
               console.error("Canon live view всё еще не активен:", err)
-              alert(
-                "Canon-камера не включилась. Проверьте соединение или включите другой режим."
+              NotificationManager.show(
+                "Canon-камера не включилась. Проверьте соединение или включите другой режим.", "error"
               )
               // Optionally fallback to PC camera:
               // await startCamera();
@@ -2154,20 +2183,15 @@ function monitorLiveView() {
 // Add event listener for the configurator button
 const openConfiguratorButton = document.getElementById('open-configurator');
 if (openConfiguratorButton) {
-    openConfiguratorButton.addEventListener('click', () => {
+    openConfiguratorButton.addEventListener('click', async () => {
         // Use ipcRenderer to communicate with main process
-        const { ipcRenderer } = require('electron');
-        
-        // Get the current folder path
-        const folderPath = ipcRenderer.sendSync('get-selected-folder');
-        
-        // Send message to main process to open configurator window
-        ipcRenderer.send('switch-to-configurator', folderPath);
+        const folderPath = await IpcRendererService.getSelectedFolder();
+        IpcRendererService.switchToConfigurator(folderPath);
     });
 }
 
 // Also listen for config updates specifically
-ipcRenderer.on('config-update', (event, updatedConfig) => {
+IpcRendererService.on(IpcChannels.CONFIG_UPDATE, (updatedConfig) => {
   console.log('Received updated config:', updatedConfig);
   if (updatedConfig) {
     config = updatedConfig;

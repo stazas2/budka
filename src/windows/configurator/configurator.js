@@ -1,6 +1,5 @@
-const { ipcRenderer } = require('electron');
-const fs = require('fs');
-const path = require('path');
+const IpcRendererService = require('../../renderer/services/IpcRendererService');
+const NotificationManager = require("../../renderer/components/Notification");
 
 // Global variable to store current folder path
 let currentFolderPath = null;
@@ -31,13 +30,13 @@ document.addEventListener('DOMContentLoaded', () => {
             openPhotoboothWithCurrentSettings();
         } else {
             // Original behavior for other tabs
-            const folderPath = ipcRenderer.sendSync('get-selected-folder');
-            ipcRenderer.send('switch-to-photobooth', folderPath);
+            const folderPath = IpcRendererService.getSelectedFolder();
+            IpcRendererService.switchToPhotobooth(folderPath);
         }
     });
 
     // Get the current folder path
-    currentFolderPath = ipcRenderer.sendSync('get-selected-folder');
+    currentFolderPath = IpcRendererService.getSelectedFolder();
     
     // Load config file when opening the interface tab
     document.querySelector('[data-tab="tab2"]').addEventListener('click', () => {
@@ -59,15 +58,20 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('[data-tab="tab3"]').addEventListener('click', () => {
         if (!currentFolderPath) return;
         
-        try {
-            const configPath = path.join(currentFolderPath, 'config.json');
-            if (fs.existsSync(configPath)) {
-                const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-                loadBrandingSettings(configData);
+        (async () => {
+            try {
+                const response = await IpcRendererService.invoke(IpcChannels.GET_EVENT_CONFIG, {
+                    folderPath: currentFolderPath
+                });
+            if (response.success && response.config) {
+                loadBrandingSettings(response.config);
+            } else {
+                console.error('Error loading branding config:', response.error);
             }
-        } catch (error) {
-            console.error('Error loading branding config:', error);
-        }
+            } catch (error) {
+                console.error('Error loading branding config:', error);
+            }
+        })();
     });
 
     // Load print settings when tab4 is clicked
@@ -75,14 +79,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentFolderPath) return;
         
         try {
-            const configPath = path.join(currentFolderPath, 'config.json');
-            if (fs.existsSync(configPath)) {
-                const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-                
-                // Load printers first, then load print settings
-                await loadAvailablePrinters();
-                loadPrintSettings(configData);
-            }
+            (async () => {
+                try {
+                    const response = await IpcRendererService.invoke(IpcChannels.GET_EVENT_CONFIG, {
+                        folderPath: currentFolderPath
+                    });
+                    if (response.success && response.config) {
+                        await loadAvailablePrinters();
+                        loadPrintSettings(response.config);
+                    } else {
+                        console.error('Error loading print config:', response.error);
+                    }
+                } catch (error) {
+                    console.error('Error loading print config:', error);
+                }
+            })();
         } catch (error) {
             console.error('Error loading print config:', error);
         }
@@ -96,11 +107,20 @@ document.addEventListener('DOMContentLoaded', () => {
             // Load both global config and event config
             const globalConfig = await loadGlobalConfig();
             
-            const configPath = path.join(currentFolderPath, 'config.json');
-            if (fs.existsSync(configPath)) {
-                const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-                loadCameraSettings(configData, globalConfig);
-            }
+            (async () => {
+                try {
+                    const response = await IpcRendererService.invoke(IpcChannels.GET_EVENT_CONFIG, {
+                        folderPath: currentFolderPath
+                    });
+                    if (response.success && response.config) {
+                        loadCameraSettings(response.config, globalConfig);
+                    } else {
+                        console.error('Error loading camera config:', response.error);
+                    }
+                } catch (error) {
+                    console.error('Error loading camera config:', error);
+                }
+            })();
         } catch (error) {
             console.error('Error loading camera config:', error);
         }
@@ -143,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (button) {
             button.addEventListener('click', () => {
                 // Use sendSync instead of invoke for file dialog
-                const result = ipcRenderer.sendSync('select-file', {
+                const result = IpcRendererService.selectFile({
                     title: 'Выберите изображение',
                     filters: [
                         { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif'] }
@@ -163,7 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (hotFolderButton) {
         hotFolderButton.addEventListener('click', () => {
             // Use special directory selection dialog
-            const result = ipcRenderer.sendSync('select-file', {
+            const result = IpcRendererService.selectFile({
                 title: 'Выберите горячую папку',
                 properties: ['openDirectory']
             });
@@ -257,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
             startWebcamPreview();
         } else if (cameraMode === 'canon') {
             // No longer starting Canon preview here
-            showNotification('Предпросмотр доступен только для веб-камеры', 'info');
+            NotificationManager.show('Предпросмотр доступен только для веб-камеры', 'info');
         }
     });
     
@@ -311,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cameraLoading.style.display = 'none';
         } catch (err) {
             console.error('Error accessing webcam:', err);
-            showNotification('Ошибка доступа к камере: ' + err.message, 'error');
+            NotificationManager.show('Ошибка доступа к камере: ' + err.message, 'error');
             cameraLoading.style.display = 'none';
         }
     }
@@ -343,21 +363,22 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Function to load config settings
-function loadConfigSettings() {
+async function loadConfigSettings() {
     if (!currentFolderPath) {
-        showNotification('No event folder selected', 'error');
+        NotificationManager.show('No event folder selected', 'error');
         return;
     }
 
-    const configPath = path.join(currentFolderPath, 'config.json');
-    
     try {
-        if (!fs.existsSync(configPath)) {
-            showNotification('Config file not found', 'error');
+        const response = await IpcRendererService.invoke(IpcChannels.GET_EVENT_CONFIG, {
+            folderPath: currentFolderPath
+        });
+        if (!response.success || !response.config) {
+            NotificationManager.show('Config file not found', 'error');
             return;
         }
 
-        const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        const configData = response.config;
         
         // Update form fields with config values
         document.getElementById('prePhotoTimer').value = configData.prePhotoTimer || 3;
@@ -394,10 +415,10 @@ function loadConfigSettings() {
             loadBrandingSettings(configData);
         }
 
-        showNotification('Config loaded successfully', 'success');
+        NotificationManager.show('Config loaded successfully', 'success');
     } catch (error) {
         console.error('Error loading config:', error);
-        showNotification('Error loading config: ' + error.message, 'error');
+        NotificationManager.show('Error loading config: ' + error.message, 'error');
     }
 }
 
@@ -454,7 +475,7 @@ function loadBrandingSettings(configData) {
         document.getElementById('darkTextColorPicker').value = configData.darkTheme.darkTextColor || '#ffffff';
     }
 
-    showNotification('Config loaded successfully', 'success');
+    NotificationManager.show('Config loaded successfully', 'success');
 }
 
 // Function to parse CSS gradient string
@@ -684,7 +705,7 @@ function loadPrintSettings(configData) {
         document.getElementById('confirmPrint').checked = configData.confirmPrint || false;
     }
     
-    showNotification('Print settings loaded successfully', 'success');
+    NotificationManager.show('Print settings loaded successfully', 'success');
 }
 
 // Function to load available printers
@@ -694,7 +715,7 @@ async function loadAvailablePrinters() {
     
     try {
         // Get printers list from main process
-        const printers = await ipcRenderer.invoke('get-printers');
+        const printers = await IpcRendererService.getPrinters();
         
         // Clear existing options, keeping only the default option
         while (printerSelect.options.length > 1) {
@@ -712,21 +733,28 @@ async function loadAvailablePrinters() {
         console.log(`Loaded ${printers.length} printers`);
     } catch (error) {
         console.error('Error loading printers:', error);
-        showNotification('Error loading printers: ' + error.message, 'error');
+        NotificationManager.show('Error loading printers: ' + error.message, 'error');
     }
 }
 
 // Function to save config settings
-function saveConfigSettings() {
+async function saveConfigSettings() {
     if (!currentFolderPath) {
-        showNotification('Папка событий не выбрана', 'error');
+        NotificationManager.show('Папка событий не выбрана', 'error');
         return;
     }
 
-    const configPath = path.join(currentFolderPath, 'config.json');
     try {
         const formData = collectFormData();
-        let existingConfig = {};
+        const response = await IpcRendererService.invoke(IpcChannels.SAVE_EVENT_CONFIG, {
+            folderPath: currentFolderPath,
+            config: formData
+        });
+        if (response.success) {
+            NotificationManager.show('Config saved successfully', 'success');
+        } else {
+            NotificationManager.show('Failed to save config: ' + response.error, 'error');
+        }
 
         if (fs.existsSync(configPath)) {
             existingConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
@@ -739,12 +767,12 @@ function saveConfigSettings() {
         fs.writeFileSync(configPath, JSON.stringify(updatedConfig, null, 2), 'utf8');
 
         // Notify the main process that config has been updated
-        ipcRenderer.send('config-updated', currentFolderPath);
+        IpcRendererService.send(IpcChannels.CONFIG_UPDATED, currentFolderPath);
         
-        showNotification('Настройки сохранены успешно', 'success');
+        NotificationManager.show('Настройки сохранены успешно', 'success');
     } catch (error) {
         console.error('Error saving config:', error);
-        showNotification('Ошибка сохранения настроек: ' + error.message, 'error');
+        NotificationManager.show('Ошибка сохранения настроек: ' + error.message, 'error');
     }
 }
 
@@ -932,43 +960,11 @@ function collectFormData() {
     return formData;
 }
 
-// Function to show notification
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    
-    // Add an icon based on notification type
-    let icon = '';
-    if (type === 'success') {
-        icon = '✓';
-    } else if (type === 'error') {
-        icon = '✕';
-    } else {
-        icon = 'ℹ';
-    }
-    
-    notification.innerHTML = `<span class="notification-icon">${icon}</span> ${message}`;
-    
-    document.body.appendChild(notification);
-    
-    // Show notification with animation
-    setTimeout(() => {
-        notification.classList.add('show');
-    }, 10);
-    
-    // Hide and remove after 3 seconds
-    setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => {
-            document.body.removeChild(notification);
-        }, 300);
-    }, 3000);
-}
 
 // Add function to immediately open photobooth with current settings
 function openPhotoboothWithCurrentSettings() {
     if (!currentFolderPath) {
-        showNotification('No event folder selected', 'error');
+        NotificationManager.show('No event folder selected', 'error');
         return;
     }
     
@@ -976,7 +972,7 @@ function openPhotoboothWithCurrentSettings() {
     saveConfigSettings();
     
     // Then open the photobooth
-    ipcRenderer.send('switch-to-photobooth', currentFolderPath);
+    IpcRendererService.switchToPhotobooth(currentFolderPath);
 }
 
 // Function to load global config.json
@@ -1057,13 +1053,13 @@ function loadCameraSettings(configData, globalConfig) {
     document.getElementById('camera-preview').style.transform = `rotate(${rotation}deg)`;
     document.getElementById('canon-preview').style.transform = `rotate(${rotation}deg)`;
 
-    showNotification('Camera settings loaded successfully', 'success');
+    NotificationManager.show('Camera settings loaded successfully', 'success');
 }
 
 // Function to save camera settings
 async function saveCameraSettings() {
     if (!currentFolderPath) {
-        showNotification('No event folder selected', 'error');
+        NotificationManager.show('No event folder selected', 'error');
         return;
     }
 
@@ -1075,18 +1071,31 @@ async function saveCameraSettings() {
         await saveGlobalConfig(globalConfig);
         
         // Save other camera settings to event config
-        const configPath = path.join(currentFolderPath, 'config.json');
-        let configData = {};
+        // Get current event config through IPC
+        const response = await IpcRendererService.invoke(IpcChannels.GET_EVENT_CONFIG, {
+            folderPath: currentFolderPath
+        });
         
-        if (fs.existsSync(configPath)) {
-            configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-        }
+        let configData = response.success ? response.config : {};
         
         // Update camera rotation settings
+        // Update camera settings
         configData.camera_rotation = parseInt(document.getElementById('camera_rotation').value);
         
         // Update Canon specific settings
         if (cameraMode === 'canon') {
+            
+            // Prepare to save the updated config through IPC
+            const saveResponse = await IpcRendererService.invoke(IpcChannels.SAVE_EVENT_CONFIG, {
+                folderPath: currentFolderPath,
+                config: configData
+            });
+
+            if (saveResponse.success) {
+                NotificationManager.show('Camera settings saved successfully', 'success');
+            } else {
+                NotificationManager.show('Failed to save camera settings: ' + saveResponse.error, 'error');
+            }
             configData.canonSettings = {
                 iso: document.getElementById('canonIso').value,
                 tv: document.getElementById('canonTv').value,
@@ -1105,12 +1114,12 @@ async function saveCameraSettings() {
         document.getElementById('canon-preview').style.transform = `rotate(${rotation}deg)`;
 
         // Notify main process about config update
-        ipcRenderer.send('config-updated', currentFolderPath);
-        ipcRenderer.send('camera-mode-changed', cameraMode);
+        IpcRendererService.send(IpcChannels.CONFIG_UPDATED, currentFolderPath);
+        IpcRendererService.cameraModeChanged(cameraMode);
         
-        showNotification('Camera settings saved successfully', 'success');
+        NotificationManager.show('Camera settings saved successfully', 'success');
     } catch (error) {
         console.error('Error saving camera settings:', error);
-        showNotification('Error saving camera settings: ' + error.message, 'error');
+        NotificationManager.show('Error saving camera settings: ' + error.message, 'error');
     }
 }
