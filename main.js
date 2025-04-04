@@ -676,13 +676,28 @@ ipcMain.on('switch-to-photobooth', (event, folderPath) => {
     emptyWindow = null;
   }
   
-  // Start Canon camera when switching to photobooth
+  // Make sure we're using the correct path and config BEFORE showing/creating the window
+  if (folderPath && folderPath !== global.selectedFolderPath) {
+    console.log(`Смена контекста папки внутри switch-to-photobooth на: ${folderPath}`);
+    setSelectedFolder(folderPath); // This will call reloadConfig inside
+  } else if (folderPath === global.selectedFolderPath) {
+    // Even if it's the same folder, the config might have just been updated
+    console.log(`Папка та же (${folderPath}), принудительная перезагрузка конфига перед показом.`);
+    reloadConfig(folderPath); // Force reload config from file
+  } else {
+    console.warn('Переключение в фотобудку без пути к папке.');
+    // Maybe load a default config or show an error here
+  }
+  
+  // Start Canon camera AFTER possible config update
   startCanonCamera();
   
   // Create or show mainWindow
   if (mainWindow === null) {
-    createMainWindow();
+    // Pass the up-to-date folder path
+    createMainWindow(global.selectedFolderPath);
   }
+  
   mainWindow.show();
 });
 
@@ -779,5 +794,18 @@ ipcMain.handle('get-printers', async () => {
   } catch (error) {
     console.error('Error getting printers:', error);
     return [];
+  }
+});
+
+// Add a new handler for config-updated events from the configurator
+ipcMain.on('config-updated', (event, folderPath) => {
+  console.log(`Получено уведомление об обновлении конфига для папки: ${folderPath}`);
+  // Перезагружаем конфиг, только если обновленная папка - это текущая выбранная папка
+  if (folderPath && folderPath === global.selectedFolderPath) {
+    console.log(`Перезагрузка конфига для текущей выбранной папки: ${folderPath}`);
+    // Вызов reloadConfig перезагрузит конфиг из файла и отправит 'config-update' в mainWindow
+    reloadConfig(folderPath);
+  } else {
+    console.log(`Обновление конфига для невыбранной папки (${folderPath}), игнорируется.`);
   }
 });

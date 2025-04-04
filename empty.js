@@ -719,109 +719,217 @@ async function loadAvailablePrinters() {
 // Function to save config settings
 function saveConfigSettings() {
     if (!currentFolderPath) {
-        showNotification('No event folder selected', 'error');
+        showNotification('Папка событий не выбрана', 'error');
         return;
     }
 
     const configPath = path.join(currentFolderPath, 'config.json');
-    
     try {
-        // First load the existing config to avoid overwriting other settings
-        let configData = {};
+        const formData = collectFormData();
+        let existingConfig = {};
+
         if (fs.existsSync(configPath)) {
-            configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-        }
-        
-        // Update the config with form values based on active tab
-        
-        // Interface tab (tab2) settings
-        if (document.getElementById('tab2').classList.contains('active')) {
-            configData.prePhotoTimer = parseInt(document.getElementById('prePhotoTimer').value, 10);
-        
-            // Convert seconds back to milliseconds for inactivityTimeout
-            configData.inactivityTimeout = parseInt(document.getElementById('inactivityTimeout').value, 10) * 1000;
-            
-            // Language settings
-            configData.language = {
-                current: document.getElementById('languageCurrent').value,
-                showSwitcher: document.getElementById('showLanguageSwitcher').checked
-            };
-            
-            // Boolean settings
-            configData.showResultQrBtn = document.getElementById('showResultQrBtn').checked;
-            configData.showStyleNames = document.getElementById('showStyleNames').checked;
-            configData.visibilityAgree = document.getElementById('visibilityAgree').checked;
-            configData.allowMultipleGenderSelection = document.getElementById('allowMultipleGenderSelection').checked;
-            
-            // Allowed genders - create the nested array structure expected by the config
-            const allowedGenders = [[], [], []];
-            
-            // Adults in first array
-            if (document.getElementById('genderMale').checked) allowedGenders[0].push('man');
-            if (document.getElementById('genderFemale').checked) allowedGenders[0].push('woman');
-            
-            // Children in second array
-            if (document.getElementById('genderBoy').checked) allowedGenders[1].push('boy');
-            if (document.getElementById('genderGirl').checked) allowedGenders[1].push('girl');
-            
-            // Third array remains empty since we removed the "Other" option
-            
-            configData.allowedGenders = allowedGenders;
+            existingConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
         }
 
-        // Branding tab (tab3) settings
-        if (document.getElementById('tab3').classList.contains('active')) {
-            configData = saveBrandingSettings(configData);
-        }
-        
-        // Print tab (tab4) settings
-        if (document.getElementById('tab4').classList.contains('active')) {
-            // Default Printer
-            const printerSelect = document.getElementById('defaultPrinter');
-            if (printerSelect) {
-                configData.defaultPrinter = printerSelect.value;
-            }
-            
-            // Border Print Image
-            configData.borderPrintImage = document.getElementById('borderPrintImage').checked;
-            
-            // Print Button Visibility
-            configData.printButtonVisible = document.getElementById('printButtonVisible').checked;
-            
-            // Orientation
-            configData.orientation = document.getElementById('orientation').value;
-            
-            // Paper Size Settings
-            configData.paperSizeWidth = parseInt(document.getElementById('paperSizeWidth').value, 10) || 105;
-            configData.paperSizeHeight = parseInt(document.getElementById('paperSizeHeight').value, 10) || 148;
-            
-            // Hot Folder Settings
-            configData.hotFolder = {
-                enabled: document.getElementById('hotFolderEnabled').checked,
-                path: document.getElementById('hotFolderPath').value
-            };
-            
-            // Additional settings
-            if (document.getElementById('printCopies')) {
-                configData.printCopies = parseInt(document.getElementById('printCopies').value, 10);
-            }
-            
-            if (document.getElementById('confirmPrint')) {
-                configData.confirmPrint = document.getElementById('confirmPrint').checked;
-            }
-        }
-        
-        // Write the updated config back to file
-        fs.writeFileSync(configPath, JSON.stringify(configData, null, 2), 'utf8');
-        
-        // Notify main process about config update - this is the key addition
+        // Update config with form values
+        const updatedConfig = { ...existingConfig, ...formData };
+
+        // Write the updated config to file
+        fs.writeFileSync(configPath, JSON.stringify(updatedConfig, null, 2), 'utf8');
+
+        // Notify the main process that config has been updated
         ipcRenderer.send('config-updated', currentFolderPath);
         
-        showNotification('Config saved successfully', 'success');
+        showNotification('Настройки сохранены успешно', 'success');
     } catch (error) {
         console.error('Error saving config:', error);
-        showNotification('Error saving config: ' + error.message, 'error');
+        showNotification('Ошибка сохранения настроек: ' + error.message, 'error');
     }
+}
+
+// Function to collect form data from active tab
+function collectFormData() {
+    const activeTab = document.querySelector('.tab-content.active');
+    if (!activeTab) return {};
+    
+    const formData = {};
+    
+    // Check which tab is active to collect the appropriate data
+    const tabId = activeTab.id;
+    
+    if (tabId === 'tab2') {
+        // Basic settings
+        const prePhotoTimer = document.getElementById('prePhotoTimer');
+        if (prePhotoTimer) {
+            formData.prePhotoTimer = parseInt(prePhotoTimer.value) || 3;
+        }
+        
+        const inactivityTimeout = document.getElementById('inactivityTimeout');
+        if (inactivityTimeout) {
+            formData.inactivityTimeout = parseInt(inactivityTimeout.value) * 1000 || 60000; // Convert seconds to ms
+        }
+        
+        // Language settings
+        const languageCurrent = document.getElementById('languageCurrent');
+        const showLanguageSwitcher = document.getElementById('showLanguageSwitcher');
+        
+        formData.language = {
+            current: languageCurrent ? languageCurrent.value || 'ru' : 'ru',
+            showSwitcher: showLanguageSwitcher ? showLanguageSwitcher.checked : false
+        };
+        
+        // Boolean settings
+        const showResultQrBtn = document.getElementById('showResultQrBtn');
+        const showStyleNames = document.getElementById('showStyleNames');
+        const visibilityAgree = document.getElementById('visibilityAgree');
+        const allowMultipleGenderSelection = document.getElementById('allowMultipleGenderSelection');
+        
+        formData.showResultQrBtn = showResultQrBtn ? showResultQrBtn.checked : false;
+        formData.showStyleNames = showStyleNames ? showStyleNames.checked : false;
+        formData.visibilityAgree = visibilityAgree ? visibilityAgree.checked : false;
+        formData.allowMultipleGenderSelection = allowMultipleGenderSelection ? allowMultipleGenderSelection.checked : false;
+        
+        // Gender settings - collect selected genders
+        const genders = [];
+        const genderMale = document.getElementById('genderMale');
+        const genderFemale = document.getElementById('genderFemale');
+        const genderBoy = document.getElementById('genderBoy');
+        const genderGirl = document.getElementById('genderGirl');
+        const genderGroup = document.getElementById('genderGroup');
+        
+        if (genderMale && genderMale.checked) genders.push('man');
+        if (genderFemale && genderFemale.checked) genders.push('woman');
+        if (genderBoy && genderBoy.checked) genders.push('boy');
+        if (genderGirl && genderGirl.checked) genders.push('girl');
+        if (genderGroup && genderGroup.checked) genders.push('group');
+        
+        // Ensure at least one gender is selected
+        if (genders.length === 0) {
+            genders.push('man'); // Default to 'man' if none selected
+        }
+        
+        formData.allowedGenders = genders;
+    } 
+    else if (tabId === 'tab3') {
+        // Branding settings - get elements first then check
+        const logoPath = document.getElementById('logoPath');
+        const brandLogoPath = document.getElementById('brandLogoPath');
+        const logo_pos_x = document.getElementById('logo_pos_x');
+        const logo_pos_y = document.getElementById('logo_pos_y');
+        const logo_scale = document.getElementById('logo_scale');
+        const mainLogoScale = document.getElementById('mainLogoScale');
+        const theme = document.getElementById('theme');
+        const backdropBlur = document.getElementById('backdropBlur');
+        const animationEnabled = document.getElementById('animationEnabled');
+        const animatedBackground = document.getElementById('animatedBackground');
+        
+        // Only set properties if elements exist
+        if (logoPath) formData.logoPath = logoPath.value;
+        if (brandLogoPath) formData.brandLogoPath = brandLogoPath.value;
+        if (logo_pos_x) formData.logo_pos_x = parseInt(logo_pos_x.value) || 0;
+        if (logo_pos_y) formData.logo_pos_y = parseInt(logo_pos_y.value) || 0;
+        if (logo_scale) formData.logo_scale = parseFloat(logo_scale.value) || 1;
+        if (mainLogoScale) formData.mainLogoScale = parseFloat(mainLogoScale.value) || 1;
+        if (theme) formData.theme = theme.value;
+        if (backdropBlur) formData.backdropBlur = backdropBlur.value;
+        if (animationEnabled) formData.animationEnabled = animationEnabled.checked;
+        if (animatedBackground) formData.animatedBackground = animatedBackground.value;
+        
+        // Light theme settings
+        const lightBackgroundColor = document.getElementById('lightBackgroundColor');
+        const lightBackgroundImage = document.getElementById('lightBackgroundImage');
+        const lightTextColor = document.getElementById('lightTextColor');
+        
+        if (lightBackgroundColor || lightBackgroundImage || lightTextColor) {
+            formData.lightTheme = {
+                backgroundColor: lightBackgroundColor ? lightBackgroundColor.value : '#ffebcd',
+                backgroundImage: lightBackgroundImage ? lightBackgroundImage.value : '',
+                lightTextColor: lightTextColor ? lightTextColor.value : '#000000'
+            };
+        }
+        
+        // Dark theme settings
+        const darkBackgroundColor = document.getElementById('darkBackgroundColor');
+        const darkBackgroundImage = document.getElementById('darkBackgroundImage');
+        const darkTextColor = document.getElementById('darkTextColor');
+        
+        if (darkBackgroundColor || darkBackgroundImage || darkTextColor) {
+            formData.darkTheme = {
+                backgroundColor: darkBackgroundColor ? darkBackgroundColor.value : '#000000',
+                backgroundImage: darkBackgroundImage ? darkBackgroundImage.value : '',
+                darkTextColor: darkTextColor ? darkTextColor.value : '#ffffff'
+            };
+        }
+    }
+    else if (tabId === 'tab4') {
+        // Printing settings
+        const defaultPrinter = document.getElementById('defaultPrinter');
+        const borderPrintImage = document.getElementById('borderPrintImage');
+        const printButtonVisible = document.getElementById('printButtonVisible');
+        const orientation = document.getElementById('orientation');
+        const paperSizeWidth = document.getElementById('paperSizeWidth');
+        const paperSizeHeight = document.getElementById('paperSizeHeight');
+        
+        if (defaultPrinter) formData.defaultPrinter = defaultPrinter.value;
+        if (borderPrintImage) formData.borderPrintImage = borderPrintImage.checked;
+        if (printButtonVisible) formData.printButtonVisible = printButtonVisible.checked;
+        if (orientation) formData.orientation = orientation.value;
+        if (paperSizeWidth) formData.paperSizeWidth = parseInt(paperSizeWidth.value) || 105;
+        if (paperSizeHeight) formData.paperSizeHeight = parseInt(paperSizeHeight.value) || 148;
+        
+        // Hot folder settings
+        const hotFolderEnabled = document.getElementById('hotFolderEnabled');
+        const hotFolderPath = document.getElementById('hotFolderPath');
+        
+        if (hotFolderEnabled || hotFolderPath) {
+            formData.hotFolder = {
+                enabled: hotFolderEnabled ? hotFolderEnabled.checked : false,
+                path: hotFolderPath ? hotFolderPath.value : ''
+            };
+        }
+        
+        // Additional print settings if they exist in the form
+        const printCopies = document.getElementById('printCopies');
+        const confirmPrint = document.getElementById('confirmPrint');
+        
+        if (printCopies) {
+            formData.printCopies = parseInt(printCopies.value) || 1;
+        }
+        
+        if (confirmPrint) {
+            formData.confirmPrint = confirmPrint.checked;
+        }
+    }
+    else if (tabId === 'tab5') {
+        // Camera settings
+        const camera_rotation = document.getElementById('camera_rotation');
+        const send_image_rotation = document.getElementById('send_image_rotation');
+        const isEvf = document.getElementById('isEvf');
+        
+        if (camera_rotation) formData.camera_rotation = parseInt(camera_rotation.value) || 0;
+        if (send_image_rotation) formData.send_image_rotation = parseInt(send_image_rotation.value) || 0;
+        if (isEvf) formData.isEvf = isEvf.checked;
+        
+        // Canon specific settings
+        const canonIso = document.getElementById('canonIso');
+        const canonTv = document.getElementById('canonTv');
+        const canonAv = document.getElementById('canonAv');
+        const canonWb = document.getElementById('canonWb');
+        const canonPictureStyle = document.getElementById('canonPictureStyle');
+        
+        if (canonIso && canonTv && canonAv && canonWb && canonPictureStyle) {
+            formData.canonSettings = {
+                iso: canonIso.value,
+                tv: canonTv.value,
+                av: canonAv.value,
+                wb: canonWb.value,
+                pictureStyle: canonPictureStyle.value
+            };
+        }
+    }
+    
+    return formData;
 }
 
 // Function to show notification
