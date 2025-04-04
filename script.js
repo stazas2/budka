@@ -122,8 +122,8 @@ function applyConfig() {
     // Apply logo settings
     printLogo = config?.logoPath;
     logo_scale = config.logoScale || 1;
-    logo_pos_x = config.logo_pos_x || 0;
-    logo_pos_y = config.logo_pos_y || 0;
+    logo_pos_x = config.logoOffsetX || 0;
+    logo_pos_y = config.logoOffsetY || 0;
     
     // === BRAND LOGO SETTINGS ===
     if (config.brandLogoPath && brandLogo) {
@@ -273,7 +273,8 @@ let stylesDir = config.stylesDir || path.join(basePath, "styles")
 // const localhost = config.localhost
 const localhost = "http://localhost:5000"
 let imagesFolder = `./canon/SavedPhotos/`
-let hotHolder = !!config?.HotFolder
+
+let hotHolder = !!config?.hotFolder["enabled"]
 let canonPhotosPath, countdownInterval
 
 
@@ -307,8 +308,8 @@ document.body.classList.add(`camera-${config.cameraMode}`)
 document.body.classList.add(
   `brandLogo-${config.brandLogoPath ? "true" : "false"}`
 )
-let logo_pos_x = config.logo_pos_x
-let logo_pos_y = config.logo_pos_y
+let logo_pos_x = config.logoOffsetX
+let logo_pos_y = config.logoOffsetY
 
 if (!fs.existsSync(brandLogo.src.replace(/^file:\/\/\//, ""))) {
   config.brandLogoPath = ""
@@ -754,7 +755,7 @@ async function takePicture() {
       }
     } else {
       const context = canvas.getContext("2d")
-      const rotationAngle = config.send_image_rotation || 0
+      const rotationAngle = config.camera_rotation || 0 //send_image_rotation
       if (rotationAngle === 90 || rotationAngle === 270) {
         canvas.width = video.videoHeight
         canvas.height = video.videoWidth

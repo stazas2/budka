@@ -88,7 +88,49 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
+    // Load camera settings when tab5 is clicked
+    document.querySelector('[data-tab="tab5"]').addEventListener('click', async () => {
+        if (!currentFolderPath) return;
+        
+        try {
+            // Load both global config and event config
+            const globalConfig = await loadGlobalConfig();
+            
+            const configPath = path.join(currentFolderPath, 'config.json');
+            if (fs.existsSync(configPath)) {
+                const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+                loadCameraSettings(configData, globalConfig);
+            }
+        } catch (error) {
+            console.error('Error loading camera config:', error);
+        }
+    });
+    
+    // Add event listener for the save camera config button
+    const saveCameraButton = document.getElementById('save-camera-config');
+    if (saveCameraButton) {
+        saveCameraButton.addEventListener('click', saveCameraSettings);
+    }
+    
+    // Remove the event listener for opening the Canon utility
+    
+    // Add event listener to toggle Canon settings visibility based on camera mode
+    const cameraModeSelect = document.getElementById('cameraMode');
+    if (cameraModeSelect) {
+        cameraModeSelect.addEventListener('change', () => {
+            const canonSettings = document.getElementById('canon-settings');
+            
+            if (cameraModeSelect.value === 'canon') {
+                canonSettings.style.display = 'block';
+            } else {
+                canonSettings.style.display = 'none';
+            }
+        });
+    }
+    
     // File selection buttons - updated to use the new approach
+    // todo
+    // 'selectHotFolder': 'hotFolderPath'
     const fileSelectors = {
         'selectLogo': 'logoPath',
         'selectBrandLogo': 'brandLogoPath',
@@ -115,6 +157,22 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
+    
+    // Add separate folder selection for hot folder
+    const hotFolderButton = document.getElementById('selectHotFolder');
+    if (hotFolderButton) {
+        hotFolderButton.addEventListener('click', () => {
+            // Use special directory selection dialog
+            const result = ipcRenderer.sendSync('select-file', {
+                title: 'Выберите горячую папку',
+                properties: ['openDirectory']
+            });
+            
+            if (result && !result.canceled && result.filePaths && result.filePaths.length > 0) {
+                document.getElementById('hotFolderPath').value = result.filePaths[0];
+            }
+        });
+    }
     
     // Connect color pickers to their text inputs
     const colorPickers = {
@@ -179,6 +237,109 @@ document.addEventListener('DOMContentLoaded', () => {
     if (savePrintButton) {
         savePrintButton.addEventListener('click', saveConfigSettings);
     }
+
+    // Camera preview functionality
+    const cameraPreview = document.getElementById('camera-preview');
+    const canonPreview = document.getElementById('canon-preview');
+    const startCameraButton = document.getElementById('start-camera');
+    const stopCameraButton = document.getElementById('stop-camera');
+    const refreshCameraButton = document.getElementById('refresh-camera');
+    const cameraLoading = document.getElementById('camera-loading');
+    
+    let stream = null;
+    let canonPreviewInterval = null;
+    
+    // Start camera stream
+    startCameraButton.addEventListener('click', () => {
+        const cameraMode = document.getElementById('cameraMode').value;
+        
+        if (cameraMode === 'pc') {
+            startWebcamPreview();
+        } else if (cameraMode === 'canon') {
+            // No longer starting Canon preview here
+            showNotification('Предпросмотр доступен только для веб-камеры', 'info');
+        }
+    });
+    
+    // Stop camera stream
+    stopCameraButton.addEventListener('click', () => {
+        stopCameraPreview();
+    });
+    
+    // Refresh camera stream
+    refreshCameraButton.addEventListener('click', () => {
+        stopCameraPreview();
+        setTimeout(() => {
+            startCameraButton.click();
+        }, 500);
+    });
+    
+    // Update preview when camera mode changes
+    document.getElementById('cameraMode').addEventListener('change', () => {
+        stopCameraPreview();
+        const canonSettings = document.getElementById('canon-settings');
+        const cameraMode = document.getElementById('cameraMode').value;
+        
+        if (cameraMode === 'canon') {
+            canonSettings.style.display = 'block';
+            // Disable camera preview buttons for Canon mode
+            startCameraButton.disabled = false;
+            document.getElementById('camera-preview-wrapper').classList.add('disabled');
+        } else {
+            canonSettings.style.display = 'none';
+            document.getElementById('camera-preview-wrapper').classList.remove('disabled');
+        }
+    });
+    
+    // Start webcam preview for PC camera mode
+    async function startWebcamPreview() {
+        cameraLoading.style.display = 'flex';
+        canonPreview.style.display = 'none';
+        cameraPreview.style.display = 'block';
+        
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                video: {
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                } 
+            });
+            
+            cameraPreview.srcObject = stream;
+            startCameraButton.disabled = true;
+            stopCameraButton.disabled = false;
+            cameraLoading.style.display = 'none';
+        } catch (err) {
+            console.error('Error accessing webcam:', err);
+            showNotification('Ошибка доступа к камере: ' + err.message, 'error');
+            cameraLoading.style.display = 'none';
+        }
+    }
+    
+    // Stop camera preview - simplify to only handle webcam
+    function stopCameraPreview() {
+        // Stop webcam stream if active
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+            cameraPreview.srcObject = null;
+        }
+        
+        // Reset UI
+        startCameraButton.disabled = false;
+        stopCameraButton.disabled = true;
+        cameraLoading.style.display = 'none';
+    }
+    
+    // Clean up when tab changes
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            // If moving away from camera tab, stop the preview
+            if (button.getAttribute('data-tab') !== 'tab5' && (stream || canonPreviewInterval)) {
+                stopCameraPreview();
+            }
+        });
+    });
 });
 
 // Function to load config settings
@@ -501,6 +662,19 @@ function loadPrintSettings(configData) {
     // Orientation
     document.getElementById('orientation').value = configData.orientation || '';
     
+    // Load paper size settings
+    document.getElementById('paperSizeWidth').value = configData.paperSizeWidth || 105;
+    document.getElementById('paperSizeHeight').value = configData.paperSizeHeight || 148;
+    
+    // Load hot folder settings
+    if (configData.hotFolder) {
+        document.getElementById('hotFolderEnabled').checked = configData.hotFolder.enabled || false;
+        document.getElementById('hotFolderPath').value = configData.hotFolder.path || '';
+    } else {
+        document.getElementById('hotFolderEnabled').checked = false;
+        document.getElementById('hotFolderPath').value = '';
+    }
+    
     // Additional settings (might not be in original config, so setting defaults)
     if (document.getElementById('printCopies')) {
         document.getElementById('printCopies').value = configData.printCopies || 1;
@@ -617,6 +791,16 @@ function saveConfigSettings() {
             // Orientation
             configData.orientation = document.getElementById('orientation').value;
             
+            // Paper Size Settings
+            configData.paperSizeWidth = parseInt(document.getElementById('paperSizeWidth').value, 10) || 105;
+            configData.paperSizeHeight = parseInt(document.getElementById('paperSizeHeight').value, 10) || 148;
+            
+            // Hot Folder Settings
+            configData.hotFolder = {
+                enabled: document.getElementById('hotFolderEnabled').checked,
+                path: document.getElementById('hotFolderPath').value
+            };
+            
             // Additional settings
             if (document.getElementById('printCopies')) {
                 configData.printCopies = parseInt(document.getElementById('printCopies').value, 10);
@@ -685,4 +869,140 @@ function openPhotoboothWithCurrentSettings() {
     
     // Then open the photobooth
     ipcRenderer.send('switch-to-photobooth', currentFolderPath);
+}
+
+// Function to load global config.json
+async function loadGlobalConfig() {
+    try {
+        const globalConfigPath = path.join('c:', 'temp', 'globalConfig.json');
+        if (fs.existsSync(globalConfigPath)) {
+            return JSON.parse(fs.readFileSync(globalConfigPath, 'utf8'));
+        } else {
+            return { cameraMode: 'pc' }; // Default value
+        }
+    } catch (error) {
+        console.error('Error loading global config:', error);
+        return { cameraMode: 'pc' }; // Default value on error
+    }
+}
+
+// Function to save global config.json
+async function saveGlobalConfig(config) {
+    try {
+        const globalConfigPath = path.join('c:', 'temp', 'globalConfig.json');
+        fs.writeFileSync(globalConfigPath, JSON.stringify(config, null, 2), 'utf8');
+    } catch (error) {
+        console.error('Error saving global config:', error);
+        throw error;
+    }
+}
+
+// Function to load camera settings
+function loadCameraSettings(configData, globalConfig) {
+    // Load camera mode from global config
+    const cameraModeSelect = document.getElementById('cameraMode');
+    if (cameraModeSelect) {
+        cameraModeSelect.value = globalConfig.cameraMode || 'pc';
+        
+        // Show/hide Canon settings based on camera mode
+        const canonSettings = document.getElementById('canon-settings');
+        
+        if (cameraModeSelect.value === 'canon') {
+            canonSettings.style.display = 'block';
+        } else {
+            canonSettings.style.display = 'none';
+        }
+    }
+    
+    // Load camera rotation settings from event config
+    document.getElementById('camera_rotation').value = configData.camera_rotation || 0;
+    document.getElementById('send_image_rotation').value = configData.send_image_rotation || 0;
+    document.getElementById('isEvf').checked = configData.isEvf || false;
+    
+    // Load Canon specific settings if available
+    if (configData.canonSettings) {
+        const canonSettings = configData.canonSettings;
+        
+        if (document.getElementById('canonIso')) {
+            document.getElementById('canonIso').value = canonSettings.iso || '100';
+        }
+        
+        if (document.getElementById('canonTv')) {
+            document.getElementById('canonTv').value = canonSettings.tv || '1/60';
+        }
+        
+        if (document.getElementById('canonAv')) {
+            document.getElementById('canonAv').value = canonSettings.av || '5.6';
+        }
+        
+        if (document.getElementById('canonWb')) {
+            document.getElementById('canonWb').value = canonSettings.wb || 'auto';
+        }
+        
+        if (document.getElementById('canonPictureStyle')) {
+            document.getElementById('canonPictureStyle').value = canonSettings.pictureStyle || 'standard';
+        }
+    }
+    
+    // Apply camera rotation to preview elements
+    const rotation = configData.camera_rotation || 0;
+    document.getElementById('camera-preview').style.transform = `rotate(${rotation}deg)`;
+    document.getElementById('canon-preview').style.transform = `rotate(${rotation}deg)`;
+
+    showNotification('Camera settings loaded successfully', 'success');
+}
+
+// Function to save camera settings
+async function saveCameraSettings() {
+    if (!currentFolderPath) {
+        showNotification('No event folder selected', 'error');
+        return;
+    }
+
+    try {
+        // Save camera mode to global config
+        const cameraMode = document.getElementById('cameraMode').value;
+        const globalConfig = await loadGlobalConfig();
+        globalConfig.cameraMode = cameraMode;
+        await saveGlobalConfig(globalConfig);
+        
+        // Save other camera settings to event config
+        const configPath = path.join(currentFolderPath, 'config.json');
+        let configData = {};
+        
+        if (fs.existsSync(configPath)) {
+            configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        }
+        
+        // Update camera rotation settings
+        configData.camera_rotation = parseInt(document.getElementById('camera_rotation').value);
+        
+        // Update Canon specific settings
+        if (cameraMode === 'canon') {
+            configData.canonSettings = {
+                iso: document.getElementById('canonIso').value,
+                tv: document.getElementById('canonTv').value,
+                av: document.getElementById('canonAv').value,
+                wb: document.getElementById('canonWb').value,
+                pictureStyle: document.getElementById('canonPictureStyle').value
+            };
+        }
+        
+        // Write the updated config back to file
+        fs.writeFileSync(configPath, JSON.stringify(configData, null, 2), 'utf8');
+        
+        // Apply camera rotation to preview elements
+        const rotation = parseInt(document.getElementById('camera_rotation').value);
+        document.getElementById('camera-preview').style.transform = `rotate(${rotation}deg)`;
+        document.getElementById('canon-preview').style.transform = `rotate(${rotation}deg)`;
+
+        // Notify main process about config update
+        ipcRenderer.send('config-updated', currentFolderPath);
+        ipcRenderer.send('camera-mode-changed', cameraMode);
+        
+        showNotification('Camera settings saved successfully', 'success');
+    } catch (error) {
+        console.error('Error saving camera settings:', error);
+        showNotification('Error saving camera settings: ' + error.message, 'error');
+    }
 }

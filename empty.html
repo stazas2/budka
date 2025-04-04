@@ -481,27 +481,54 @@
             </div>
 
             <div class="config-section">
-              <h3>Дополнительные настройки</h3>
+              <h3>Размер бумаги (мм)</h3>
 
               <div class="form-group">
-                <label for="printCopies">Количество копий по умолчанию:</label>
+                <label for="paperSizeWidth">Ширина (мм):</label>
                 <input
                   type="number"
-                  id="printCopies"
-                  min="1"
-                  max="10"
-                  value="1"
+                  id="paperSizeWidth"
+                  min="10"
+                  max="1000"
+                  value="105"
                 />
               </div>
 
+              <div class="form-group">
+                <label for="paperSizeHeight">Высота (мм):</label>
+                <input
+                  type="number"
+                  id="paperSizeHeight"
+                  min="10"
+                  max="1000"
+                  value="148"
+                />
+              </div>
+            </div>
+
+            <div class="config-section">
+              <h3>Настройки горячей папки</h3>
+
               <div class="form-group toggle-group">
-                <label for="confirmPrint"
-                  >Запрашивать подтверждение печати</label
-                >
+                <label for="hotFolderEnabled">Включить горячую папку</label>
                 <label class="toggle-switch">
-                  <input type="checkbox" id="confirmPrint" />
+                  <input type="checkbox" id="hotFolderEnabled" />
                   <span class="toggle-slider"></span>
                 </label>
+              </div>
+
+              <div class="form-group">
+                <label for="hotFolderPath">Путь к горячей папке:</label>
+                <div class="file-input-group">
+                  <input
+                    type="text"
+                    id="hotFolderPath"
+                    placeholder="C:\путь\к\папке"
+                  />
+                  <button class="file-select-button" id="selectHotFolder">
+                    Выбрать
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -512,7 +539,146 @@
             </div>
           </div>
         </div>
-        <div id="tab5" class="tab-content">Содержимое вкладки 5</div>
+        <div id="tab5" class="tab-content">
+          <h2>Настройки камеры</h2>
+          <div class="config-form">
+            <div class="config-section">
+              <h3>Режим камеры</h3>
+
+              <div class="form-group">
+                <label for="cameraMode">Режим работы камеры:</label>
+                <select id="cameraMode">
+                  <option value="pc">Веб-камера ПК</option>
+                  <option value="canon">Canon DSLR</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="camera_rotation"
+                  >Поворот изображения с камеры (градусы):</label
+                >
+                <select id="camera_rotation">
+                  <option value="0">0°</option>
+                  <option value="90">90°</option>
+                  <option value="180">180°</option>
+                  <option value="270">270°</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Camera Preview Section -->
+            <div class="config-section">
+              <h3>Предварительный просмотр камеры</h3>
+              <p class="info-text">
+                Предварительный просмотр доступен только для веб-камеры (PC
+                режим)
+              </p>
+              <div class="camera-preview-container">
+                <div id="camera-preview-wrapper">
+                  <div id="camera-loading" class="camera-loading">
+                    <div class="spinner"></div>
+                    <p>Загрузка камеры...</p>
+                  </div>
+                  <video id="camera-preview" autoplay playsinline></video>
+                  <img
+                    id="canon-preview"
+                    style="display: none"
+                    alt="Canon Preview"
+                  />
+                </div>
+                <div class="camera-controls">
+                  <button id="start-camera" class="camera-button">
+                    Запустить камеру
+                  </button>
+                  <button id="stop-camera" class="camera-button" disabled>
+                    Остановить камеру
+                  </button>
+                  <button id="refresh-camera" class="camera-button">
+                    Обновить
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Canon-specific settings section -->
+            <div
+              id="canon-settings"
+              class="config-section"
+              style="display: none"
+            >
+              <h3>Настройки Canon DSLR</h3>
+
+              <div class="form-group">
+                <label for="canonIso">ISO:</label>
+                <select id="canonIso">
+                  <option value="100">100</option>
+                  <option value="200">200</option>
+                  <option value="400">400</option>
+                  <option value="800">800</option>
+                  <option value="1600">1600</option>
+                  <option value="3200">3200</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="canonTv">Выдержка (Tv):</label>
+                <select id="canonTv">
+                  <option value="1/30">1/30</option>
+                  <option value="1/60">1/60</option>
+                  <option value="1/125">1/125</option>
+                  <option value="1/250">1/250</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="canonAv">Диафрагма (Av):</label>
+                <select id="canonAv">
+                  <option value="3.5">f/3.5</option>
+                  <option value="4.0">f/4.0</option>
+                  <option value="5.6">f/5.6</option>
+                  <option value="8.0">f/8.0</option>
+                  <option value="11.0">f/11.0</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="canonWb">Баланс белого:</label>
+                <select id="canonWb">
+                  <option value="auto">Авто</option>
+                  <option value="daylight">Дневной свет</option>
+                  <option value="shade">Тень</option>
+                  <option value="cloudy">Облачно</option>
+                  <option value="tungsten">Лампа накаливания</option>
+                  <option value="fluorescent">Флуоресцентная лампа</option>
+                  <option value="flash">Вспышка</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="canonPictureStyle">Стиль изображения:</label>
+                <select id="canonPictureStyle">
+                  <option value="standard">Стандартный</option>
+                  <option value="portrait">Портрет</option>
+                  <option value="landscape">Пейзаж</option>
+                  <option value="neutral">Нейтральный</option>
+                  <option value="faithful">Точный</option>
+                  <option value="monochrome">Монохромный</option>
+                </select>
+              </div>
+
+              <p class="info-text">
+                Для более детальной настройки параметров камеры воспользуйтесь
+                утилитой Canon в папке utils/canon.
+              </p>
+            </div>
+
+            <div class="button-group">
+              <button id="save-camera-config" class="action-button">
+                Сохранить настройки камеры
+              </button>
+            </div>
+          </div>
+        </div>
         <div id="tab6" class="tab-content">Содержимое вкладки 6</div>
       </div>
       <button id="open-photobooth" class="action-button">

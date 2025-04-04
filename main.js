@@ -128,8 +128,9 @@ function createEmptyWindow(folderPath) {
   });
 }
 
-app.whenReady().then(() => {
+function startCanonCamera() {
   if (config.cameraMode === "canon") {
+    console.log("Starting Canon camera...");
     exec("start.bat", { cwd: `./canon` }, (error, stdout, stderr) => {
       if (error) {
         console.error("Не удалось запустить Canon камеру:", error)
@@ -137,7 +138,16 @@ app.whenReady().then(() => {
       }
       console.log(stdout || stderr)
     })
+    
+    // Start the camera check interval
+    if (!cameraCheckInterval) {
+      cameraCheckInterval = setInterval(checkCameraControlProcess, 1000)
+    }
   }
+}
+
+app.whenReady().then(() => {
+  // Remove Canon camera startup from here - we'll start it only when photobooth is opened
   createLauncherWindow();
   
   // Pre-create the main window but keep it hidden
@@ -148,10 +158,6 @@ app.whenReady().then(() => {
       createLauncherWindow();
     }
   });
-
-  if (config.cameraMode === "canon") {
-    cameraCheckInterval = setInterval(checkCameraControlProcess, 1000)
-  }
 });
 
 app.on('window-all-closed', () => {
@@ -231,6 +237,9 @@ ipcMain.on('open-main-window', (event, folderPath) => {
     emptyWindow.close();
     emptyWindow = null;
   }
+
+  // Start Canon camera when main window is opened
+  startCanonCamera();
 
   if (mainWindow === null) {
     createMainWindow(folderPath);
@@ -666,6 +675,9 @@ ipcMain.on('switch-to-photobooth', (event, folderPath) => {
     emptyWindow.close();
     emptyWindow = null;
   }
+  
+  // Start Canon camera when switching to photobooth
+  startCanonCamera();
   
   // Create or show mainWindow
   if (mainWindow === null) {
