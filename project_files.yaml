@@ -2667,9 +2667,9 @@ files:
       \ на основе новой архитектуры.\n\n**Приоритет:** Сначала обеспечить корректное\
       \ расположение файлов и обновление путей, затем интегрировать сервисы и IPC.\n\
       \n1.  **Завершение Фазы 1: Корректная Структура и Переименование:**\n    * \
-      \  **Действие:** Переименовать корневые `script.js` -> `src/windows/photobooth/photobooth.js`.\n\
-      \    *   **Действие:** Переименовать корневые `empty.js` -> `src/windows/configurator/configurator.js`.\n\
-      \    *   **Действие:** Переименовать корневые `launcher.js` -> `src/windows/launcher/launcher.js`.\n\
+      \  **Действие:** Переместить корневые `script.js` -> `src/windows/photobooth/photobooth.js`.\n\
+      \    *   **Действие:** Переместить корневые `empty.js` -> `src/windows/configurator/configurator.js`.\n\
+      \    *   **Действие:** Переместить корневые `launcher.js` -> `src/windows/launcher/launcher.js`.\n\
       \    *   **Действие:** Переместить соответствующие CSS (`styles.css`, `empty.css`,\
       \ `launcher.css`) в `src/renderer/assets/css/` и переименовать их в `photobooth.css`,\
       \ `configurator.css`, `launcher.css`.\n    *   **Действие:** Переместить `translations.json`\
@@ -2705,8 +2705,8 @@ files:
       \ `imageData` вызывать `await IpcRendererService.saveImage('input', imageData)`.\n\
       \        *   Переписать функцию `takePicture` для Canon: логика `getUniquePhotoBase64`,\
       \ `waitForFileReady`, `getBase64Image` должна быть перенесена в `main` процесс\
-      \ (вероятно, в `CanonCameraService` или отдельный сервис) и вызываться через\
-      \ IPC после команды `capture`. `require('sharp')` должен быть только в `main`.\n\
+      \ (вероятно, в `CanonCameraService` или `ImageSaveService`) и вызываться через\
+      \ IPC после команды `capture`. `require('sharp')` должен быть *только* в `main`.\n\
       \        *   Переписать `sendDateToServer`: удалить прямую запись лога (`fs.writeFileSync`);\
       \ делегировать это через IPC, если логирование файлов нужно сохранить. Удалить\
       \ прямое чтение логотипа (`fs.readFileSync`); логотип должен передаваться из\
@@ -2716,40 +2716,44 @@ files:
       \   *   Удалить `require('fs')`, `require('path')`.\n        *   Переписать\
       \ `loadConfigSettings`, `loadBrandingSettings`, `loadPrintSettings`, `loadCameraSettings`:\
       \ вместо прямого чтения `config.json` использовать `await IpcRendererService.getConfig()`\
-      \ (или специализированные запросы для конкретных секций).\n        *   Переписать\
-      \ `saveConfigSettings`, `saveCameraSettings`: вместо прямого чтения/записи `config.json`/`globalConfig.json`\
-      \ использовать `IpcRendererService.saveEventConfig()` и `IpcRendererService.saveGlobalConfig()`.\n\
-      \    *   **Действие:** В `src/windows/launcher/launcher.js`:\n        *   Удалить\
-      \ `require('fs')`, `require('path')`.\n        *   Переписать `validateFolderStructure`,\
-      \ `getFolders`, `createEventFolder`, `copyFolderContents`, `deleteEventFolder`,\
-      \ `deleteFolderRecursive`, `openConfigEditor`, `saveConfig`: вся работа с файловой\
-      \ системой должна выполняться в `main` процессе через IPC. Создать новые каналы\
-      \ и хендлеры для этих операций (например, `LIST_EVENTS`, `CREATE_EVENT`, `DELETE_EVENT`,\
-      \ `READ_EVENT_CONFIG`, `SAVE_EVENT_CONFIG`).\n\n5.  **Завершение Фазы 2: Интеграция\
+      \ (или специализированные запросы для конкретных секций через IPC).\n      \
+      \  *   Переписать `saveConfigSettings`, `saveCameraSettings`: вместо прямого\
+      \ чтения/записи `config.json`/`globalConfig.json` использовать `IpcRendererService.saveEventConfig()`\
+      \ и `IpcRendererService.saveGlobalConfig()` через IPC.\n    *   **Действие:**\
+      \ В `src/windows/launcher/launcher.js`:\n        *   Удалить `require('fs')`,\
+      \ `require('path')`.\n        *   Переписать `validateFolderStructure`, `getFolders`,\
+      \ `createEventFolder`, `copyFolderContents`, `deleteEventFolder`, `deleteFolderRecursive`,\
+      \ `openConfigEditor`, `saveConfig`: вся работа с файловой системой должна выполняться\
+      \ в `main` процессе через IPC. Создать новые каналы и хендлеры для этих операций\
+      \ (например, `LIST_EVENTS`, `CREATE_EVENT`, `DELETE_EVENT`, `READ_EVENT_CONFIG`,\
+      \ `SAVE_EVENT_CONFIG`). Использовать существующие `IpcChannels.VALIDATE_FOLDER_STRUCTURE`\
+      \ и `IpcChannels.LIST_EVENT_FOLDER_NAMES`.\n\n5.  **Завершение Фазы 2: Интеграция\
       \ IPC:**\n    *   **Действие:** В `src/windows/launcher/launcher.js`, `src/windows/configurator/configurator.js`,\
       \ `src/windows/photobooth/photobooth.js` заменить *все* оставшиеся прямые вызовы\
-      \ `ipcRenderer` на методы `IpcRendererService` с использованием констант из\
-      \ `IpcChannels`.\n    *   **Действие:** В `src/main/services/IpcMainHandlers.js`\
-      \ добавить обработчики (`ipcMain.handle` или `ipcMain.on`) для *всех* новых\
-      \ каналов, созданных на шаге 4, и реализовать соответствующую логику, используя\
-      \ `ConfigurationService`, `FileSystemUtils`, `PrintService` и т.д.\n\n6.  **Завершение\
-      \ Фазы 3: Интеграция ConfigurationService:**\n    *   **Действие:** Убедиться,\
-      \ что *вся* логика чтения/записи/управления конфигурацией в `main` и `renderer`\
-      \ проходит через `ConfigurationService` (напрямую в main, через IPC в renderer).\
-      \ Удалить остатки старого `configLoader.js` и его `require`.\n\n7.  **Рефакторинг\
-      \ Renderer (Фаза 5 - Продолжение):**\n    *   **Действие:** Внедрить использование\
-      \ созданных компонентов (`NotificationManager`, `ModalManager` и т.д.) в `configurator.js`\
-      \ и `photobooth.js`, заменив прямую DOM-манипуляцию для этих элементов.\n  \
-      \  *   **Действие:** Внедрить использование `WebcamService` и `CanonCameraService`\
-      \ (если он в рендерере) для управления камерами в `photobooth.js` и `configurator.js`.\n\
-      \    *   **Действие:** Внедрить `LocalizationService` для загрузки `translations.json`\
-      \ и обновления текстов.\n    *   **Действие:** Внедрить `ThemeService` для управления\
-      \ темами.\n\n8.  **Полное Тестирование (Фаза 7):**\n    *   **Действие:** Пройти\
-      \ по всему чеклисту `TESTING.md`, проверяя каждую функцию в новой архитектуре.\
-      \ Уделить особое внимание IPC, работе с файлами, конфигурации и взаимодействию\
-      \ с камерами/принтерами.\n\nЭтот план более детальный и направлен на исправление\
-      \ конкретных расхождений между заявленным прогрессом рефакторинга и фактическим\
-      \ состоянием кода."
+      \ `ipcRenderer` на методы `IpcRendererService` (доступен через `window.IpcRendererService`\
+      \ благодаря `renderer-preload.js`) с использованием констант из `IpcChannels`.\n\
+      \    *   **Действие:** В `src/main/services/IpcMainHandlers.js` добавить обработчики\
+      \ (`ipcMain.handle` или `ipcMain.on`) для *всех* новых каналов, созданных на\
+      \ шаге 4, и реализовать соответствующую логику, используя `ConfigurationService`,\
+      \ `FileSystemUtils`, `PrintService` и т.д. Дозаполнить существующие пустые или\
+      \ TODO хэндлеры.\n\n6.  **Завершение Фазы 3: Интеграция ConfigurationService:**\n\
+      \    *   **Действие:** Убедиться, что *вся* логика чтения/записи/управления\
+      \ конфигурацией в `main` и `renderer` проходит через `ConfigurationService`\
+      \ (напрямую в main, через IPC в renderer). Удалить остатки старого `configLoader.js`\
+      \ и его `require`.\n\n7.  **Рефакторинг Renderer (Фаза 5 - Продолжение, если\
+      \ необходимо для базовой работы):**\n    *   **Действие:** Хотя полный рефакторинг\
+      \ на компоненты может подождать, *минимально* нужно внедрить `NotificationManager`\
+      \ вместо прямых `alert` или самодельных уведомлений в `configurator.js` и `photobooth.js`.\n\
+      \    *   **Действие:** Аналогично, внедрить `ModalManager` для модальных окон\
+      \ (QR, подтверждение удаления, редактор конфига в лаунчере).\n\n8.  **Полное\
+      \ Тестирование (Фаза 7):**\n    *   **Действие:** Пройти по всему чеклисту `TESTING.md`,\
+      \ проверяя каждую функцию в новой архитектуре. Уделить особое внимание IPC,\
+      \ работе с файлами, конфигурации и взаимодействию с камерами/принтерами.\n\n\
+      Этот план более детальный и направлен на исправление конкретных расхождений\
+      \ между заявленным прогрессом рефакторинга и фактическим состоянием кода. После\
+      \ выполнения этих шагов приложение должно быть в состоянии, близком к описанному\
+      \ в `refactoring-status.md` (завершенные Фазы 1-5), и готово к дальнейшему тестированию\
+      \ и завершению Фаз 6-7."
   .\canon\Client\CameraControllerClient.deps.json:
     content: "{\n  \"runtimeTarget\": {\n    \"name\": \".NETCoreApp,Version=v8.0\"\
       ,\n    \"signature\": \"\"\n  },\n  \"compilationOptions\": {},\n  \"targets\"\
@@ -3938,6 +3942,15 @@ files:
       \ Rejection:\", error);\n    dialog.showErrorBox(\"Необработанная ошибка Promise\"\
       , `Произошла ошибка: ${error.message || error}`);\n});\n\n// Window management\
       \ functions are now called through IpcMainHandlers"
+  .\src\main\renderer\renderer-preload.js:
+    content: 'const IpcRendererService = require(''../../renderer/services/IpcRendererService'');
+
+      const IpcChannels = require(''../../shared/constants/IpcChannels'');
+
+
+      window.IpcRendererService = IpcRendererService;
+
+      window.IpcChannels = IpcChannels;'
   .\src\main\services\CanonCameraService.js:
     content: "const { exec, execSync } = require('child_process');\nconst path = require('path');\n\
       const { app } = require('electron');\nconst IpcChannels = require('../../shared/constants/IpcChannels');\n\
@@ -4203,7 +4216,67 @@ files:
       \        ipcMain.on(IpcChannels.CAMERA_MODE_CHANGED, (event, mode) => {\n  \
       \          if (mode === 'canon') {\n                CanonCameraService.start();\n\
       \            } else {\n                CanonCameraService.stop();\n        \
-      \    }\n        });\n    }\n}\n\nmodule.exports = new IpcMainHandlers();"
+      \        ipcMain.handle(IpcChannels.LIST_EVENT_FOLDER_NAMES, async (event, {\
+      \ eventsBasePath }) => {\n                    const fs = require('fs');\n  \
+      \                  const path = require('path');\n                    try {\n\
+      \                        if (!fs.existsSync(eventsBasePath)) {\n           \
+      \                 return { success: true, items: [] };\n                   \
+      \     }\n                        const items = fs.readdirSync(eventsBasePath);\n\
+      \                        const folders = items\n                           \
+      \ .filter(item => {\n                                try {\n               \
+      \                     return fs.statSync(path.join(eventsBasePath, item)).isDirectory();\n\
+      \                                } catch {\n                               \
+      \     return false;\n                                }\n                   \
+      \         })\n                            .map(folderName => {\n           \
+      \                     try {\n                                    const folderPath\
+      \ = path.join(eventsBasePath, folderName);\n                               \
+      \     const stats = fs.statSync(folderPath);\n                             \
+      \       return {\n                                        name: folderName,\n\
+      \                                        createdAt: stats.birthtime || stats.mtime,\n\
+      \                                        path: folderPath\n                \
+      \                    };\n                                } catch {\n       \
+      \                             return null;\n                               \
+      \ }\n                            })\n                            .filter(f =>\
+      \ f !== null)\n                            .sort((a, b) => b.createdAt - a.createdAt);\n\
+      \                        return { success: true, items: folders };\n       \
+      \             } catch (error) {\n                        console.error('Error\
+      \ listing event folders:', error);\n                        return { success:\
+      \ false, error: error.message };\n                    }\n                });\n\
+      \            }\n        });\n        ipcMain.handle(IpcChannels.VALIDATE_FOLDER_STRUCTURE,\
+      \ async (event, { basePath }) => {\n            const fs = require('fs');\n\
+      \            const path = require('path');\n            try {\n            \
+      \    if (!fs.existsSync(basePath)) {\n                    return {\n       \
+      \                 success: true,\n                        result: {\n      \
+      \                      valid: false,\n                            message: `Директория\
+      \ ${basePath} не существует`\n                        }\n                  \
+      \  };\n                }\n\n                const items = fs.readdirSync(basePath);\n\
+      \n                const hasExeFile = items.some(item =>\n                  \
+      \  item.endsWith('.exe') && fs.statSync(path.join(basePath, item)).isFile()\n\
+      \                );\n\n                const hasJsonFile = items.some(item =>\n\
+      \                    item.endsWith('.json') && fs.statSync(path.join(basePath,\
+      \ item)).isFile()\n                );\n\n                const userFolderPath\
+      \ = path.join(basePath, 'UserFolder');\n                const hasUserFolder\
+      \ = fs.existsSync(userFolderPath) && fs.statSync(userFolderPath).isDirectory();\n\
+      \n                const eventsPath = path.join(userFolderPath, 'Events');\n\
+      \                const hasEventsFolder = hasUserFolder &&\n                \
+      \    fs.existsSync(eventsPath) &&\n                    fs.statSync(eventsPath).isDirectory();\n\
+      \n                const missingItems = [];\n                if (!hasExeFile)\
+      \ missingItems.push('*.exe файл');\n                if (!hasJsonFile) missingItems.push('*.json\
+      \ файл');\n                if (!hasUserFolder) missingItems.push(\"папка 'UserFolder'\"\
+      );\n                else if (!hasEventsFolder) missingItems.push(\"папка 'Events'\
+      \ внутри 'UserFolder'\");\n\n                if (missingItems.length > 0) {\n\
+      \                    return {\n                        success: true,\n    \
+      \                    result: {\n                            valid: false,\n\
+      \                            message: `Некорректная структура папки. Отсутствуют:\
+      \ ${missingItems.join(', ')}`\n                        }\n                 \
+      \   };\n                }\n\n                return {\n                    success:\
+      \ true,\n                    result: {\n                        valid: true,\n\
+      \                        eventsPath\n                    }\n               \
+      \ };\n            } catch (error) {\n                console.error('Error in\
+      \ validate-folder-structure:', error);\n                return {\n         \
+      \           success: false,\n                    error: error.message\n    \
+      \            };\n            }\n        });\n    }\n}\n\nmodule.exports = new\
+      \ IpcMainHandlers();"
   .\src\main\services\PrintService.js:
     content: "const PDFDocument = require('pdfkit');\nconst { print } = require('pdf-to-printer');\n\
       const fs = require('fs');\nconst path = require('path');\nconst os = require('os');\n\
@@ -5832,8 +5905,16 @@ files:
       \    RELOAD_OPEN_WINDOWS: 'reload-open-windows',\n    GET_PRINTERS: 'get-printers',\n\
       \    CONFIG_UPDATED: 'config-updated',\n    CAMERA_MODE_CHANGED: 'camera-mode-changed',\n\
       \    SAVE_EVENT_CONFIG: 'save-event-config',\n    SAVE_IMAGE: 'save-image',\n\
-      \    ENSURE_FOLDER_EXISTS: 'ensure-folder-exists'\n};\n\n// Use module.exports\
-      \ for compatibility with require in Electron\nmodule.exports = IpcChannels;"
+      \    ENSURE_FOLDER_EXISTS: 'ensure-folder-exists',\n\n    // New channels for\
+      \ refactored IPC\n    VALIDATE_FOLDER_STRUCTURE: 'validate-folder-structure',\n\
+      \    LIST_EVENT_FOLDERS: 'list-event-folders',\n    LIST_EVENT_FOLDER_NAMES:\
+      \ 'list-event-folder-names',\n    GET_EVENT_CONFIG: 'get-event-config',\n  \
+      \  SAVE_EVENT_CONFIG: 'save-event-config',\n    DELETE_PHOTO: 'delete-photo',\n\
+      \    GET_STYLE_FILES: 'get-style-files',\n    GET_STYLE_IMAGE_DATA: 'get-style-image-data',\n\
+      \    GET_CANON_IMAGE: 'get-canon-image',\n    LIST_PHOTOS: 'list-photos',\n\
+      \    GET_TRANSLATIONS: 'get-translations',\n    GET_RANDOM_STYLE_IMAGE: 'get-random-style-image'\n\
+      };\n\n// Use module.exports for compatibility with require in Electron\nmodule.exports\
+      \ = IpcChannels;"
   .\src\windows\configurator\configurator.html:
     content: "<!DOCTYPE html>\n<html>\n  <head>\n    <meta charset=\"UTF-8\" />\n\
       \    <title>Конфигуратор</title>\n    <!-- Common styles -->\n    <link rel=\"\
@@ -6155,11 +6236,11 @@ files:
       \  <!-- Back to Photobooth button -->\n    <button id=\"backToPhotobooth\" class=\"\
       utility-button\">\n      Вернуться в фотобудку\n    </button>\n  </body>\n</html>\n"
   .\src\windows\configurator\configurator.js:
-    content: "const fs = require('fs');\nconst path = require('path');\nconst IpcRendererService\
-      \ = require('../../renderer/services/IpcRendererService');\nconst NotificationManager\
-      \ = require(\"../../renderer/components/Notification\");\n\n// Global variable\
-      \ to store current folder path\nlet currentFolderPath = null;\n\ndocument.addEventListener('DOMContentLoaded',\
-      \ () => {\n    // Tab switching functionality\n    const tabButtons = document.querySelectorAll('.tab-button');\n\
+    content: "const IpcRendererService = require('../../renderer/services/IpcRendererService');\n\
+      const NotificationManager = require(\"../../renderer/components/Notification\"\
+      );\n\n// Global variable to store current folder path\nlet currentFolderPath\
+      \ = null;\n\ndocument.addEventListener('DOMContentLoaded', () => {\n    // Tab\
+      \ switching functionality\n    const tabButtons = document.querySelectorAll('.tab-button');\n\
       \    const tabContents = document.querySelectorAll('.tab-content');\n\n    tabButtons.forEach(button\
       \ => {\n      button.addEventListener('click', () => {\n        const targetTab\
       \ = button.getAttribute('data-tab');\n        // Remove active class from all\
@@ -6185,31 +6266,43 @@ files:
       \    if (saveConfigButton) {\n        saveConfigButton.addEventListener('click',\
       \ saveConfigSettings);\n    }\n    \n    // Load branding settings when tab3\
       \ is clicked\n    document.querySelector('[data-tab=\"tab3\"]').addEventListener('click',\
-      \ () => {\n        if (!currentFolderPath) return;\n        \n        try {\n\
-      \            const configPath = path.join(currentFolderPath, 'config.json');\n\
-      \            if (fs.existsSync(configPath)) {\n                const configData\
-      \ = JSON.parse(fs.readFileSync(configPath, 'utf8'));\n                loadBrandingSettings(configData);\n\
-      \            }\n        } catch (error) {\n            console.error('Error\
-      \ loading branding config:', error);\n        }\n    });\n\n    // Load print\
-      \ settings when tab4 is clicked\n    document.querySelector('[data-tab=\"tab4\"\
-      ]').addEventListener('click', async () => {\n        if (!currentFolderPath)\
-      \ return;\n        \n        try {\n            const configPath = path.join(currentFolderPath,\
-      \ 'config.json');\n            if (fs.existsSync(configPath)) {\n          \
-      \      const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));\n\
-      \                \n                // Load printers first, then load print settings\n\
-      \                await loadAvailablePrinters();\n                loadPrintSettings(configData);\n\
-      \            }\n        } catch (error) {\n            console.error('Error\
+      \ () => {\n        if (!currentFolderPath) return;\n        \n        (async\
+      \ () => {\n            try {\n                const response = await IpcRendererService.invoke(IpcChannels.GET_EVENT_CONFIG,\
+      \ {\n                    folderPath: currentFolderPath\n                });\n\
+      \            if (response.success && response.config) {\n                loadBrandingSettings(response.config);\n\
+      \            } else {\n                console.error('Error loading branding\
+      \ config:', response.error);\n            }\n            } catch (error) {\n\
+      \                console.error('Error loading branding config:', error);\n \
+      \           }\n        })();\n    });\n\n    // Load print settings when tab4\
+      \ is clicked\n    document.querySelector('[data-tab=\"tab4\"]').addEventListener('click',\
+      \ async () => {\n        if (!currentFolderPath) return;\n        \n       \
+      \ try {\n            (async () => {\n                try {\n               \
+      \     const response = await IpcRendererService.invoke(IpcChannels.GET_EVENT_CONFIG,\
+      \ {\n                        folderPath: currentFolderPath\n               \
+      \     });\n                    if (response.success && response.config) {\n\
+      \                        await loadAvailablePrinters();\n                  \
+      \      loadPrintSettings(response.config);\n                    } else {\n \
+      \                       console.error('Error loading print config:', response.error);\n\
+      \                    }\n                } catch (error) {\n                \
+      \    console.error('Error loading print config:', error);\n                }\n\
+      \            })();\n        } catch (error) {\n            console.error('Error\
       \ loading print config:', error);\n        }\n    });\n    \n    // Load camera\
       \ settings when tab5 is clicked\n    document.querySelector('[data-tab=\"tab5\"\
       ]').addEventListener('click', async () => {\n        if (!currentFolderPath)\
       \ return;\n        \n        try {\n            // Load both global config and\
       \ event config\n            const globalConfig = await loadGlobalConfig();\n\
-      \            \n            const configPath = path.join(currentFolderPath, 'config.json');\n\
-      \            if (fs.existsSync(configPath)) {\n                const configData\
-      \ = JSON.parse(fs.readFileSync(configPath, 'utf8'));\n                loadCameraSettings(configData,\
-      \ globalConfig);\n            }\n        } catch (error) {\n            console.error('Error\
-      \ loading camera config:', error);\n        }\n    });\n    \n    // Add event\
-      \ listener for the save camera config button\n    const saveCameraButton = document.getElementById('save-camera-config');\n\
+      \            \n            (async () => {\n                try {\n         \
+      \           const response = await IpcRendererService.invoke(IpcChannels.GET_EVENT_CONFIG,\
+      \ {\n                        folderPath: currentFolderPath\n               \
+      \     });\n                    if (response.success && response.config) {\n\
+      \                        loadCameraSettings(response.config, globalConfig);\n\
+      \                    } else {\n                        console.error('Error\
+      \ loading camera config:', response.error);\n                    }\n       \
+      \         } catch (error) {\n                    console.error('Error loading\
+      \ camera config:', error);\n                }\n            })();\n        }\
+      \ catch (error) {\n            console.error('Error loading camera config:',\
+      \ error);\n        }\n    });\n    \n    // Add event listener for the save\
+      \ camera config button\n    const saveCameraButton = document.getElementById('save-camera-config');\n\
       \    if (saveCameraButton) {\n        saveCameraButton.addEventListener('click',\
       \ saveCameraSettings);\n    }\n    \n    // Remove the event listener for opening\
       \ the Canon utility\n    \n    // Add event listener to toggle Canon settings\
@@ -6320,15 +6413,16 @@ files:
       \ moving away from camera tab, stop the preview\n            if (button.getAttribute('data-tab')\
       \ !== 'tab5' && (stream || canonPreviewInterval)) {\n                stopCameraPreview();\n\
       \            }\n        });\n    });\n});\n\n// Function to load config settings\n\
-      function loadConfigSettings() {\n    if (!currentFolderPath) {\n        NotificationManager.show('No\
-      \ event folder selected', 'error');\n        return;\n    }\n\n    const configPath\
-      \ = path.join(currentFolderPath, 'config.json');\n    \n    try {\n        if\
-      \ (!fs.existsSync(configPath)) {\n            NotificationManager.show('Config\
-      \ file not found', 'error');\n            return;\n        }\n\n        const\
-      \ configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));\n        \n\
-      \        // Update form fields with config values\n        document.getElementById('prePhotoTimer').value\
-      \ = configData.prePhotoTimer || 3;\n        \n        // inactivityTimeout is\
-      \ in milliseconds in the config, convert to seconds for UI\n        document.getElementById('inactivityTimeout').value\
+      async function loadConfigSettings() {\n    if (!currentFolderPath) {\n     \
+      \   NotificationManager.show('No event folder selected', 'error');\n       \
+      \ return;\n    }\n\n    try {\n        const response = await IpcRendererService.invoke(IpcChannels.GET_EVENT_CONFIG,\
+      \ {\n            folderPath: currentFolderPath\n        });\n        if (!response.success\
+      \ || !response.config) {\n            NotificationManager.show('Config file\
+      \ not found', 'error');\n            return;\n        }\n\n        const configData\
+      \ = response.config;\n        \n        // Update form fields with config values\n\
+      \        document.getElementById('prePhotoTimer').value = configData.prePhotoTimer\
+      \ || 3;\n        \n        // inactivityTimeout is in milliseconds in the config,\
+      \ convert to seconds for UI\n        document.getElementById('inactivityTimeout').value\
       \ = (configData.inactivityTimeout || 60000) / 1000;\n        \n        // Language\
       \ settings\n        if (configData.language) {\n            document.getElementById('languageCurrent').value\
       \ = configData.language.current || 'ru';\n            document.getElementById('showLanguageSwitcher').checked\
@@ -6504,11 +6598,14 @@ files:
       \     console.log(`Loaded ${printers.length} printers`);\n    } catch (error)\
       \ {\n        console.error('Error loading printers:', error);\n        NotificationManager.show('Error\
       \ loading printers: ' + error.message, 'error');\n    }\n}\n\n// Function to\
-      \ save config settings\nfunction saveConfigSettings() {\n    if (!currentFolderPath)\
+      \ save config settings\nasync function saveConfigSettings() {\n    if (!currentFolderPath)\
       \ {\n        NotificationManager.show('Папка событий не выбрана', 'error');\n\
-      \        return;\n    }\n\n    const configPath = path.join(currentFolderPath,\
-      \ 'config.json');\n    try {\n        const formData = collectFormData();\n\
-      \        let existingConfig = {};\n\n        if (fs.existsSync(configPath))\
+      \        return;\n    }\n\n    try {\n        const formData = collectFormData();\n\
+      \        const response = await IpcRendererService.invoke(IpcChannels.SAVE_EVENT_CONFIG,\
+      \ {\n            folderPath: currentFolderPath,\n            config: formData\n\
+      \        });\n        if (response.success) {\n            NotificationManager.show('Config\
+      \ saved successfully', 'success');\n        } else {\n            NotificationManager.show('Failed\
+      \ to save config: ' + response.error, 'error');\n        }\n\n        if (fs.existsSync(configPath))\
       \ {\n            existingConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));\n\
       \        }\n\n        // Update config with form values\n        const updatedConfig\
       \ = { ...existingConfig, ...formData };\n\n        // Write the updated config\
@@ -6681,14 +6778,21 @@ files:
       \        const cameraMode = document.getElementById('cameraMode').value;\n \
       \       const globalConfig = await loadGlobalConfig();\n        globalConfig.cameraMode\
       \ = cameraMode;\n        await saveGlobalConfig(globalConfig);\n        \n \
-      \       // Save other camera settings to event config\n        const configPath\
-      \ = path.join(currentFolderPath, 'config.json');\n        let configData = {};\n\
-      \        \n        if (fs.existsSync(configPath)) {\n            configData\
-      \ = JSON.parse(fs.readFileSync(configPath, 'utf8'));\n        }\n        \n\
-      \        // Update camera rotation settings\n        configData.camera_rotation\
-      \ = parseInt(document.getElementById('camera_rotation').value);\n        \n\
-      \        // Update Canon specific settings\n        if (cameraMode === 'canon')\
-      \ {\n            configData.canonSettings = {\n                iso: document.getElementById('canonIso').value,\n\
+      \       // Save other camera settings to event config\n        // Get current\
+      \ event config through IPC\n        const response = await IpcRendererService.invoke(IpcChannels.GET_EVENT_CONFIG,\
+      \ {\n            folderPath: currentFolderPath\n        });\n        \n    \
+      \    let configData = response.success ? response.config : {};\n        \n \
+      \       // Update camera rotation settings\n        // Update camera settings\n\
+      \        configData.camera_rotation = parseInt(document.getElementById('camera_rotation').value);\n\
+      \        \n        // Update Canon specific settings\n        if (cameraMode\
+      \ === 'canon') {\n            \n            // Prepare to save the updated config\
+      \ through IPC\n            const saveResponse = await IpcRendererService.invoke(IpcChannels.SAVE_EVENT_CONFIG,\
+      \ {\n                folderPath: currentFolderPath,\n                config:\
+      \ configData\n            });\n\n            if (saveResponse.success) {\n \
+      \               NotificationManager.show('Camera settings saved successfully',\
+      \ 'success');\n            } else {\n                NotificationManager.show('Failed\
+      \ to save camera settings: ' + saveResponse.error, 'error');\n            }\n\
+      \            configData.canonSettings = {\n                iso: document.getElementById('canonIso').value,\n\
       \                tv: document.getElementById('canonTv').value,\n           \
       \     av: document.getElementById('canonAv').value,\n                wb: document.getElementById('canonWb').value,\n\
       \                pictureStyle: document.getElementById('canonPictureStyle').value\n\
@@ -6804,54 +6908,37 @@ files:
       \        </div>\n      </div>\n    </div>\n\n    <!-- JavaScript files -->\n\
       \    <script src=\"launcher.js\"></script>\n  </body>\n</html>\n"
   .\src\windows\launcher\launcher.js:
-    content: "const fs = require(\"fs\")\nconst path = require(\"path\")\nconst IpcRendererService\
-      \ = require(\"../../renderer/services/IpcRendererService\")\n\nconst NotificationManager\
-      \ = require(\"../../renderer/components/Notification\")\n\nlet FOLDER_PATH =\
-      \ \"C:\\\\temp\"\n\n;(async () => {\n  try {\n    const config = await IpcRendererService.getConfig()\n\
-      \    FOLDER_PATH = config.globalFolderPath || \"C:\\\\temp\"\n  } catch (e)\
-      \ {\n    console.error(\"Failed to load config:\", e)\n  }\n})()\n\n// Function\
-      \ to format date\nfunction formatDate(date) {\n  const options = {\n    year:\
-      \ \"numeric\",\n    month: \"short\",\n    day: \"numeric\",\n    hour: \"2-digit\"\
-      ,\n    minute: \"2-digit\",\n  }\n  return date.toLocaleDateString(\"en-US\"\
-      , options)\n}\n\n// Check if the folder structure is valid\nfunction validateFolderStructure(basePath)\
-      \ {\n  try {\n    // Check if the base path exists\n    if (!fs.existsSync(basePath))\
-      \ {\n      return {\n        valid: false,\n        message: `Директория ${basePath}\
-      \ не существует`,\n      }\n    }\n\n    // Get all items in the base directory\n\
-      \    const items = fs.readdirSync(basePath)\n\n    // Check for required files\
-      \ (.exe, .json)\n    const hasExeFile = items.some((item) => {\n      return\
-      \ (\n        item.endsWith(\".exe\") && fs.statSync(path.join(basePath, item)).isFile()\n\
-      \      )\n    })\n\n    const hasJsonFile = items.some((item) => {\n      return\
-      \ (\n        item.endsWith(\".json\") &&\n        fs.statSync(path.join(basePath,\
-      \ item)).isFile()\n      )\n    })\n\n    // Check for UserFolder directory\n\
-      \    const userFolderPath = path.join(basePath, \"UserFolder\")\n    const hasUserFolder\
-      \ =\n      fs.existsSync(userFolderPath) && fs.statSync(userFolderPath).isDirectory()\n\
-      \n    // Check for Events directory inside UserFolder\n    const eventsPath\
-      \ = path.join(userFolderPath, \"Events\")\n    const hasEventsFolder =\n   \
-      \   hasUserFolder &&\n      fs.existsSync(eventsPath) &&\n      fs.statSync(eventsPath).isDirectory()\n\
-      \n    // Build validation result\n    const missingItems = []\n    if (!hasExeFile)\
-      \ missingItems.push(\"*.exe файл\")\n    if (!hasJsonFile) missingItems.push(\"\
-      *.json файл\")\n    if (!hasUserFolder) missingItems.push(\"папка 'UserFolder'\"\
-      )\n    else if (!hasEventsFolder)\n      missingItems.push(\"папка 'Events'\
-      \ внутри 'UserFolder'\")\n\n    if (missingItems.length > 0) {\n      return\
-      \ {\n        valid: false,\n        message: `Некорректная структура папки.\
-      \ Отсутствуют: ${missingItems.join(\n          \", \"\n        )}`,\n      }\n\
-      \    }\n\n    return {\n      valid: true,\n      eventsPath: eventsPath,\n\
-      \    }\n  } catch (error) {\n    console.error(\"Ошибка при проверке структуры\
-      \ папки:\", error)\n    return {\n      valid: false,\n      message: `Ошибка\
-      \ при проверке структуры папки: ${error.message}`,\n    }\n  }\n}\n\n// Add\
-      \ global variable to track if a folder is selected\nlet selectedFolderPath =\
-      \ null\nlet eventsBasePath = null\n\n// Get folders from the specified path\n\
-      async function getFolders() {\n  const folderListElement = document.getElementById(\"\
-      folderList\")\n  const refreshButton = document.getElementById(\"refreshFolders\"\
-      )\n  const createEventButton = document.getElementById(\"createEvent\")\n\n\
-      \  // Add spinning animation to refresh button\n  refreshButton.classList.add(\"\
-      spinning\")\n\n  // Reset selected folder and disable buttons when refreshing\n\
-      \  selectedFolderPath = null\n  updateButtonState()\n\n  try {\n    // Validate\
-      \ folder structure\n    const validation = validateFolderStructure(FOLDER_PATH)\n\
-      \n    if (!validation.valid) {\n      folderListElement.innerHTML = `\n    \
-      \            <div class=\"error-message\">\n                    ${validation.message}\n\
-      \                </div>\n            `\n      // Disable create event button\
-      \ if structure is invalid\n      createEventButton.disabled = true\n      createEventButton.classList.add(\"\
+    content: "const IpcRendererService = require(\"../../renderer/services/IpcRendererService\"\
+      )\n\nconst NotificationManager = require(\"../../renderer/components/Notification\"\
+      )\n\nlet FOLDER_PATH = \"C:\\\\temp\"\n\n;(async () => {\n  try {\n    const\
+      \ config = await IpcRendererService.getConfig()\n    FOLDER_PATH = config.globalFolderPath\
+      \ || \"C:\\\\temp\"\n  } catch (e) {\n    console.error(\"Failed to load config:\"\
+      , e)\n  }\n})()\n\n// Function to format date\nfunction formatDate(date) {\n\
+      \  const options = {\n    year: \"numeric\",\n    month: \"short\",\n    day:\
+      \ \"numeric\",\n    hour: \"2-digit\",\n    minute: \"2-digit\",\n  }\n  return\
+      \ date.toLocaleDateString(\"en-US\", options)\n}\n\n// Check if the folder structure\
+      \ is valid\nasync function validateFolderStructure(basePath) {\n  try {\n  \
+      \  const response = await IpcRendererService.invoke(window.IpcChannels.VALIDATE_FOLDER_STRUCTURE,\
+      \ {\n      basePath\n    });\n\n    if (response.success) {\n      return response.result;\n\
+      \    } else {\n      console.error(\"Folder validation error:\", response.error);\n\
+      \      return {\n        valid: false,\n        message: response.error || \"\
+      Unknown error during folder validation\"\n      };\n    }\n  } catch (error)\
+      \ {\n    console.error(\"Ошибка при проверке структуры папки:\", error);\n \
+      \   return {\n      valid: false,\n      message: `Ошибка при проверке структуры\
+      \ папки: ${error.message}`\n    };\n  }\n}\n\n// Add global variable to track\
+      \ if a folder is selected\nlet selectedFolderPath = null\nlet eventsBasePath\
+      \ = null\n\n// Get folders from the specified path\nasync function getFolders()\
+      \ {\n  const folderListElement = document.getElementById(\"folderList\")\n \
+      \ const refreshButton = document.getElementById(\"refreshFolders\")\n  const\
+      \ createEventButton = document.getElementById(\"createEvent\")\n\n  // Add spinning\
+      \ animation to refresh button\n  refreshButton.classList.add(\"spinning\")\n\
+      \n  // Reset selected folder and disable buttons when refreshing\n  selectedFolderPath\
+      \ = null\n  updateButtonState()\n\n  try {\n    // Validate folder structure\n\
+      \    const validation = validateFolderStructure(FOLDER_PATH)\n\n    if (!validation.valid)\
+      \ {\n      folderListElement.innerHTML = `\n                <div class=\"error-message\"\
+      >\n                    ${validation.message}\n                </div>\n     \
+      \       `\n      // Disable create event button if structure is invalid\n  \
+      \    createEventButton.disabled = true\n      createEventButton.classList.add(\"\
       disabled\")\n      return\n    }\n\n    // Enable create event button if structure\
       \ is valid\n    createEventButton.disabled = false\n    createEventButton.classList.remove(\"\
       disabled\")\n\n    // Use the Events folder path\n    eventsBasePath = validation.eventsPath\n\
@@ -6876,12 +6963,17 @@ files:
       \    } else {\n      // Clear existing folder list\n      folderListElement.innerHTML\
       \ = '';\n      \n      // Get the template\n      const template = document.getElementById('folder-item-template');\n\
       \      \n      // Create a document fragment to improve performance\n      const\
-      \ fragment = document.createDocumentFragment();\n      \n      // Create folder\
-      \ items using the template\n      folders.forEach(folder => {\n        // Split\
-      \ folder name into date and event name parts\n        const nameParts = folder.name.split('_');\n\
-      \        const dateStr = nameParts[0] || '';\n        const eventName = nameParts.slice(1).join('_')\
-      \ || folder.name;\n        \n        // Clone the template content\n       \
-      \ const folderItem = template.content.cloneNode(true).querySelector('.folder-item');\n\
+      \ fragment = document.createDocumentFragment();\n      \n      console.log('Event\
+      \ folders received:', folders);\n      // Create folder items using the template\n\
+      \      folders.forEach(folder => {\n        // Split folder name into date and\
+      \ event name parts\n        const nameParts = folder.name.split('_');\n    \
+      \    let dateStr = nameParts[0];\n        const eventName = nameParts.slice(1).join('_')\
+      \ || folder.name;\n\n        // If no date prefix, fallback to folder creation\
+      \ date\n        if (!dateStr || !/^\\d{2}\\.\\d{2}\\.\\d{4}$/.test(dateStr))\
+      \ {\n            const createdAt = folder.createdAt ? new Date(folder.createdAt)\
+      \ : null;\n            dateStr = createdAt ? createdAt.toLocaleDateString('ru-RU')\
+      \ : '';\n        }\n        \n        // Clone the template content\n      \
+      \  const folderItem = template.content.cloneNode(true).querySelector('.folder-item');\n\
       \        \n        // Set data attributes\n        folderItem.setAttribute('data-path',\
       \ folder.path);\n        folderItem.setAttribute('data-name', folder.name);\n\
       \        \n        // Fill in the content\n        folderItem.querySelector('.folder-name').textContent\
@@ -8048,19 +8140,19 @@ files:
       \ {\n      console.error(\"Failed to get image data:\", imageResponse.error);\n\
       \      throw new Error(imageResponse.error);\n    }\n\n    // Delete the file\
       \ through IPC after successful retrieval\n    if (imageResponse.dataUrl) {\n\
-      \      const deleteResponse = await IpcRendererService.invoke(IpcChannels.DELETE_PHOTO,\
-      \ {\n        folderPath,\n        fileName: uniqueFiles[0]\n      });\n\n  \
-      \    if (deleteResponse.success) {\n        console.log(`File successfully deleted.`);\n\
-      \      } else {\n        console.error(\"Failed to delete file:\", deleteResponse.error);\n\
-      \      }\n\n      return imageResponse.dataUrl;\n      } catch (err) {\n   \
-      \     console.error(`❌ Ошибка при удалении файла ${uniqueFilePath}:`, err)\n\
-      \      }\n    }\n\n    // \U0001F5BC Преобразуем в base64\n    return base64Image\n\
-      \  } catch (error) {\n    console.error(\"❌ Ошибка в getUniquePhotoBase64:\"\
-      , error)\n    return null\n  }\n}\n\nasync function waitForFileReady(filePath)\
-      \ {\n  let attempts = 0\n  while (attempts < 5) {\n    try {\n      // Проверяем,\
-      \ существует ли файл\n      await fs.promises.access(filePath)\n\n      // Проверяем\
-      \ размер файла\n      const stats = await fs.promises.stat(filePath)\n     \
-      \ if (stats.size > 0) {\n        console.log(`✅ Файл размером ${stats.size}\
+      \      try {\n        const deleteResponse = await IpcRendererService.invoke(IpcChannels.DELETE_PHOTO,\
+      \ {\n          folderPath,\n          fileName: uniqueFiles[0]\n        });\n\
+      \n        if (deleteResponse.success) {\n          console.log(`File successfully\
+      \ deleted.`);\n        } else {\n          console.error(\"Failed to delete\
+      \ file:\", deleteResponse.error);\n        }\n      } catch (err) {\n      \
+      \  console.error(`Error while deleting file:`, err);\n      }\n\n      return\
+      \ imageResponse.dataUrl;\n    }\n\n    return null;\n  } catch (error) {\n \
+      \   console.error(\"Error in getUniquePhotoBase64:\", error);\n    NotificationManager.show(\"\
+      Failed to process photo\", \"error\");\n    return null;\n  }\n}\n\nasync function\
+      \ waitForFileReady(filePath) {\n  let attempts = 0\n  while (attempts < 5) {\n\
+      \    try {\n      // Проверяем, существует ли файл\n      await fs.promises.access(filePath)\n\
+      \n      // Проверяем размер файла\n      const stats = await fs.promises.stat(filePath)\n\
+      \      if (stats.size > 0) {\n        console.log(`✅ Файл размером ${stats.size}\
       \ байт найден.`)\n\n        // Пробуем открыть файл для чтения (гарантия, что\
       \ он записан полностью)\n        try {\n          await fs.promises.readFile(filePath)\n\
       \          console.log(`Файл доступен для чтения.`)\n          return\n    \

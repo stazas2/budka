@@ -27,10 +27,14 @@ let currentLanguage = 'ru'; // Default, will be updated from config
 let translations = {};
 
 //* ================ IMPORTS AND REQUIREMENTS ================
-const IpcRendererService = require("../../renderer/services/IpcRendererService")
-const NotificationManager = require("../../renderer/components/Notification")
-const QRCode = require("qrcode")
-const IpcChannels = require("../../shared/constants/IpcChannels")
+const IpcRendererService = require("../../renderer/services/IpcRendererService");
+const NotificationManager = require("../../renderer/components/Notification");
+const QRCode = require("qrcode");
+const IpcChannels = require("../../shared/constants/IpcChannels");
+// Remove fs, path, sharp requires as they should only be used in main process
+// const fs = require("fs");
+// const path = require("path");
+// const sharp = require("sharp");
 
 // Already moved to declarations section
 

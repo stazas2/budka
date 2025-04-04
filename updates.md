@@ -42,9 +42,9 @@
 **Приоритет:** Сначала обеспечить корректное расположение файлов и обновление путей, затем интегрировать сервисы и IPC.
 
 1.  **Завершение Фазы 1: Корректная Структура и Переименование:**
-    *   **Действие:** Переименовать корневые `script.js` -> `src/windows/photobooth/photobooth.js`.
-    *   **Действие:** Переименовать корневые `empty.js` -> `src/windows/configurator/configurator.js`.
-    *   **Действие:** Переименовать корневые `launcher.js` -> `src/windows/launcher/launcher.js`.
+    *   **Действие:** Переместить корневые `script.js` -> `src/windows/photobooth/photobooth.js`.
+    *   **Действие:** Переместить корневые `empty.js` -> `src/windows/configurator/configurator.js`.
+    *   **Действие:** Переместить корневые `launcher.js` -> `src/windows/launcher/launcher.js`.
     *   **Действие:** Переместить соответствующие CSS (`styles.css`, `empty.css`, `launcher.css`) в `src/renderer/assets/css/` и переименовать их в `photobooth.css`, `configurator.css`, `launcher.css`.
     *   **Действие:** Переместить `translations.json` в `src/renderer/assets/`.
     *   **Действие:** Переместить `utils/datepicker.js` в `src/renderer/utils/`.
@@ -68,31 +68,29 @@
         *   Удалить `require('fs')`, `require('path')`, `require('sharp')`.
         *   Переписать функцию `getRandomImageFromStyleFolder`: она должна использовать `IpcRendererService.invoke(IpcChannels.GET_RANDOM_STYLE_IMAGE, { style, gender })` (нужно будет добавить этот канал и хендлер в main). Логика чтения папки и выбора файла переедет в `IpcMainHandlers.js` или `FileSystemUtils.js`.
         *   Переписать функцию `takePicture` для PC-камеры: после получения `imageData` вызывать `await IpcRendererService.saveImage('input', imageData)`.
-        *   Переписать функцию `takePicture` для Canon: логика `getUniquePhotoBase64`, `waitForFileReady`, `getBase64Image` должна быть перенесена в `main` процесс (вероятно, в `CanonCameraService` или отдельный сервис) и вызываться через IPC после команды `capture`. `require('sharp')` должен быть только в `main`.
+        *   Переписать функцию `takePicture` для Canon: логика `getUniquePhotoBase64`, `waitForFileReady`, `getBase64Image` должна быть перенесена в `main` процесс (вероятно, в `CanonCameraService` или `ImageSaveService`) и вызываться через IPC после команды `capture`. `require('sharp')` должен быть *только* в `main`.
         *   Переписать `sendDateToServer`: удалить прямую запись лога (`fs.writeFileSync`); делегировать это через IPC, если логирование файлов нужно сохранить. Удалить прямое чтение логотипа (`fs.readFileSync`); логотип должен передаваться из `main` или читаться через IPC.
         *   Переписать `handleServerResponse`: вызывать `await IpcRendererService.saveImage('output', resultImage.src)`.
     *   **Действие:** В `src/windows/configurator/configurator.js`:
         *   Удалить `require('fs')`, `require('path')`.
-        *   Переписать `loadConfigSettings`, `loadBrandingSettings`, `loadPrintSettings`, `loadCameraSettings`: вместо прямого чтения `config.json` использовать `await IpcRendererService.getConfig()` (или специализированные запросы для конкретных секций).
-        *   Переписать `saveConfigSettings`, `saveCameraSettings`: вместо прямого чтения/записи `config.json`/`globalConfig.json` использовать `IpcRendererService.saveEventConfig()` и `IpcRendererService.saveGlobalConfig()`.
+        *   Переписать `loadConfigSettings`, `loadBrandingSettings`, `loadPrintSettings`, `loadCameraSettings`: вместо прямого чтения `config.json` использовать `await IpcRendererService.getConfig()` (или специализированные запросы для конкретных секций через IPC).
+        *   Переписать `saveConfigSettings`, `saveCameraSettings`: вместо прямого чтения/записи `config.json`/`globalConfig.json` использовать `IpcRendererService.saveEventConfig()` и `IpcRendererService.saveGlobalConfig()` через IPC.
     *   **Действие:** В `src/windows/launcher/launcher.js`:
         *   Удалить `require('fs')`, `require('path')`.
-        *   Переписать `validateFolderStructure`, `getFolders`, `createEventFolder`, `copyFolderContents`, `deleteEventFolder`, `deleteFolderRecursive`, `openConfigEditor`, `saveConfig`: вся работа с файловой системой должна выполняться в `main` процессе через IPC. Создать новые каналы и хендлеры для этих операций (например, `LIST_EVENTS`, `CREATE_EVENT`, `DELETE_EVENT`, `READ_EVENT_CONFIG`, `SAVE_EVENT_CONFIG`).
+        *   Переписать `validateFolderStructure`, `getFolders`, `createEventFolder`, `copyFolderContents`, `deleteEventFolder`, `deleteFolderRecursive`, `openConfigEditor`, `saveConfig`: вся работа с файловой системой должна выполняться в `main` процессе через IPC. Создать новые каналы и хендлеры для этих операций (например, `LIST_EVENTS`, `CREATE_EVENT`, `DELETE_EVENT`, `READ_EVENT_CONFIG`, `SAVE_EVENT_CONFIG`). Использовать существующие `IpcChannels.VALIDATE_FOLDER_STRUCTURE` и `IpcChannels.LIST_EVENT_FOLDER_NAMES`.
 
 5.  **Завершение Фазы 2: Интеграция IPC:**
-    *   **Действие:** В `src/windows/launcher/launcher.js`, `src/windows/configurator/configurator.js`, `src/windows/photobooth/photobooth.js` заменить *все* оставшиеся прямые вызовы `ipcRenderer` на методы `IpcRendererService` с использованием констант из `IpcChannels`.
-    *   **Действие:** В `src/main/services/IpcMainHandlers.js` добавить обработчики (`ipcMain.handle` или `ipcMain.on`) для *всех* новых каналов, созданных на шаге 4, и реализовать соответствующую логику, используя `ConfigurationService`, `FileSystemUtils`, `PrintService` и т.д.
+    *   **Действие:** В `src/windows/launcher/launcher.js`, `src/windows/configurator/configurator.js`, `src/windows/photobooth/photobooth.js` заменить *все* оставшиеся прямые вызовы `ipcRenderer` на методы `IpcRendererService` (доступен через `window.IpcRendererService` благодаря `renderer-preload.js`) с использованием констант из `IpcChannels`.
+    *   **Действие:** В `src/main/services/IpcMainHandlers.js` добавить обработчики (`ipcMain.handle` или `ipcMain.on`) для *всех* новых каналов, созданных на шаге 4, и реализовать соответствующую логику, используя `ConfigurationService`, `FileSystemUtils`, `PrintService` и т.д. Дозаполнить существующие пустые или TODO хэндлеры.
 
 6.  **Завершение Фазы 3: Интеграция ConfigurationService:**
     *   **Действие:** Убедиться, что *вся* логика чтения/записи/управления конфигурацией в `main` и `renderer` проходит через `ConfigurationService` (напрямую в main, через IPC в renderer). Удалить остатки старого `configLoader.js` и его `require`.
 
-7.  **Рефакторинг Renderer (Фаза 5 - Продолжение):**
-    *   **Действие:** Внедрить использование созданных компонентов (`NotificationManager`, `ModalManager` и т.д.) в `configurator.js` и `photobooth.js`, заменив прямую DOM-манипуляцию для этих элементов.
-    *   **Действие:** Внедрить использование `WebcamService` и `CanonCameraService` (если он в рендерере) для управления камерами в `photobooth.js` и `configurator.js`.
-    *   **Действие:** Внедрить `LocalizationService` для загрузки `translations.json` и обновления текстов.
-    *   **Действие:** Внедрить `ThemeService` для управления темами.
+7.  **Рефакторинг Renderer (Фаза 5 - Продолжение, если необходимо для базовой работы):**
+    *   **Действие:** Хотя полный рефакторинг на компоненты может подождать, *минимально* нужно внедрить `NotificationManager` вместо прямых `alert` или самодельных уведомлений в `configurator.js` и `photobooth.js`.
+    *   **Действие:** Аналогично, внедрить `ModalManager` для модальных окон (QR, подтверждение удаления, редактор конфига в лаунчере).
 
 8.  **Полное Тестирование (Фаза 7):**
     *   **Действие:** Пройти по всему чеклисту `TESTING.md`, проверяя каждую функцию в новой архитектуре. Уделить особое внимание IPC, работе с файлами, конфигурации и взаимодействию с камерами/принтерами.
 
-Этот план более детальный и направлен на исправление конкретных расхождений между заявленным прогрессом рефакторинга и фактическим состоянием кода.
+Этот план более детальный и направлен на исправление конкретных расхождений между заявленным прогрессом рефакторинга и фактическим состоянием кода. После выполнения этих шагов приложение должно быть в состоянии, близком к описанному в `refactoring-status.md` (завершенные Фазы 1-5), и готово к дальнейшему тестированию и завершению Фаз 6-7.

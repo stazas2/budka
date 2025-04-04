@@ -137,6 +137,107 @@ class IpcMainHandlers {
             } catch (error) {
                 console.error('Error fetching styles:', error);
                 return []; // Return empty array on error
+                ipcMain.handle(IpcChannels.GET_STYLE_PREVIEW_IMAGE, async (event, { style, sanitizedName, genders }) => {
+                    const fs = require('fs');
+                    const path = require('path');
+                    const config = ConfigurationService.getCurrentConfig();
+                    let stylesDir = config?.stylesDir || '';
+                    if (stylesDir.includes("{{basePath}}") && config.basePath) {
+                        stylesDir = stylesDir.replace("{{basePath}}", config.basePath);
+                    } else if (!path.isAbsolute(stylesDir) && config.basePath) {
+                        stylesDir = path.join(config.basePath, stylesDir);
+                    } else if (!stylesDir && config.basePath) {
+                        stylesDir = path.join(config.basePath, 'styles');
+                    }
+        
+                    if (!stylesDir) return null;
+        
+                    const possiblePaths = [];
+                    for (const gender of genders) {
+                        possiblePaths.push(path.join(stylesDir, gender, style, `${sanitizedName}.jpg`));
+                        possiblePaths.push(path.join(stylesDir, gender, style, 'preview.jpg'));
+                    }
+        
+                    for (const p of possiblePaths) {
+                        if (fs.existsSync(p)) {
+                            return p; // Return the first found path
+                        }
+                    }
+                    return null; // Return null if no preview found
+                });
+        
+                ipcMain.handle(IpcChannels.CHECK_LOGO_EXISTS, async () => {
+                    const fs = require('fs');
+                    const config = ConfigurationService.getCurrentConfig();
+                    const logoPath = config?.logoPath;
+                    return logoPath && fs.existsSync(logoPath);
+                });
+        
+                ipcMain.handle(IpcChannels.CHECK_STYLE_PATH_EXISTS, async (event, { stylePath }) => {
+                    const fs = require('fs');
+                    return fs.existsSync(stylePath);
+                });
+        
+                ipcMain.handle(IpcChannels.GET_STYLE_FILES, async (event, { stylePath }) => {
+                    const fs = require('fs').promises;
+                    try {
+                        const files = await fs.readdir(stylePath);
+                        return files.filter(file => /\.(jpg|jpeg|png)$/i.test(file));
+                    } catch (error) {
+                        console.error('Error reading style files:', error);
+                        return [];
+                    }
+                });
+        
+                ipcMain.handle(IpcChannels.GET_STYLE_IMAGE_DATA, async (event, { imagePath }) => {
+                    const fs = require('fs').promises;
+                    try {
+                        const data = await fs.readFile(imagePath, { encoding: 'base64' });
+                        return `data:image/jpeg;base64,${data}`;
+                    } catch (error) {
+                        console.error('Error reading style image data:', error);
+                        return null;
+                    }
+                });
+        
+                ipcMain.handle(IpcChannels.GET_CANON_IMAGE, async (event, { imagePath }) => {
+                     const fs = require('fs').promises;
+                     try {
+                         const data = await fs.readFile(imagePath, { encoding: 'base64' });
+                         return `data:image/jpeg;base64,${data}`;
+                     } catch (error) {
+                         console.error('Error reading canon image data:', error);
+                         return null;
+                     }
+                });
+        
+                ipcMain.handle(IpcChannels.DELETE_PHOTO, async (event, { filePath }) => {
+                    const fs = require('fs').promises;
+                    try {
+                        await fs.unlink(filePath);
+                        return { success: true };
+                    } catch (error) {
+                        console.error('Error deleting photo:', error);
+                        return { success: false, error: error.message };
+                    }
+                });
+        
+                ipcMain.handle(IpcChannels.GET_TRANSLATIONS, async () => {
+                    const fs = require('fs');
+                    const path = require('path');
+                    try {
+                        // Assuming translations.json is now in src/renderer/assets
+                        const translationsPath = path.join(app.getAppPath(), 'src', 'renderer', 'assets', 'translations.json');
+                        if (fs.existsSync(translationsPath)) {
+                            const data = fs.readFileSync(translationsPath, 'utf8');
+                            return JSON.parse(data);
+                        }
+                        return {};
+                    } catch (error) {
+                        console.error('Error loading translations:', error);
+                        return {};
+                    }
+                });
             }
         });
 
@@ -161,6 +262,206 @@ class IpcMainHandlers {
                     try {
                         if (!fs.existsSync(eventsBasePath)) {
                             return { success: true, items: [] };
+                            ipcMain.handle(IpcChannels.CREATE_EVENT_FOLDER, async (event, { basePath, eventDate, eventName }) => {
+                                const fs = require('fs');
+                                const path = require('path');
+                                try {
+                                    const folderName = `${eventDate}_${eventName}`;
+                                    const eventFolderPath = path.join(basePath, folderName);
+                    
+                                    if (fs.existsSync(eventFolderPath)) {
+                                        return { success: false, error: 'Folder already exists' };
+                                        ipcMain.handle(IpcChannels.CREATE_EVENT_FOLDER, async (event, { basePath, eventDate, eventName }) => {
+                                            const fs = require('fs');
+                                            const path = require('path');
+                                            try {
+                                                const folderName = `${eventDate}_${eventName}`;
+                                                const eventFolderPath = path.join(basePath, folderName);
+                                
+                                                if (fs.existsSync(eventFolderPath)) {
+                                                    return { success: false, error: 'Folder already exists' };
+                                                }
+                                
+                                                fs.mkdirSync(eventFolderPath, { recursive: true });
+                                
+                                                // Copy from default if exists
+                                                const defaultFolderPath = path.join(basePath, 'default');
+                                                if (fs.existsSync(defaultFolderPath)) {
+                                                    // TODO: Implement copyFolderContents or use a library
+                                                    console.warn('Copying from default folder not implemented yet.');
+                                                }
+                                
+                                                return { success: true };
+                                            } catch (error) {
+                                                console.error('Error creating event folder:', error);
+                                                return { success: false, error: error.message };
+                                            }
+                                        });
+                                
+                                        ipcMain.handle(IpcChannels.DELETE_EVENT_FOLDER, async (event, { folderPath }) => {
+                                            const fs = require('fs');
+                                            try {
+                                                if (fs.existsSync(folderPath)) {
+                                                    fs.rmSync(folderPath, { recursive: true, force: true });
+                                                    return { success: true };
+                                                }
+                                                return { success: false, error: 'Folder not found' };
+                                            } catch (error) {
+                                                console.error('Error deleting event folder:', error);
+                                                return { success: false, error: error.message };
+                                            }
+                                        });
+                                
+                                        ipcMain.handle(IpcChannels.GET_EVENT_CONFIG, async (event, { folderPath }) => {
+                                            const fs = require('fs');
+                                            const path = require('path');
+                                            try {
+                                                const configPath = path.join(folderPath, 'config.json');
+                                                if (!fs.existsSync(configPath)) {
+                                                    return { success: false, error: 'Config file not found' };
+                                                }
+                                                const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+                                                return { success: true, config: configData };
+                                            } catch (error) {
+                                                console.error('Error reading event config:', error);
+                                                return { success: false, error: error.message };
+                                            }
+                                        });
+                                
+                                        // Verify SAVE_EVENT_CONFIG handler (already exists, but ensure it's correct)
+                                        // The existing handler seems correct:
+                                        // ipcMain.handle(IpcChannels.SAVE_EVENT_CONFIG, (event, {folderPath, config}) =>
+                                        //     ConfigurationService.saveEventConfig(folderPath, config));
+                                
+                                        ipcMain.handle(IpcChannels.LIST_EVENT_FOLDERS, async (event, { basePath }) => {
+                                            const fs = require('fs');
+                                            const path = require('path');
+                                            try {
+                                                if (!fs.existsSync(basePath)) {
+                                                    return { success: true, folders: [] };
+                                                }
+                                                const items = fs.readdirSync(basePath);
+                                                const folders = items
+                                                    .filter(item => {
+                                                        try {
+                                                            // Exclude 'default' folder
+                                                            if (item === "default") return false;
+                                                            return fs.statSync(path.join(basePath, item)).isDirectory();
+                                                        } catch {
+                                                            return false;
+                                                        }
+                                                    })
+                                                    .map(folderName => {
+                                                        try {
+                                                            const folderPath = path.join(basePath, folderName);
+                                                            const stats = fs.statSync(folderPath);
+                                                            return {
+                                                                name: folderName,
+                                                                createdAt: stats.birthtime || stats.mtime,
+                                                                path: folderPath
+                                                            };
+                                                        } catch {
+                                                            return null;
+                                                        }
+                                                    })
+                                                    .filter(f => f !== null);
+                                                return { success: true, folders: folders };
+                                            } catch (error) {
+                                                console.error('Error listing event folders:', error);
+                                                return { success: false, error: error.message };
+                                            }
+                                        });
+                                    }
+                    
+                                    fs.mkdirSync(eventFolderPath, { recursive: true });
+                    
+                                    // Copy from default if exists
+                                    const defaultFolderPath = path.join(basePath, 'default');
+                                    if (fs.existsSync(defaultFolderPath)) {
+                                        // TODO: Implement copyFolderContents or use a library
+                                        console.warn('Copying from default folder not implemented yet.');
+                                    }
+                    
+                                    return { success: true };
+                                } catch (error) {
+                                    console.error('Error creating event folder:', error);
+                                    return { success: false, error: error.message };
+                                }
+                            });
+                    
+                            ipcMain.handle(IpcChannels.DELETE_EVENT_FOLDER, async (event, { folderPath }) => {
+                                const fs = require('fs');
+                                try {
+                                    if (fs.existsSync(folderPath)) {
+                                        fs.rmSync(folderPath, { recursive: true, force: true });
+                                        return { success: true };
+                                    }
+                                    return { success: false, error: 'Folder not found' };
+                                } catch (error) {
+                                    console.error('Error deleting event folder:', error);
+                                    return { success: false, error: error.message };
+                                }
+                            });
+                    
+                            ipcMain.handle(IpcChannels.GET_EVENT_CONFIG, async (event, { folderPath }) => {
+                                const fs = require('fs');
+                                const path = require('path');
+                                try {
+                                    const configPath = path.join(folderPath, 'config.json');
+                                    if (!fs.existsSync(configPath)) {
+                                        return { success: false, error: 'Config file not found' };
+                                    }
+                                    const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+                                    return { success: true, config: configData };
+                                } catch (error) {
+                                    console.error('Error reading event config:', error);
+                                    return { success: false, error: error.message };
+                                }
+                            });
+                    
+                            // Verify SAVE_EVENT_CONFIG handler (already exists, but ensure it's correct)
+                            // The existing handler seems correct:
+                            // ipcMain.handle(IpcChannels.SAVE_EVENT_CONFIG, (event, {folderPath, config}) =>
+                            //     ConfigurationService.saveEventConfig(folderPath, config));
+                    
+                            ipcMain.handle(IpcChannels.LIST_EVENT_FOLDERS, async (event, { basePath }) => {
+                                const fs = require('fs');
+                                const path = require('path');
+                                try {
+                                    if (!fs.existsSync(basePath)) {
+                                        return { success: true, folders: [] };
+                                    }
+                                    const items = fs.readdirSync(basePath);
+                                    const folders = items
+                                        .filter(item => {
+                                            try {
+                                                // Exclude 'default' folder
+                                                if (item === "default") return false;
+                                                return fs.statSync(path.join(basePath, item)).isDirectory();
+                                            } catch {
+                                                return false;
+                                            }
+                                        })
+                                        .map(folderName => {
+                                            try {
+                                                const folderPath = path.join(basePath, folderName);
+                                                const stats = fs.statSync(folderPath);
+                                                return {
+                                                    name: folderName,
+                                                    createdAt: stats.birthtime || stats.mtime,
+                                                    path: folderPath
+                                                };
+                                            } catch {
+                                                return null;
+                                            }
+                                        })
+                                        .filter(f => f !== null);
+                                    return { success: true, folders: folders };
+                                } catch (error) {
+                                    console.error('Error listing event folders:', error);
+                                    return { success: false, error: error.message };
+                                }
+                            });
                         }
                         const items = fs.readdirSync(eventsBasePath);
                         const folders = items

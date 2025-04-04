@@ -90,38 +90,15 @@ async function getFolders() {
     // Use the Events folder path
     eventsBasePath = validation.eventsPath
 
-    // Read Events directory contents
-    const items = fs.readdirSync(eventsBasePath)
+    const response = await IpcRendererService.invoke(IpcChannels.LIST_EVENT_FOLDERS, {
+      basePath: eventsBasePath
+    });
 
-    // Filter to only include directories and get their stats
-    const folders = items
-      .filter((item) => {
-        try {
-          // Exclude 'default' folder
-          if (item === "default") return false
-          
-          return fs.statSync(path.join(eventsBasePath, item)).isDirectory()
-        } catch (err) {
-          console.error(`Error checking if ${item} is directory:`, err)
-          return false
-        }
-      })
-      .map((folder) => {
-        try {
-          const stats = fs.statSync(path.join(eventsBasePath, folder))
-          return {
-            name: folder,
-            createdAt: stats.birthtime || stats.mtime, // Use mtime as fallback
-            path: path.join(eventsBasePath, folder),
-          }
-        } catch (err) {
-          console.error(`Error getting stats for ${folder}:`, err)
-          return null
-        }
-      })
-      .filter((folder) => folder !== null)
-      // Sort by creation date, newest first
-      .sort((a, b) => b.createdAt - a.createdAt)
+    if (!response.success) {
+      throw new Error(response.error);
+    }
+
+    const folders = response.folders.sort((a, b) => b.createdAt - a.createdAt);
 
     // Display folders or "no folders" message
     if (folders.length === 0) {
@@ -258,37 +235,27 @@ function updateButtonState() {
 }
 
 // Function to create a new event folder
-function createEventFolder(eventDate, eventName) {
+async function createEventFolder(eventDate, eventName) {
   if (!eventsBasePath) {
     NotificationManager.show('Ошибка: путь к папке мероприятий не найден.', 'error');
     return false;
   }
 
   try {
-    // Format folder name as DD.MM.YYYY_EventName
-    const folderName = `${eventDate}_${eventName}`;
-    const eventFolderPath = path.join(eventsBasePath, folderName);
-    
-    // Check if folder already exists
-    if (fs.existsSync(eventFolderPath)) {
-      NotificationManager.show('Папка с таким именем уже существует!', 'error');
-      return false;
+    const response = await IpcRendererService.invoke(IpcChannels.CREATE_EVENT_FOLDER, {
+      basePath: eventsBasePath,
+      eventDate,
+      eventName
+    });
+
+    if (!response.success) {
+      throw new Error(response.error);
     }
 
-    // Create the event folder
-    fs.mkdirSync(eventFolderPath, { recursive: true });
-    
-    // Check for default folder existence
-    const defaultFolderPath = path.join(eventsBasePath, 'default');
-    if (fs.existsSync(defaultFolderPath)) {
-      // Copy contents from default folder to new event folder
-      copyFolderContents(defaultFolderPath, eventFolderPath);
-    }
-    
-    NotificationManager.show(`Мероприятие "${folderName}" успешно создано!`, 'success');
+    NotificationManager.show(`Мероприятие "${eventDate}_${eventName}" успешно создано!`, 'success');
     
     // Refresh folder list
-    getFolders();
+    await getFolders();
     
     return true;
   } catch (error) {
@@ -512,57 +479,34 @@ function showDeleteConfirmation(folderPath, folderName) {
 }
 
 // Function to delete event folder
-function deleteEventFolder(folderPath, folderName) {
+async function deleteEventFolder(folderPath, folderName) {
   try {
-    if (!fs.existsSync(folderPath)) {
-      NotificationManager.show('Папка мероприятия не найдена.', 'error');
-      return;
-    }
-    
-    // If this is the selected folder, deselect it
+    // Deselect if this was the selected folder
     if (selectedFolderPath === folderPath) {
       selectedFolderPath = null;
       updateButtonState();
-      // Notify main process that no folder is selected
       IpcRendererService.setSelectedFolder(null);
     }
-    
-    // Delete the folder and its contents
-    deleteFolderRecursive(folderPath);
-    
-    // Show success notification
+
+    const response = await IpcRendererService.invoke(IpcChannels.DELETE_EVENT_FOLDER, {
+      folderPath,
+      folderName
+    });
+
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to delete event folder');
+    }
+
     NotificationManager.show(`Мероприятие "${folderName}" успешно удалено!`, 'success');
-    
-    // Refresh folder list
-    getFolders();
-    
+    await getFolders();
   } catch (error) {
     console.error('Ошибка при удалении мероприятия:', error);
     NotificationManager.show(`Ошибка при удалении мероприятия: ${error.message}`, 'error');
   }
 }
 
-// Function to delete folder and its contents recursively
-function deleteFolderRecursive(folderPath) {
-  if (fs.existsSync(folderPath)) {
-    fs.readdirSync(folderPath).forEach((file) => {
-      const curPath = path.join(folderPath, file);
-      if (fs.lstatSync(curPath).isDirectory()) {
-        // Recursive call for directories
-        deleteFolderRecursive(curPath);
-      } else {
-        // Delete file
-        fs.unlinkSync(curPath);
-      }
-    });
-    
-    // Delete the empty directory
-    fs.rmdirSync(folderPath);
-  }
-}
-
 // Function to open config editor
-function openConfigEditor(folderPath, folderName) {
+async function openConfigEditor(folderPath, folderName) {
   const configEditorModal = document.getElementById('configEditorModal');
   const configEditorBody = document.getElementById('configEditorBody');
   
@@ -578,24 +522,17 @@ function openConfigEditor(folderPath, folderName) {
   // Show the modal
   configEditorModal.style.display = 'flex';
   
-  // Try to load the config file
   try {
-    const configPath = path.join(folderPath, 'config.json');
-    if (!fs.existsSync(configPath)) {
-      configEditorBody.innerHTML = `
-        <div class="config-error">
-          Файл конфигурации не найден в папке мероприятия.
-        </div>
-      `;
-      return;
+    const response = await IpcRendererService.invoke(IpcChannels.GET_EVENT_CONFIG, {
+      folderPath
+    });
+
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to load event config');
     }
-    
-    // Read and parse the config file
-    const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    
+
     // Generate form fields for config properties
-    renderConfigEditor(configData, configEditorBody);
-    
+    renderConfigEditor(response.config, configEditorBody);
   } catch (error) {
     console.error('Ошибка при загрузке конфигурации:', error);
     configEditorBody.innerHTML = `
@@ -722,15 +659,13 @@ function renderConfigEditor(configData, container) {
 }
 
 // Function to save config
-function saveConfig(modal) {
+async function saveConfig(modal) {
   const folderPath = modal.getAttribute('data-path');
-  const configPath = path.join(folderPath, 'config.json');
   const configEditorBody = document.getElementById('configEditorBody');
   
   try {
-    // Get original config
-    const originalConfig = JSON.parse(configEditorBody.getAttribute('data-original-config'));
-    const updatedConfig = {...originalConfig};
+    // Get original config (if needed, or just collect current values)
+    const updatedConfig = {};
     
     // Collect values from all inputs
     configEditorBody.querySelectorAll('input, textarea').forEach(input => {
@@ -750,7 +685,8 @@ function saveConfig(modal) {
           value = JSON.parse(input.value);
         } catch (e) {
           console.error(`Ошибка при разборе JSON для поля ${key}:`, e);
-          value = originalConfig[key]; // Keep original on error
+          // Decide how to handle parse errors - maybe keep original or set to null/empty
+          value = {}; // Example: set to empty object on error
         }
       } else {
         value = input.value;
@@ -759,13 +695,17 @@ function saveConfig(modal) {
       updatedConfig[key] = value;
     });
     
-    // Write the updated config back to the file
-    fs.writeFileSync(configPath, JSON.stringify(updatedConfig, null, 2), 'utf8');
+    // Save config through IPC
+    const response = await IpcRendererService.invoke(IpcChannels.SAVE_EVENT_CONFIG, {
+      folderPath,
+      config: updatedConfig
+    });
+
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to save config');
+    }
     
-    // Show success notification
     NotificationManager.show(`Конфигурация успешно сохранена`, 'success');
-    
-    // Close the modal
     modal.style.display = 'none';
     
   } catch (error) {

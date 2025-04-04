@@ -38,7 +38,13 @@ const IpcChannels = {
     GET_CANON_IMAGE: 'get-canon-image',
     LIST_PHOTOS: 'list-photos',
     GET_TRANSLATIONS: 'get-translations',
-    GET_RANDOM_STYLE_IMAGE: 'get-random-style-image'
+    GET_RANDOM_STYLE_IMAGE: 'get-random-style-image',
+    CHECK_STYLE_PATH_EXISTS: 'check-style-path-exists',
+    CHECK_LOGO_EXISTS: 'check-logo-exists',
+
+    // Additional launcher operations
+    CREATE_EVENT_FOLDER: 'create-event-folder',
+    DELETE_EVENT_FOLDER: 'delete-event-folder'
 };
 
 // Use module.exports for compatibility with require in Electron
