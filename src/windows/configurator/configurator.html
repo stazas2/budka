@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Конфигуратор</title>
+    <!-- Common styles -->
+    <link rel="stylesheet" href="../../renderer/assets/css/main.css" />
+    <!-- Configurator specific styles -->
+    <link rel="stylesheet" href="../../renderer/assets/css/configurator.css" />
+    <!-- FontAwesome for icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <!-- Main script -->
+    <script src="configurator.js" defer></script>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Tabs header -->
+      <div class="tabs">
+        <button class="tab-button active" data-tab="tab1">AI Обработка</button>
+        <button class="tab-button" data-tab="tab2">Интерфейс</button>
+        <button class="tab-button" data-tab="tab3">Брендирование</button>
+        <button class="tab-button" data-tab="tab4">Печать</button>
+        <button class="tab-button" data-tab="tab5">Камера</button>
+        <button class="tab-button" data-tab="tab6">Сбор данных</button>
+      </div>
+
+      <!-- Tabs content -->
+      <div class="tab-contents">
+        <!-- AI Tab -->
+        <div id="tab1" class="tab-content active">
+          <h2>Настройки AI обработки</h2>
+          <div class="config-form">
+            <!-- AI settings will be added here -->
+            <div class="config-section">
+              <h3>AI Параметры</h3>
+              <!-- Content will be added dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Interface Tab -->
+        <div id="tab2" class="tab-content">
+          <h2>Настройки интерфейса</h2>
+          <div class="config-form">
+            <div class="config-section">
+              <h3>Основные настройки</h3>
+
+              <div class="form-group">
+                <label for="prePhotoTimer">Таймер перед фото (секунды):</label>
+                <input
+                  type="number"
+                  id="prePhotoTimer"
+                  min="1"
+                  max="10"
+                  value="3"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="inactivityTimeout"
+                  >Таймаут неактивности (секунды):</label
+                >
+                <input
+                  type="number"
+                  id="inactivityTimeout"
+                  min="10"
+                  max="300"
+                  value="60"
+                />
+              </div>
+            </div>
+
+            <div class="config-section">
+              <h3>Настройки языка</h3>
+
+              <div class="form-group">
+                <label for="languageCurrent">Текущий язык:</label>
+                <select id="languageCurrent">
+                  <option value="ru">Русский</option>
+                  <option value="kz">Қазақша</option>
+                </select>
+              </div>
+
+              <div class="form-group toggle-group">
+                <label for="showLanguageSwitcher"
+                  >Показывать переключатель языка</label
+                >
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showLanguageSwitcher" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="config-section">
+              <h3>Элементы интерфейса</h3>
+
+              <div class="form-group toggle-group">
+                <label for="showResultQrBtn"
+                  >Показывать кнопку QR-кода результата</label
+                >
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showResultQrBtn" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div class="form-group toggle-group">
+                <label for="showStyleNames">Показывать названия стилей</label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="showStyleNames" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div class="form-group toggle-group">
+                <label for="visibilityAgree"
+                  >Запрашивать согласие на публикацию</label
+                >
+                <label class="toggle-switch">
+                  <input type="checkbox" id="visibilityAgree" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="config-section">
+              <h3>Настройки выбора пола</h3>
+
+              <div class="form-group toggle-group">
+                <label for="allowMultipleGenderSelection"
+                  >Разрешить выбор нескольких полов</label
+                >
+                <label class="toggle-switch">
+                  <input type="checkbox" id="allowMultipleGenderSelection" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div class="form-group">
+                <label class="gender-section-label"
+                  >Доступные варианты пола:</label
+                >
+
+                <div class="gender-panels">
+                  <!-- Adult genders panel -->
+                  <div class="gender-panel">
+                    <h4>Взрослые</h4>
+                    <div class="gender-options">
+                      <div class="checkbox-item toggle-group">
+                        <label for="genderMale">Мужчина</label>
+                        <label class="toggle-switch">
+                          <input type="checkbox" id="genderMale" />
+                          <span class="toggle-slider"></span>
+                        </label>
+                      </div>
+                      <div class="checkbox-item toggle-group">
+                        <label for="genderFemale">Женщина</label>
+                        <label class="toggle-switch">
+                          <input type="checkbox" id="genderFemale" />
+                          <span class="toggle-slider"></span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Children genders panel -->
+                  <div class="gender-panel">
+                    <h4>Дети</h4>
+                    <div class="gender-options">
+                      <div class="checkbox-item toggle-group">
+                        <label for="genderBoy">Мальчик</label>
+                        <label class="toggle-switch">
+                          <input type="checkbox" id="genderBoy" />
+                          <span class="toggle-slider"></span>
+                        </label>
+                      </div>
+                      <div class="checkbox-item toggle-group">
+                        <label for="genderGirl">Девочка</label>
+                        <label class="toggle-switch">
+                          <input type="checkbox" id="genderGirl" />
+                          <span class="toggle-slider"></span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="button-group">
+              <button id="save-config" class="action-button">
+                Сохранить настройки
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Branding Tab -->
+        <div id="tab3" class="tab-content">
+          <h2>Настройки брендирования</h2>
+          <div class="config-form">
+            <div class="config-section">
+              <h3>Логотипы</h3>
+
+              <div class="form-group">
+                <label for="logoPath">Путь к основному логотипу:</label>
+                <div class="file-input-group">
+                  <input
+                    type="text"
+                    id="logoPath"
+                    placeholder="Путь к файлу логотипа"
+                  />
+                  <button class="file-select-button" id="selectLogo">
+                    Выбрать
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="brandLogoPath">Путь к брендовому логотипу:</label>
+                <div class="file-input-group">
+                  <input
+                    type="text"
+                    id="brandLogoPath"
+                    placeholder="Путь к файлу брендового логотипа"
+                  />
+                  <button class="file-select-button" id="selectBrandLogo">
+                    Выбрать
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Размер и позиция -->
+            <div class="config-section">
+              <h3>Размер и позиция</h3>
+
+              <div class="form-group">
+                <label for="logo_pos_x">Позиция логотипа X:</label>
+                <input type="number" id="logo_pos_x" min="0" value="0" />
+              </div>
+
+              <div class="form-group">
+                <label for="logo_pos_y">Позиция логотипа Y:</label>
+                <input type="number" id="logo_pos_y" min="0" value="0" />
+              </div>
+
+              <div class="form-group">
+                <label for="logo_scale">Масштаб логотипа:</label>
+                <input
+                  type="number"
+                  id="logo_scale"
+                  min="0.1"
+                  max="5"
+                  step="0.1"
+                  value="1"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="mainLogoScale">Масштаб основного логотипа:</label>
+                <input
+                  type="number"
+                  id="mainLogoScale"
+                  min="0.1"
+                  max="5"
+                  step="0.1"
+                  value="1"
+                />
+              </div>
+            </div>
+
+            <!-- Оформление и фон -->
+            <div class="config-section">
+              <h3>Оформление и фон</h3>
+
+              <div class="form-group">
+                <label for="theme">Тема оформления:</label>
+                <select id="theme">
+                  <option value="dark">Темная</option>
+                  <option value="light">Светлая</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="backdropBlur">Размытие фона:</label>
+                <div class="range-input-group">
+                  <input
+                    type="range"
+                    id="backdropBlurRange"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value="50"
+                  />
+                  <input type="text" id="backdropBlur" value="50px" />
+                </div>
+              </div>
+
+              <div class="form-group toggle-group">
+                <label for="animationEnabled">Включить анимацию</label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="animationEnabled" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <!-- Gradient Editor -->
+              <div class="form-group">
+                <label for="animatedBackground"
+                  >Анимированный фон (градиент):</label
+                >
+                <div id="gradientEditor" class="gradient-editor">
+                  <div class="gradient-colors">
+                    <!-- Initial color pickers will be added dynamically -->
+                  </div>
+
+                  <div class="gradient-controls">
+                    <button
+                      type="button"
+                      id="addGradientColor"
+                      class="small-button"
+                    >
+                      <i class="fas fa-plus"></i> Добавить цвет
+                    </button>
+                    <button
+                      type="button"
+                      id="removeGradientColor"
+                      class="small-button"
+                    >
+                      <i class="fas fa-minus"></i> Удалить цвет
+                    </button>
+                  </div>
+
+                  <div class="gradient-options">
+                    <label>
+                      <span>Направление:</span>
+                      <select id="gradientDirection">
+                        <option value="-45deg">Диагональ (↙↗)</option>
+                        <option value="45deg">Диагональ (↖↘)</option>
+                        <option value="0deg">Горизонтально (→)</option>
+                        <option value="90deg">Вертикально (↓)</option>
+                        <option value="180deg">Горизонтально (←)</option>
+                        <option value="270deg">Вертикально (↑)</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <input
+                    type="hidden"
+                    id="animatedBackground"
+                    value="linear-gradient(-45deg, #ed030c, #c5c4fa, #c4facd, #ab9aff)"
+                  />
+                  <div class="gradient-preview" id="gradientPreview"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Theme Settings -->
+            <div class="config-section">
+              <h3>Настройки тем</h3>
+
+              <div class="theme-panels">
+                <!-- Light theme panel -->
+                <div class="theme-panel">
+                  <h4>Светлая тема</h4>
+                  <div class="form-group">
+                    <label for="lightBackgroundColor">Цвет фона:</label>
+                    <div class="color-input-group">
+                      <input
+                        type="text"
+                        id="lightBackgroundColor"
+                        value="#ffebcd"
+                      />
+                      <input
+                        type="color"
+                        id="lightBackgroundColorPicker"
+                        value="#ffebcd"
+                      />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="lightBackgroundImage"
+                      >Фоновое изображение:</label
+                    >
+                    <div class="file-input-group">
+                      <input type="text" id="lightBackgroundImage" value="" />
+                      <button
+                        class="file-select-button"
+                        id="selectLightBgImage"
+                      >
+                        Выбрать
+                      </button>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="lightTextColor">Цвет текста:</label>
+                    <div class="color-input-group">
+                      <input type="text" id="lightTextColor" value="#000000" />
+                      <input
+                        type="color"
+                        id="lightTextColorPicker"
+                        value="#000000"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Dark theme panel -->
+                <div class="theme-panel">
+                  <h4>Темная тема</h4>
+                  <div class="form-group">
+                    <label for="darkBackgroundColor">Цвет фона:</label>
+                    <div class="color-input-group">
+                      <input
+                        type="text"
+                        id="darkBackgroundColor"
+                        value="#000000"
+                      />
+                      <input
+                        type="color"
+                        id="darkBackgroundColorPicker"
+                        value="#000000"
+                      />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="darkBackgroundImage"
+                      >Фоновое изображение:</label
+                    >
+                    <div class="file-input-group">
+                      <input type="text" id="darkBackgroundImage" value="" />
+                      <button class="file-select-button" id="selectDarkBgImage">
+                        Выбрать
+                      </button>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="darkTextColor">Цвет текста:</label>
+                    <div class="color-input-group">
+                      <input type="text" id="darkTextColor" value="#ffffff" />
+                      <input
+                        type="color"
+                        id="darkTextColorPicker"
+                        value="#ffffff"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="button-group">
+              <button id="save-branding-config" class="action-button">
+                Сохранить настройки
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Print Tab -->
+        <div id="tab4" class="tab-content">
+          <h2>Настройки печати</h2>
+          <div class="config-form">
+            <div class="config-section">
+              <h3>Основные настройки печати</h3>
+
+              <div class="form-group">
+                <label for="defaultPrinter">Принтер:</label>
+                <select id="defaultPrinter">
+                  <option value="">Принтер по умолчанию</option>
+                  <!-- Printer options will be populated dynamically -->
+                </select>
+              </div>
+
+              <div class="form-group toggle-group">
+                <label for="borderPrintImage"
+                  >Добавить рамку к печатаемому изображению</label
+                >
+                <label class="toggle-switch">
+                  <input type="checkbox" id="borderPrintImage" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div class="form-group toggle-group">
+                <label for="printButtonVisible">Показывать кнопку печати</label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="printButtonVisible" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div class="form-group">
+                <label for="orientation">Ориентация печати:</label>
+                <select id="orientation">
+                  <option value="">Автоматически</option>
+                  <option value="portrait">Портретная</option>
+                  <option value="landscape">Альбомная</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="config-section">
+              <h3>Размер бумаги (мм)</h3>
+
+              <div class="form-group">
+                <label for="paperSizeWidth">Ширина (мм):</label>
+                <input
+                  type="number"
+                  id="paperSizeWidth"
+                  min="10"
+                  max="1000"
+                  value="105"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="paperSizeHeight">Высота (мм):</label>
+                <input
+                  type="number"
+                  id="paperSizeHeight"
+                  min="10"
+                  max="1000"
+                  value="148"
+                />
+              </div>
+            </div>
+
+            <div class="button-group">
+              <button id="save-print-config" class="action-button">
+                Сохранить настройки
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Camera Tab -->
+        <div id="tab5" class="tab-content">
+          <h2>Настройки камеры</h2>
+          <div class="config-form">
+            <div class="config-section">
+              <h3>Основные настройки</h3>
+
+              <div class="form-group">
+                <label for="cameraMode">Режим камеры:</label>
+                <select id="cameraMode">
+                  <option value="pc">Камера ПК</option>
+                  <option value="canon">Canon камера</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="camera_rotation">Поворот камеры (градусы):</label>
+                <input
+                  type="number"
+                  id="camera_rotation"
+                  min="0"
+                  max="360"
+                  step="90"
+                  value="0"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="send_image_rotation"
+                  >Поворот отправляемого изображения:</label
+                >
+                <input
+                  type="number"
+                  id="send_image_rotation"
+                  min="0"
+                  max="360"
+                  step="90"
+                  value="0"
+                />
+              </div>
+
+              <div class="form-group toggle-group">
+                <label for="isEvf">Включить EVF (для Canon)</label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="isEvf" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="button-group">
+              <button id="save-camera-config" class="action-button">
+                Сохранить настройки
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data Collection Tab -->
+        <div id="tab6" class="tab-content">
+          <h2>Настройки сбора данных</h2>
+          <div class="config-form">
+            <div class="config-section">
+              <h3>Горячая папка</h3>
+
+              <div class="form-group toggle-group">
+                <label for="hotFolderEnabled">Использовать горячую папку</label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="hotFolderEnabled" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div class="form-group">
+                <label for="hotFolderPath">Путь к горячей папке:</label>
+                <div class="file-input-group">
+                  <input
+                    type="text"
+                    id="hotFolderPath"
+                    placeholder="Путь к горячей папке"
+                  />
+                  <button class="file-select-button" id="selectHotFolder">
+                    Выбрать
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="button-group">
+              <button id="save-data-config" class="action-button">
+                Сохранить настройки
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Back to Photobooth button -->
+    <button id="backToPhotobooth" class="utility-button">
+      Вернуться в фотобудку
+    </button>
+  </body>
+</html>

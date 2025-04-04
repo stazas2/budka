@@ -2,7 +2,7 @@
   "name": "photobooth-electron",
   "version": "1.0.0",
   "description": "Photobooth application using Electron",
-  "main": "main.js",
+  "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder"
@@ -26,23 +26,27 @@
   "build": {
     "appId": "com.yourcompany.photobooth",
     "productName": "PhotoBooth",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
     "files": [
-      "**/*",
+      "src/**/*",
+      "node_modules/**/*",
+      "package.json",
+      "config.json",
       "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
       "!**/node_modules/.bin",
       "!**/*.{o,hprof,orig,pyc,pyo,rbc}",
       "!**/._*",
       "!**/electron-builder.{yaml,yml,json,json5,toml}",
-      "!**/node_modules/electron*",
+      "!**/node_modules/electron",
+      "!**/node_modules/electron-builder",
       "!**/node_modules/@types",
-      "!**/node_modules/.bin",
       "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
       "!**/test{,s}/**",
       "!**/tests/**",
-      "!**/*.map",
-      "!**/src/**/*.ts",
-      "!**/typings/**/*.d.ts",
-      "!**/typings"
+      "!**/*.map"
     ],
     "win": {
       "target": [
@@ -52,9 +56,6 @@
       "icon": "build/icon.ico",
       "signAndEditExecutable": false,
       "certificateFile": null
-    },
-    "directories": {
-      "buildResources": "build"
     },
     "nsis": {
       "oneClick": false,
@@ -70,17 +71,17 @@
         "from": "canon",
         "to": "canon",
         "filter": [
-          "/*",
-          "!/Server/pathExe.txt"
+          "**/*",
+          "!Server/pathExe.txt"
         ]
       },
       {
         "from": "build/dependencies/dotnet-runtime-9.0.2-win-x64.exe",
-        "to": "resources/dotnet-runtime-9.0.2-win-x64.exe"
+        "to": "resources/app-resources/dotnet-runtime-9.0.2-win-x64.exe"
       },
       {
         "from": "build/dependencies/aspnetcore-runtime-9.0.2-win-x64.exe",
-        "to": "resources/aspnetcore-runtime-9.0.2-win-x64.exe"
+        "to": "resources/app-resources/aspnetcore-runtime-9.0.2-win-x64.exe"
       }
     ]
   }

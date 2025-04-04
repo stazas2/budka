@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Фотобудка</title>
+    <!-- Common styles -->
+    <link rel="stylesheet" href="../../renderer/assets/css/main.css" />
+    <!-- Photobooth specific styles -->
+    <link rel="stylesheet" href="../../renderer/assets/css/photobooth.css" />
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Main script -->
+    <script src="photobooth.js" defer></script>
+  </head>
+  <body>
+    <!-- Logo section -->
+    <div id="logo-container">
+      <img src="" alt="Логотип" id="logo" />
+    </div>
+    <div id="fullscreen-toggle"></div>
+
+    <div id="loading-screen" class="screen active">
+      <h1></h1>
+    </div>
+
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="screen">
+      <h1></h1>
+      <button id="start-button"></button>
+      <label class="start-text">
+        <input type="checkbox" id="agreement-checkbox" checked />
+        <span class="custom-checkbox"></span>
+        <span class="custom-checkbox-text">
+          Нажимая на кнопку «Начать» <br />вы даете
+          <span class="custom-checkbox-qr">согласиe</span> на использование
+          вашего фото в коммерческих целях
+        </span>
+      </label>
+      <!-- Theme switcher -->
+      <label class="theme-switcher">
+        <input type="checkbox" id="theme-switcher" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <!-- Gender Screen -->
+    <div id="gender-screen" class="screen">
+      <button class="back-button"></button>
+      <h1></h1>
+      <div id="gender-buttons">
+        <div class="button-row">
+          <div class="button-row_block">
+            <div class="button-row_item">
+              <img
+                id="gender-man"
+                data-gender="man"
+                src="../../renderer/assets/icons/man.png"
+                class="invert-image"
+                alt="Мужчина"
+              />
+              <div class="button" data-gender="man">Мужчина</div>
+            </div>
+            <div class="button-row_item">
+              <img
+                id="gender-woman"
+                data-gender="woman"
+                src="../../renderer/assets/icons/woman.png"
+                class="invert-image"
+                alt="Женщина"
+              />
+              <div class="button" data-gender="woman">Женщина</div>
+            </div>
+          </div>
+          <div class="button-row_block">
+            <div class="button-row_item">
+              <img
+                id="gender-boy"
+                data-gender="boy"
+                src="../../renderer/assets/icons/boy.png"
+                class="invert-image"
+                alt="Мальчик"
+              />
+              <div class="button" data-gender="boy">Мальчик</div>
+            </div>
+            <div class="button-row_item">
+              <img
+                id="gender-girl"
+                data-gender="girl"
+                src="../../renderer/assets/icons/girl.png"
+                class="invert-image"
+                alt="Девочка"
+              />
+              <div class="button" data-gender="girl">Девочка</div>
+            </div>
+          </div>
+          <div class="button-row_item button-row_item-last">
+            <img
+              id="gender-group"
+              data-gender="group"
+              src="../../renderer/assets/icons/group.png"
+              class="invert-image"
+              alt="Групповое фото"
+            />
+            <div class="button" data-gender="group">Групповое фото</div>
+          </div>
+        </div>
+        <button id="gender-continue"></button>
+      </div>
+    </div>
+
+    <!-- Style Screen -->
+    <div id="style-screen" class="screen">
+      <button class="back-button"></button>
+      <div class="style-block">
+        <h1></h1>
+        <div id="style-buttons">
+          <!-- Style buttons will be added dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Camera Screen -->
+    <div id="camera-screen" class="screen">
+      <button class="back-button" disabled></button>
+      <h1></h1>
+      <div class="video-container">
+        <div id="camera-loader">
+          <div class="loader-spinner"></div>
+          <div class="loader-text">Инициализация камеры...</div>
+        </div>
+        <video id="video" autoplay muted playsinline></video>
+        <div id="liveViewContainer">
+          <img id="liveViewImage" style="display: none" alt="Live View" />
+        </div>
+        <div id="countdown"></div>
+      </div>
+    </div>
+
+    <!-- Processing Screen -->
+    <div id="processing-screen" class="screen">
+      <h1></h1>
+      <div id="progress-bar">
+        <div id="progress-bar-fill"></div>
+        <div id="progress"></div>
+      </div>
+      <div id="progress-percentage">0%</div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="result-screen" class="screen">
+      <h1></h1>
+      <div class="content-container">
+        <img id="result-image" alt="Обработанное изображение" />
+        <div id="selected-params" class="selected-params">
+          <div id="selected-params-text"></div>
+        </div>
+      </div>
+      <div class="buttons-container">
+        <button id="print-photo">Печать фото</button>
+        <button id="start-over">Начать заново</button>
+        <button id="show-qr-button">Показать QR-код</button>
+      </div>
+    </div>
+
+    <!-- QR Modal -->
+    <div id="qr-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <img
+          id="qr-code-agree"
+          src="../../renderer/assets/icons/qr-image.jpg"
+          alt="Image"
+        />
+        <img id="qr-code-img" alt="QR Code" />
+      </div>
+    </div>
+
+    <!-- Language Switcher -->
+    <button id="language-switcher" style="display: none">KK</button>
+
+    <!-- Configurator Button -->
+    <button id="open-configurator" class="utility-button">Конфигуратор</button>
+
+    <!-- Hidden Canvas -->
+    <canvas
+      id="canvas"
+      width="1280"
+      height="720"
+      style="display: none"
+    ></canvas>
+  </body>
+</html>

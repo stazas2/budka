@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Лаунчер PhotoBooth</title>
+    <!-- Add main shared styles -->
+    <link rel="stylesheet" href="../../renderer/assets/css/main.css" />
+    <!-- Add launcher-specific styles -->
+    <link rel="stylesheet" href="../../renderer/assets/css/launcher.css" />
+    <!-- Updated datepicker path -->
+    <script src="../../renderer/utils/datepicker.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Фотобудка Лаунчер</h1>
+      <div class="folder-section">
+        <div class="folder-header">
+          <div class="folder-actions">
+            <button
+              id="createEvent"
+              class="create-button"
+              title="Создать мероприятие"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Создать мероприятие
+            </button>
+            <button
+              id="refreshFolders"
+              class="refresh-button"
+              title="Обновить список папок"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="folder-list_shell">
+          <div class="folder-list_shell-text">
+            <p>Название</p>
+            <p>Дата мероприятия</p>
+          </div>
+          <div class="folder-list" id="folderList">
+            <div class="loading">Загрузка папок событий</div>
+          </div>
+        </div>
+        <div class="selection-hint">
+          Выберите папку мероприятия для продолжения
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button id="openMainWindow">Запуск</button>
+        <button id="openEmptyWindow">Настройка мероприятия</button>
+        <button id="closeApp">Выход</button>
+      </div>
+    </div>
+
+    <!-- Template for folder item (hidden) -->
+    <template id="folder-item-template">
+      <div class="folder-item">
+        <div class="folder-item-content">
+          <span class="folder-name"></span>
+          <div class="folder-right-section">
+            <div class="folder-item-btns">
+              <button
+                class="edit-event-button"
+                title="Редактировать конфигурацию"
+              >
+                ✏️
+              </button>
+              <button class="delete-event-button" title="Удалить мероприятие">
+                &times;
+              </button>
+            </div>
+            <span class="folder-date"></span>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Модальное окно создания мероприятия -->
+    <div id="createEventModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Создание мероприятия</h2>
+          <span class="close-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="eventDate">Дата мероприятия (ДД.ММ.ГГГГ):</label>
+            <div class="date-input-container">
+              <input type="text" id="eventDate" placeholder="01.01.2024" />
+              <button id="calendarToggle" class="calendar-button">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              </button>
+            </div>
+            <div id="eventDateError" class="error-message"></div>
+          </div>
+          <div class="form-group">
+            <label for="eventName">Название мероприятия:</label>
+            <input type="text" id="eventName" placeholder="Мероприятие" />
+            <div id="eventNameError" class="error-message"></div>
+          </div>
+          <div class="form-actions">
+            <button id="createEventButton" class="button">Создать</button>
+            <button id="cancelEventButton" class="button secondary">
+              Отмена
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Модальное окно подтверждения удаления -->
+    <div id="deleteConfirmModal" class="confirm-modal">
+      <div class="confirm-modal-content">
+        <h3 class="confirm-modal-title">Удаление мероприятия</h3>
+        <p class="confirm-modal-message">
+          Вы уверены, что хотите удалить мероприятие "<span
+            id="eventToDelete"
+          ></span
+          >"? <br /><br />
+          <strong>Это действие невозможно отменить!</strong>
+        </p>
+        <div class="confirm-modal-actions">
+          <button class="confirm-delete" id="confirmDeleteButton">
+            Удалить
+          </button>
+          <button class="cancel-delete" id="cancelDeleteButton">Отмена</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Модальное окно редактирования конфигурации -->
+    <div id="configEditorModal" class="config-editor-modal">
+      <div class="config-editor-content">
+        <div class="config-editor-header">
+          <h2>
+            Редактирование конфигурации: <span id="configEventName"></span>
+          </h2>
+          <span class="close-modal" id="closeConfigEditor">&times;</span>
+        </div>
+        <div class="config-editor-body" id="configEditorBody">
+          <!-- Config properties will be generated here -->
+          <div class="loading">Загрузка конфигурации...</div>
+        </div>
+        <div class="config-editor-footer">
+          <button id="saveConfigButton" class="config-editor-button save">
+            Сохранить
+          </button>
+          <button id="cancelConfigButton" class="config-editor-button cancel">
+            Отмена
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScript files -->
+    <script src="launcher.js"></script>
+  </body>
+</html>

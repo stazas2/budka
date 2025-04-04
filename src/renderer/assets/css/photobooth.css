@@ -1,0 +1,1536 @@
+/* -----------------------------------------------------
+   RESET & GLOBAL
+----------------------------------------------------- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none; /* Запрещаем выделение элементов */
+}
+
+/* html {
+  scroll-behavior: smooth;
+} */
+
+body {
+  font-family: "Roboto", sans-serif;
+  background-color: var(--background-color);
+  background-image: var(--background-image);
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-attachment: fixed;
+  background-size: cover;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  -webkit-tap-highlight-color: transparent; /* Убирает подсветку нажатий */
+  /* animation: zoomBackground 2s infinite alternate;  */
+}
+
+@keyframes zoomBackground {
+  0% {
+    background-size: 100%;
+  }
+  100% {
+    background-size: 110%;
+  }
+}
+
+body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(var(--backdrop-blur));
+  z-index: -1;
+}
+
+/* Анимация */
+.animated-background {
+  background: var(--animated-background);
+  background-size: 400% 400%;
+  animation: gradientBackground 15s ease infinite;
+}
+
+@keyframes gradientBackground {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes zoomBackground {
+  0% {
+    background-size: 100%;
+  }
+  100% {
+    background-size: 110%;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes floatParticles {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-20px);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin-light {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin-dark {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes progress-animation {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes fade-up {
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-50%, 10px);
+  }
+}
+
+/* -----------------------------------------------------
+   LAYOUT: SCREENS & ELEMENTS
+----------------------------------------------------- */
+#screen-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.screen {
+  display: none;
+  padding: 20px;
+  min-height: 100vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  position: fixed; /* Меняем absolute на fixed */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0; /* Базовый z-index для всех экранов */
+  visibility: hidden; /* Скрываем экран полностью */
+  pointer-events: none; /* Отключаем взаимодействие с неактивными экранами */
+  opacity: 0; /* Добавляем полную прозрачность */
+}
+
+.screen.active {
+  display: flex;
+  visibility: visible; /* Показываем активный экран */
+  pointer-events: all; /* Включаем взаимодействие для активного экрана */
+  z-index: 1; /* Активный экран поверх остальных */
+  opacity: 1; /* Показываем активный экран */
+  animation: fadeIn 0.5s ease;
+}
+
+.style-block {
+  position: relative;
+  padding: 10px;
+}
+
+#style-buttons {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  /* display: grid; */
+  /* grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); */
+  gap: 15px;
+  width: 100%;
+  max-width: 1200px;
+  max-height: 700px;
+  overflow-y: auto;
+  padding: 20px 20px 17px;
+  /* padding: 20px 20px 0px; */
+  align-items: center;
+
+  /* Стили для скроллбара */
+  scrollbar-width: thin; /* Для браузера Firefox */
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent; /* Цвет для Firefox */
+
+  /* Для браузеров на базе WebKit */
+  scrollbar-width: none; /* Скрыть стандартный скроллбар */
+}
+
+/* Стили для скролла и класса hide */
+#style-buttons::-webkit-scrollbar {
+  margin-right: -20px;
+  width: 2px; /* Ширина вертикального скроллбара */
+  height: 8px; /* Высота горизонтального скроллбара (если есть) */
+}
+
+#style-buttons::-webkit-scrollbar-track {
+  background: transparent; /* Фоновый цвет трека */
+}
+
+#style-buttons::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3); /* Цвет ползунка */
+  border-radius: 4px; /* Радиус скругления углов ползунка */
+}
+
+#style-buttons.hide-scrollbar {
+  scrollbar-width: none; /* Для браузера Firefox */
+}
+
+#style-buttons.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Для браузеров на базе WebKit */
+}
+
+#style-buttons .button {
+  box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
+  opacity: 0;
+  animation: fadeIn 1s forwards; /* Анимация появления */
+  backdrop-filter: blur(10px) saturate(180%);
+}
+
+.style-buttons .button:active {
+  transform: scale(0.9) translateY(4px);
+  box-shadow: 0px 2px 12px rgba(0, 0, 0, 0.2);
+}
+
+#gender-continue {
+  display: flex;
+  color: var(--text-color);
+  margin: 20px auto;
+  margin-bottom: 0;
+  font-size: 1.7em;
+  /* 1.4 */
+  padding: 30px 60px;
+  /* 20 50 */
+  border-radius: 170px;
+  background: linear-gradient(
+    178deg,
+    rgba(36.65, 49.36, 81.12, 0.03) 0%,
+    rgba(98.2, 109.7, 138.45, 0.11) 39%,
+    rgba(0, 7.04, 28.15, 0) 100%
+  );
+  backdrop-filter: blur(10px) saturate(180%);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.button-row_item.selected {
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+  transform: scale(1.05);
+  background: rgba(0, 255, 0, 0.1);
+}
+
+.button {
+  display: inline-block;
+  vertical-align: top;
+  margin: 10px;
+  padding: 12px;
+  font-size: 1.5em;
+  cursor: pointer;
+  border: none;
+  border-radius: 12px;
+  text-align: center;
+  width: 100%;
+  max-width: 300px;
+  min-width: 200px;
+  /* background: rgba(255, 255, 255, 0.2); */
+  /* backdrop-filter: blur(10px) saturate(180%); */
+  transition:
+    transform 0.5s,
+    box-shadow 0.5s;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  transform: translateY(0);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.button:active {
+  transform: scale(0.95) translateY(2px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.button img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  pointer-events: none; /* Чтобы клики проходили к родителю */
+}
+
+.button div {
+  margin-top: 10px;
+  font-weight: 500;
+  pointer-events: none; /* Чтобы клики проходили к родителю */
+}
+
+button {
+  /* font-family: "Chakra Petch", sans-serif; */
+  font-family: "Roboto", sans-serif;
+  padding: 25.35px 50.7px;
+  font-size: 1.5em;
+  cursor: pointer;
+  border: none;
+  border-radius: 170px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px) saturate(180%);
+  font-weight: 700;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+button:active {
+  transform: scale(0.95) translateY(2px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+#print-photo,
+#start-over {
+  color: var(--text-color);
+  transition: all 0.3s ease;
+}
+
+#countdown {
+  position: relative;
+  bottom: 0;
+  font-size: 3.9em;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+#progress-bar {
+  width: 90%;
+  max-width: 600px;
+  height: 40px;
+  background-color: rgba(255, 255, 255, 0.2);
+  margin: 30px auto 15px;
+  border-radius: 40px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+#progress-bar-fill {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  background: linear-gradient(270deg, #00c6ff, #b95be5, #00c6ff);
+  background-size: 300% 100%;
+  animation: gradientAnimation 3s ease infinite;
+}
+
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Анимация внутри бара */
+/* #progress-bar-fill::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 20%);
+  background-size: 20px 20px;
+  animation: floatParticles 2s linear infinite;
+} */
+
+/* ! время движения */
+#progress-percentage {
+  display: none;
+  margin-top: 5px;
+  font-size: 2em;
+  color: var(--text-color);
+  font-weight: bold;
+  text-align: center;
+  animation: pulse 1.2s 10 ease-in-out;
+  animation-delay: 1.2s;
+}
+
+#result-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  transition: none;
+}
+
+.content-container {
+  display: flex;
+  /* flex: 1; */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#result-image {
+  max-width: 80%;
+  max-height: 60vh;
+  object-fit: contain;
+  transform: rotate(0deg);
+
+  padding: 20px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(196, 213, 217, 0.7511379551820728) 100%);
+  box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
+  border-radius: 40px;
+}
+
+.video-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 30vh;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+#video {
+  width: 90%; /* Увеличиваем ширину видео */
+  object-fit: contain;
+  /* ? */
+  /* padding: 20px;
+  background: linear-gradient(90deg, rgba(249,181,241,0.6615021008403361) 0%, rgba(0,212,255,0.35898109243697474) 100%);
+  box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
+}
+
+#gender-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Расстояние между строками */
+  align-items: center; /* Центрирование строк по горизонтали */
+}
+
+#gender-buttons .button img {
+  width: 100%;
+  height: 200px; /* Фиксированная высота для всех изображений */
+  object-fit: cover; /* Изображение заполнит контейнер, сохраняя пропорции */
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+#gender-buttons .button div {
+  margin-top: 10px;
+  font-weight: 500;
+  color: #222;
+  pointer-events: none;
+}
+
+.button-row_block {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px; /* Расстояние между строками */
+}
+
+#result-screen > div {
+  margin-top: 50px;
+  display: flex;
+  gap: 20px; /* Расстояние между кнопками */
+  justify-content: center;
+}
+
+#gender-buttons .button {
+  width: 260px;
+  height: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: none; /* Отключаем трансформацию */
+  box-shadow: none; /* Отключаем тень */
+  background: transparent;
+  transition: none; /* Отключаем анимацию перехода */
+}
+
+.button-row {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  padding: 10px;
+}
+
+.button-row_item {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px) saturate(180%);
+  box-shadow: 0px 4px 24px rgba(105.36, 97.05, 200.93, 0.25);
+  border-radius: 40px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  display: inline-flex;
+  padding: 10px;
+  cursor: pointer;
+  transition:
+    transform 0.5s,
+    box-shadow 0.5s;
+  transform: translateY(0);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  animation: fadeIn 0.5s forwards;
+}
+
+.button-row_item:active {
+  transform: scale(0.95) translateY(2px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.button-row_item img {
+  pointer-events: none;
+}
+
+.button-row_item div {
+  font-weight: 600;
+}
+
+#style-buttons div {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+h1 {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  font-size: 2.6em;
+  text-align: center;
+}
+
+.screen h1 {
+  color: var(--text-color);
+  letter-spacing: 1px;
+  /* font-weight: 700;
+  text-align: center;
+  margin: 0; */
+}
+
+#style-screen h1 {
+  /* margin-bottom: 40px; */
+  /* position: absolute; */
+  top: 15%;
+}
+
+#gender-screen h1 {
+  margin-bottom: 20px;
+}
+
+#camera-screen {
+  position: relative;
+}
+
+#camera-screen h1 {
+  /* position: absolute;
+  top: 50px; 
+  left: 50%; */
+  /* transform: translateX(-50%); */
+  position: relative;
+  margin: 0;
+  z-index: 1;
+  text-align: center;
+}
+
+#processing-screen h1 {
+  margin-bottom: 20px;
+}
+
+.buttons-container {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  padding-top: 10px; /* Отступ сверху для кнопок */
+}
+
+.back-button {
+  position: absolute;
+  bottom: 5%;
+  padding: 20px 70px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.back-button:disabled {
+  background: rgba(255, 255, 255, 0.2);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+#start-button:disabled {
+  background: rgba(255, 255, 255, 0.2);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+#print-photo:disabled {
+  background: rgba(255, 255, 255, 0.2);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+#gender-continue:disabled {
+  background: rgba(255, 255, 255, 0.2);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.theme-switcher {
+  display: none;
+  position: absolute;
+  top: 90px;
+  right: 20px;
+  width: 60px;
+  height: 34px;
+}
+
+.theme-switcher input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  /* ! */
+  display: none;
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #2196f3;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+#splash-screen {
+  margin-top: 30px;
+}
+
+#splash-screen h1 {
+  font-size: 3em;
+  margin-bottom: 40px;
+  color: var(--text-color);
+}
+
+#start-button {
+  padding: 30px 60px;
+  font-size: 1.8em;
+  cursor: pointer;
+  border: none;
+  /* border-radius: 12px; */
+  /* backdrop-filter: blur(10px); */
+  background: rgba(255, 255, 255, 0.25);
+  color: var(--text-color);
+  font-weight: 600;
+  transition:
+    background-color 0.3s,
+    transform 0.5s,
+    box-shadow 0.5s;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  transform: translateY(0);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#start-button:active {
+  transform: scale(0.95) translateY(2px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+#splash-screen .back-button {
+  display: none;
+}
+
+#logo-container {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+}
+
+#logo {
+  transition: transform 0.3s ease;
+}
+
+.rotation-90 #video,
+.rotation-270 #video {
+  max-height: 40vh;
+}
+
+.rotation-90 #countdown,
+.rotation-270 #countdown {
+  bottom: -25%;
+}
+
+#liveViewImage {
+  max-width: 100%;
+}
+
+#liveViewContainer {
+  position: relative;
+}
+.rotation-90 #liveViewContainer {
+  transform: rotate(90deg);
+}
+.rotation-180 #liveViewContainer {
+  transform: rotate(180deg);
+}
+.rotation-270 #liveViewContainer {
+  transform: rotate(270deg);
+}
+
+/* Адаптивность под разные экраны */
+/* Вертикальная ориентация */
+@media (orientation: portrait) {
+  /* Отсутствие ЛОГО */
+  .brandLogo-false #gender-buttons {
+    margin-bottom: 150px;
+  }
+  .brandLogo-false #style-buttons {
+    margin-bottom: 200px;
+  }
+
+  .modal-content {
+    max-width: 50vw;
+  }
+
+  .rotation-90 #countdown,
+  .rotation-270 #countdown {
+    bottom: -27%;
+    /* -18 */
+  }
+
+  .rotation-90 #video,
+  .rotation-270 #video {
+    position: relative;
+    top: -15%;
+    max-height: 53vh;
+  }
+
+  .back-button {
+    font-size: 1.7em;
+    padding: 30px 70px;
+  }
+
+  #style-screen h1 {
+    top: 20%;
+  }
+
+  .rotation-90 #camera-screen h1,
+  .rotation-270 #camera-screen h1 {
+    top: -29%;
+    /* -20 */
+  }
+
+  #camera-screen h1 {
+    top: -15%;
+  }
+
+  #style-buttons {
+    max-width: 1200px;
+    max-height: 900px;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    /*? Скролл */
+    /* overflow-y: auto; */
+  }
+
+  #style-buttons,
+  #gender-buttons {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .button {
+    max-width: 275px;
+  }
+
+  .button-row {
+    flex-direction: column;
+    /* align-items: center; */
+  }
+
+  .button-row_item {
+    padding: 20px;
+    /* 5 */
+  }
+
+  #result-image {
+    max-width: 90%;
+    max-height: 75vh;
+  }
+
+  #video {
+    width: 95%;
+    max-height: 50vh;
+  }
+
+  #logo {
+    /* width: 300px; */
+    height: auto;
+  }
+
+  #qr-code-img {
+    width: 375px;
+  }
+
+  .rotation-90 #liveViewContainer,
+  .rotation-270 #liveViewContainer {
+    bottom: 12%;
+  }
+
+  .rotation-90 #result-image,
+  .rotation-270 #result-image {
+    max-height: 85vh;
+    /*? 40 */
+  }
+
+  .rotation-90 #result-screen > div,
+  .rotation-270 #result-screen > div {
+    margin-top: 30px;
+  }
+
+  .rotation-90 #result-screen h1,
+  .rotation-270 #result-screen h1 {
+    margin-bottom: 0px;
+  }
+
+  .rotation-90 #selected-params-text {
+    position: relative;
+    top: 10%;
+    /*? 40  */
+  }
+
+  .rotation-90 #start-over,
+  #print-photo,
+  .rotation-270 #start-over,
+  #print-photo {
+    margin-top: 0px;
+    position: relative;
+    /* top: 95%; */
+  }
+
+  #logo-container {
+    top: 1%;
+    /* ! 6 */
+  }
+}
+
+/* Горизонтальная ориентация */
+@media (orientation: landscape) {
+  .rotation-90 #liveViewImage,
+  .rotation-270 #liveViewImage {
+    max-width: 65%;
+  }
+
+  .rotation-90 #liveViewContainer {
+    top: 58%;
+  }
+  .rotation-270 #liveViewContainer {
+    bottom: 61%;
+  }
+
+  /* todo */
+  .camera-canon #countdown {
+    bottom: 4%;
+  }
+
+  .camera-canon #countdown {
+    bottom: 0;
+  }
+
+  .rotation-90 #countdown,
+  .rotation-270 #countdown {
+    bottom: -34%;
+    /* -37 */
+  }
+
+  .brandLogo-false #gender-buttons {
+    margin-bottom: 100px;
+  }
+  .brandLogo-false #style-buttons {
+    margin-bottom: 150px;
+  }
+
+  #qr-code-img {
+    width: 325px;
+  }
+
+  .modal-content {
+    max-width: 35vw;
+  }
+
+  /* .style-block {
+    bottom: -4%;
+  } */
+
+  .rotation-90 #video,
+  .rotation-270 #video {
+    max-height: 46vh;
+  }
+
+  #logo-container {
+    top: 1%;
+    /* 3 */
+  }
+
+  #logo {
+    /* width: 180px; */
+    height: auto;
+  }
+
+  .button-row_item {
+    flex-direction: row;
+  }
+
+  .button {
+    max-width: 240px;
+    margin: 0;
+  }
+
+  #style-buttons {
+    gap: 30px;
+    max-height: 600px;
+  }
+
+  .back-button {
+    bottom: 3%;
+  }
+
+  #camera-screen h1 {
+    top: -25%;
+  }
+
+  .button-row_item .button {
+    font-size: 2em;
+  }
+
+  #result-screen > div {
+    margin-top: 30px;
+    /*?  */
+  }
+
+  #style-buttons,
+  #gender-buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .button-row {
+    justify-content: center;
+  }
+  #result-image {
+    max-width: 80%;
+    max-height: 85vh;
+  }
+  /* #video {
+    max-width: 50%;
+    max-height: 80vh;
+  } */
+  #video {
+    width: 85%;
+    height: 67vh;
+  }
+
+  .rotation-90 #result-image,
+  .rotation-270 #result-image {
+    max-height: 90vh;
+  }
+
+  .rotation-90 #result-screen h1,
+  .rotation-270 #result-screen h1 {
+    position: relative;
+    /* top: -2%; */
+    /*? 5 */
+  }
+
+  .rotation-90 #selected-params-text,
+  .rotation-270 #selected-params-text {
+    position: relative;
+    top: 0%;
+    /*? 160 */
+  }
+}
+
+@media (min-width: 880px) and (min-height: 1800px) {
+  #style-screen h1 {
+    top: 28%;
+  }
+}
+
+@media (max-width: 1000px) and (max-height: 1000px) {
+  .rotation-90 #video,
+  .rotation-270 #video {
+    max-height: 42vh;
+  }
+}
+
+@media (max-width: 775px) {
+  #style-buttons {
+    /* grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); */
+    /* gap: 10px; */
+    padding: 15px;
+  }
+
+  .button {
+    padding: 15px;
+    font-size: 1.4em;
+  }
+}
+
+@media (max-width: 710px) {
+  #style-screen h1 {
+    /* margin-top: 65px; */
+    margin-bottom: 0;
+  }
+  #result-screen > div {
+    margin-top: 60px;
+  }
+  #result-screen h1 {
+    margin-bottom: 50px;
+  }
+  .content-container {
+    flex: 0;
+  }
+  .back-button {
+    padding: 20px 70px;
+  }
+  .button-row_item {
+    box-shadow: 0px 2px 8px rgba(105.36, 97.05, 200.93, 0.25);
+    padding: 5px;
+  }
+  .button {
+    margin: 5px;
+  }
+  .selected-params {
+    font-size: 1.2em;
+  }
+}
+
+@media (max-width: 600px) {
+  .button-row_item {
+    padding: 5px;
+    width: 220px;
+  }
+  .button-row_item-last {
+    width: auto;
+  }
+
+  /* #camera-screen h1 {
+    top: 10%;
+  } */
+}
+
+@media (max-width: 480px) {
+  .button-row_item {
+    width: 160px;
+  }
+  .button-row_item-last {
+    width: auto;
+  }
+  #style-buttons {
+    grid-template-columns: 1fr;
+    /* gap: 10px; */
+    padding: 10px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+    overflow-y: auto;
+  }
+
+  .button {
+    font-size: 1.5em;
+    /* width: 300px; */
+    margin: 10px;
+  }
+}
+
+@media (max-height: 950px) {
+  .button-row {
+    gap: 10px;
+  }
+
+  .button {
+    margin: 0px;
+  }
+  #gender-screen h1 {
+    margin-bottom: 5px;
+    font-size: 2em;
+  }
+  .button-row {
+    padding: 0;
+  }
+}
+
+.selected-params {
+  font-size: 1.4em;
+  margin-top: 10px;
+}
+
+#fullscreen-toggle {
+  z-index: 2;
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  padding: 40px;
+  font-size: 1em;
+  background-color: #4caf50;
+  color: white;
+  border-radius: 5px;
+  opacity: 0;
+}
+
+#camera-loader {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  z-index: 2;
+}
+
+.loader-spinner {
+  width: 50px;
+  height: 50px;
+  border-width: 5px;
+  border-style: solid;
+  border-radius: 50%;
+  animation: spin 1s ease-in-out infinite;
+}
+
+.loader-text {
+  font-size: 1.2em;
+  text-align: center;
+}
+
+.video-container.loading #video {
+  opacity: 0;
+}
+
+.video-container.loading #camera-loader {
+  display: flex;
+}
+
+body.light .button {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--text-color);
+}
+
+body.light #style-buttons div {
+  color: var(--text-color);
+}
+
+body.light .button-row_item .button {
+  color: var(--text-color);
+}
+
+body.light .back-button {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--text-color);
+}
+
+body.light .invert-image {
+  filter: invert(1);
+}
+
+body.light #selected-params-text {
+  color: var(--text-color);
+}
+
+body.light #camera-loader .loader-text {
+  color: var(--text-color);
+}
+
+body.light #camera-loader .loader-spinner {
+  border-color: rgba(0, 0, 0, 0.3);
+  border-top-color: #000;
+  animation: spin-light 1s ease-in-out infinite;
+}
+
+body.light::before {
+  /* background: rgba(255, 255, 255, 0.4); */
+  background: linear-gradient(to top, transparent, white 200%);
+}
+
+body.dark .button {
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--text-color);
+}
+
+body.dark #selected-params-text {
+  color: var(--text-color);
+}
+
+body.dark #style-buttons div {
+  color: var(--text-color);
+}
+
+body.dark #camera-loader .loader-text {
+  color: #e6e6fa;
+}
+
+body.dark .back-button {
+  background: linear-gradient(
+    178deg,
+    rgba(36.65, 49.36, 81.12, 0.03) 0%,
+    rgba(98.2, 109.7, 138.45, 0.11) 39%,
+    rgba(0, 7.04, 28.15, 0) 100%
+  );
+  color: var(--text-color);
+}
+
+body.dark .invert-image {
+  filter: invert(0);
+}
+
+body.dark #camera-loader .loader-spinner {
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  animation: spin-dark 1s ease-in-out infinite;
+}
+
+body.dark #camera-loader .loader-text {
+  color: var(--text-color);
+}
+
+body.dark::before {
+  /* background: rgba(0, 0, 0, 0.4); */
+  background: linear-gradient(to top, transparent, black 200%);
+}
+
+#style-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.loader-spinner {
+  border: 8px solid #f3f3f3;
+  border-top: 8px solid #3498db;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 2s linear infinite;
+  margin-bottom: 10px;
+}
+
+.loader-text {
+  font-size: 1.2em;
+  color: #333;
+}
+
+#language-switcher {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 15px 30px;
+  font-size: 1.2em;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+#language-switcher:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+#progress {
+  width: 0;
+  height: 100%;
+  animation: progress-animation 5s linear infinite;
+}
+
+.floating-text {
+  position: absolute;
+  top: 70%;
+  color: var(--text-color);
+  font-size: 1.5em;
+  font-family: "Roboto", sans-serif;
+  animation: fade-up 2s ease-in-out forwards;
+  opacity: 0;
+}
+
+.scroll-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: bounce 1.5s infinite;
+}
+
+.start-text {
+  width: 500px;
+  position: relative;
+  text-align: center;
+  /* text-transform: uppercase; */
+  display: inline;
+  align-items: center;
+  justify-content: center;
+  margin-top: 40px;
+  font-size: 1.2em;
+  color: rgba(0, 0, 0, 0.8);
+  font-weight: 500;
+}
+
+.start-text input[type="checkbox"] {
+  opacity: 0;
+}
+
+.start-text .custom-checkbox {
+  width: 24px;
+  height: 24px;
+  background-color: transparent;
+  backdrop-filter: blur(10px) saturate(180%);
+  border-radius: 4px; /* Rounded corners */
+  margin-right: 15px;
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+  border: 0.5px solid rgba(0, 0, 0, 0.2);
+}
+
+.start-text input[type="checkbox"]:checked + .custom-checkbox {
+  /* background-color: #2196F3; */
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.start-text .custom-checkbox::after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 8px;
+  top: 4px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.start-text input[type="checkbox"]:checked + .custom-checkbox::after {
+  display: block;
+}
+
+.start-text span:last-child {
+  line-height: 1.4;
+}
+
+.custom-checkbox-qr {
+  letter-spacing: 0.3px;
+  z-index: 1000;
+  cursor: pointer;
+  color: rgb(35, 24, 131);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+body.light .custom-checkbox-text {
+  color: var(--text-color);
+}
+
+body.dark .custom-checkbox-text {
+  color: var(--text-color);
+}
+
+body.light .custom-checkbox-qr {
+  color: rgb(59, 66, 90);
+}
+
+body.dark .custom-checkbox-qr {
+  color: rgb(52, 140, 211);
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  position: relative;
+  background: linear-gradient(90deg, rgba(85, 84, 84, 0.98) 0%, rgba(196, 213, 217, 0.911379551820728) 100%);
+  margin: auto;
+  border-radius: 10px;
+  padding: 20px;
+  max-height: 80vh;
+  /* overflow: auto; */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  opacity: 1;
+  animation: fadeIn 0.5s ease;
+}
+
+.modal-content img {
+  width: 100%;
+  height: auto;
+}
+
+.close-modal {
+  /* ? */
+  display: flex;
+  justify-content: right;
+  font-size: 50px;
+  margin-bottom: -15px;
+  margin-top: -35px;
+  margin-right: -19px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close-modal:hover,
+.close-modal:focus {
+  color: black;
+  text-decoration: none;
+}
+
+#show-qr-button {
+  color: var(--text-color);
+}
+
+/* Стили для кнопки открытия конфигуратора */
+#open-configurator {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 10px 20px;
+  font-size: 1em;
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--text-color);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+#open-configurator:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
