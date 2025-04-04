@@ -207,12 +207,13 @@ function ensureConfigDefaults() {
   
   // Camera settings - ensure we're properly setting and logging camera_rotation
   config.camera_rotation = config.camera_rotation != null ? Number(config.camera_rotation) : 0;
-  config.send_image_rotation = config.send_image_rotation != null ? Number(config.send_image_rotation) : 0;
+  // todo
+  config.send_image_rotation = config.send_image_rotation != null ? Number(config.camera_rotation) : 0;
   console.log('Camera rotation set to:', config.camera_rotation);
   
   // Logo and theme settings
   config.mainLogoScale = Number(config.mainLogoScale) || 1;
-  config.logoScale = Number(config.logoScale) || 1;
+  config.logo_scale = Number(config.logo_scale) || 1;
   config.logo_pos_x = Number(config.logo_pos_x) || 0;
   config.logo_pos_y = Number(config.logo_pos_y) || 0;
   config.theme = config.theme || "light";

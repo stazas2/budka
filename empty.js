@@ -132,13 +132,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // todo
     // 'selectHotFolder': 'hotFolderPath'
     const fileSelectors = {
-        'selectLogo': 'logoPath',
-        'selectBrandLogo': 'brandLogoPath',
-        'selectLightBgImage': 'lightBackgroundImage',
-        'selectDarkBgImage': 'darkBackgroundImage'
+        'selectLogo': { inputId: 'logoPath', previewId: 'logoPathPreview' },
+        'selectBrandLogo': { inputId: 'brandLogoPath', previewId: 'brandLogoPathPreview' },
+        'selectLightBgImage': { inputId: 'lightBackgroundImage', previewId: 'lightBackgroundImagePreview' },
+        'selectDarkBgImage': { inputId: 'darkBackgroundImage', previewId: 'darkBackgroundImagePreview' }
     };
     
-    Object.entries(fileSelectors).forEach(([buttonId, inputId]) => {
+    Object.entries(fileSelectors).forEach(([buttonId, ids]) => {
         const button = document.getElementById(buttonId);
         if (button) {
             button.addEventListener('click', () => {
@@ -152,7 +152,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 
                 if (result && !result.canceled && result.filePaths && result.filePaths.length > 0) {
-                    document.getElementById(inputId).value = result.filePaths[0];
+                    const selectedPath = result.filePaths[0];
+                    document.getElementById(ids.inputId).value = selectedPath;
+                    
+                    // Update image preview
+                    updateImagePreview(ids.inputId, ids.previewId);
+                    
+                    // Show notification about path extraction
+                    showNotification('Для сохранения будет использовано только имя файла', 'info');
                 }
             });
         }
@@ -340,6 +347,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // Add input change listeners for image preview updates
+    const imageInputs = ['logoPath', 'brandLogoPath', 'lightBackgroundImage', 'darkBackgroundImage'];
+    
+    imageInputs.forEach(inputId => {
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.addEventListener('change', () => {
+                updateImagePreview(inputId, inputId + 'Preview');
+            });
+            
+            input.addEventListener('input', () => {
+                updateImagePreview(inputId, inputId + 'Preview');
+            });
+        }
+    });
 });
 
 // Function to load config settings
@@ -403,9 +426,29 @@ function loadConfigSettings() {
 
 // Function to load branding settings
 function loadBrandingSettings(configData) {
-    // Logos
-    document.getElementById('logoPath').value = configData.logoPath || 'empty.png';
-    document.getElementById('brandLogoPath').value = configData.brandLogoPath || 'empty.png';
+    // Logos - handle the case where logo paths might be stored as filenames or full paths
+    // We'll show the full path in the UI if we're able to locate the file
+    let logoPath = configData.logoPath || 'empty.png';
+    let brandLogoPath = configData.brandLogoPath || 'empty.png';
+    
+    // Try to resolve full paths for display in the UI
+    if (currentFolderPath) {
+        // Check if paths are already absolute
+        if (!path.isAbsolute(logoPath) && fs.existsSync(path.join(currentFolderPath, logoPath))) {
+            logoPath = path.join(currentFolderPath, logoPath);
+        }
+        
+        if (!path.isAbsolute(brandLogoPath) && fs.existsSync(path.join(currentFolderPath, brandLogoPath))) {
+            brandLogoPath = path.join(currentFolderPath, brandLogoPath);
+        }
+    }
+    
+    document.getElementById('logoPath').value = logoPath;
+    document.getElementById('brandLogoPath').value = brandLogoPath;
+    
+    // Update image previews
+    updateImagePreview('logoPath', 'logoPathPreview');
+    updateImagePreview('brandLogoPath', 'brandLogoPathPreview');
     
     // Position and scale
     document.getElementById('logo_pos_x').value = configData.logo_pos_x || 0;
@@ -440,7 +483,18 @@ function loadBrandingSettings(configData) {
     if (configData.lightTheme) {
         document.getElementById('lightBackgroundColor').value = configData.lightTheme.backgroundColor || '#ffebcd';
         document.getElementById('lightBackgroundColorPicker').value = configData.lightTheme.backgroundColor || '#ffebcd';
-        document.getElementById('lightBackgroundImage').value = configData.lightTheme.backgroundImage || '';
+        
+        // Handle image path for display in UI
+        let lightBgImage = configData.lightTheme.backgroundImage || '';
+        if (lightBgImage && currentFolderPath && !path.isAbsolute(lightBgImage)) {
+            if (fs.existsSync(path.join(currentFolderPath, lightBgImage))) {
+                lightBgImage = path.join(currentFolderPath, lightBgImage);
+            }
+        }
+        
+        document.getElementById('lightBackgroundImage').value = lightBgImage;
+        updateImagePreview('lightBackgroundImage', 'lightBackgroundImagePreview');
+        
         document.getElementById('lightTextColor').value = configData.lightTheme.lightTextColor || '#000000';
         document.getElementById('lightTextColorPicker').value = configData.lightTheme.lightTextColor || '#000000';
     }
@@ -449,7 +503,18 @@ function loadBrandingSettings(configData) {
     if (configData.darkTheme) {
         document.getElementById('darkBackgroundColor').value = configData.darkTheme.backgroundColor || '#000000';
         document.getElementById('darkBackgroundColorPicker').value = configData.darkTheme.backgroundColor || '#000000';
-        document.getElementById('darkBackgroundImage').value = configData.darkTheme.backgroundImage || '';
+        
+        // Handle image path for display in UI
+        let darkBgImage = configData.darkTheme.backgroundImage || '';
+        if (darkBgImage && currentFolderPath && !path.isAbsolute(darkBgImage)) {
+            if (fs.existsSync(path.join(currentFolderPath, darkBgImage))) {
+                darkBgImage = path.join(currentFolderPath, darkBgImage);
+            }
+        }
+        
+        document.getElementById('darkBackgroundImage').value = darkBgImage;
+        updateImagePreview('darkBackgroundImage', 'darkBackgroundImagePreview');
+        
         document.getElementById('darkTextColor').value = configData.darkTheme.darkTextColor || '#ffffff';
         document.getElementById('darkTextColorPicker').value = configData.darkTheme.darkTextColor || '#ffffff';
     }
@@ -825,8 +890,8 @@ function collectFormData() {
         const animatedBackground = document.getElementById('animatedBackground');
         
         // Only set properties if elements exist
-        if (logoPath) formData.logoPath = logoPath.value;
-        if (brandLogoPath) formData.brandLogoPath = brandLogoPath.value;
+        if (logoPath) formData.logoPath = extractFilenameFromPath(logoPath.value);
+        if (brandLogoPath) formData.brandLogoPath = extractFilenameFromPath(brandLogoPath.value);
         if (logo_pos_x) formData.logo_pos_x = parseInt(logo_pos_x.value) || 0;
         if (logo_pos_y) formData.logo_pos_y = parseInt(logo_pos_y.value) || 0;
         if (logo_scale) formData.logo_scale = parseFloat(logo_scale.value) || 1;
@@ -844,7 +909,7 @@ function collectFormData() {
         if (lightBackgroundColor || lightBackgroundImage || lightTextColor) {
             formData.lightTheme = {
                 backgroundColor: lightBackgroundColor ? lightBackgroundColor.value : '#ffebcd',
-                backgroundImage: lightBackgroundImage ? lightBackgroundImage.value : '',
+                backgroundImage: lightBackgroundImage ? extractFilenameFromPath(lightBackgroundImage.value) : '',
                 lightTextColor: lightTextColor ? lightTextColor.value : '#000000'
             };
         }
@@ -857,7 +922,7 @@ function collectFormData() {
         if (darkBackgroundColor || darkBackgroundImage || darkTextColor) {
             formData.darkTheme = {
                 backgroundColor: darkBackgroundColor ? darkBackgroundColor.value : '#000000',
-                backgroundImage: darkBackgroundImage ? darkBackgroundImage.value : '',
+                backgroundImage: darkBackgroundImage ? extractFilenameFromPath(darkBackgroundImage.value) : '',
                 darkTextColor: darkTextColor ? darkTextColor.value : '#ffffff'
             };
         }
@@ -930,6 +995,16 @@ function collectFormData() {
     }
     
     return formData;
+}
+
+// Helper function to extract filename from full path
+function extractFilenameFromPath(filePath) {
+    if (!filePath) return '';
+    
+    // Handle both Windows and Unix-style paths
+    const normalizedPath = filePath.replace(/\\/g, '/');
+    const parts = normalizedPath.split('/');
+    return parts[parts.length - 1];
 }
 
 // Function to show notification
@@ -1113,4 +1188,45 @@ async function saveCameraSettings() {
         console.error('Error saving camera settings:', error);
         showNotification('Error saving camera settings: ' + error.message, 'error');
     }
+}
+
+// Add function to update image preview
+function updateImagePreview(inputId, previewId) {
+    const input = document.getElementById(inputId);
+    const previewContainer = document.getElementById(previewId);
+    
+    if (!input || !previewContainer) return;
+    
+    // Clear existing preview
+    previewContainer.innerHTML = '';
+    previewContainer.className = 'image-preview';
+    
+    if (!input.value) {
+        previewContainer.classList.add('empty');
+        return;
+    }
+    
+    // Get file path
+    let filePath = input.value;
+    
+    // If it's a relative path, try to resolve it against the current folder
+    if (!path.isAbsolute(filePath) && currentFolderPath) {
+        filePath = path.join(currentFolderPath, filePath);
+    }
+    
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+        previewContainer.innerHTML = '<div class="error-text">Файл не найден</div>';
+        return;
+    }
+    
+    // Create and add the image element
+    const img = document.createElement('img');
+    img.src = filePath;
+    img.alt = path.basename(filePath);
+    img.onerror = function() {
+        previewContainer.innerHTML = '<div class="error-text">Ошибка загрузки изображения</div>';
+    };
+    
+    previewContainer.appendChild(img);
 }

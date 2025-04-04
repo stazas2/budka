@@ -121,9 +121,9 @@ function applyConfig() {
     // === LOGO SETTINGS ===
     // Apply logo settings
     printLogo = config?.logoPath;
-    logo_scale = config.logoScale || 1;
-    logo_pos_x = config.logoOffsetX || 0;
-    logo_pos_y = config.logoOffsetY || 0;
+    logo_scale = config.logo_scale || 1;
+    logo_pos_x = config.logo_pos_x || 0;
+    logo_pos_y = config.logo_pos_y || 0;
     
     // === BRAND LOGO SETTINGS ===
     if (config.brandLogoPath && brandLogo) {
@@ -300,7 +300,7 @@ if (!fs.existsSync(canonPhotosPath)) {
 }
 
 let printLogo = config?.logoPath
-let logo_scale = config.logoScale
+let logo_scale = config.logo_scale
 brandLogo.src = config?.brandLogoPath
 brandLogo.style.transform = `scale(${config.mainLogoScale})`
 document.body.classList.add(`rotation-${config.camera_rotation}`)
@@ -308,8 +308,8 @@ document.body.classList.add(`camera-${config.cameraMode}`)
 document.body.classList.add(
   `brandLogo-${config.brandLogoPath ? "true" : "false"}`
 )
-let logo_pos_x = config.logoOffsetX
-let logo_pos_y = config.logoOffsetY
+let logo_pos_x = config.logo_pos_x
+let logo_pos_y = config.logo_pos_y
 
 if (!fs.existsSync(brandLogo.src.replace(/^file:\/\/\//, ""))) {
   config.brandLogoPath = ""

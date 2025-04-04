@@ -678,3 +678,43 @@ input:checked + .toggle-slider:before {
       transform: rotate(360deg);
    }
 }
+
+/* Image preview styles */
+.image-preview {
+   margin-top: 10px;
+   width: 100%;
+   max-height: 120px;
+   border: 1px dashed #ccc;
+   border-radius: 4px;
+   overflow: hidden;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   background-color: #f9f9f9;
+}
+
+.image-preview img {
+   max-width: 100%;
+   max-height: 120px;
+   object-fit: contain;
+}
+
+.image-preview.empty {
+   height: 60px;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   color: #999;
+   font-style: italic;
+}
+
+.image-preview.empty::after {
+   content: "Нет изображения";
+}
+
+.image-preview .error-text {
+   color: #f44336;
+   padding: 10px;
+   text-align: center;
+   font-size: 12px;
+}
