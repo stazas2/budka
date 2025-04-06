@@ -702,6 +702,12 @@ ipcMain.on('switch-to-photobooth', (event, folderPath) => {
   mainWindow.show();
 });
 
+// Make sure we have a handler for close-app
+ipcMain.on('close-app', () => {
+  console.log('Received request to close the application due to camera mode change');
+  app.quit();
+});
+
 // Handler to get config for renderer processes
 ipcMain.handle('get-config', () => {
   return config;

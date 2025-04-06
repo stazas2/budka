@@ -117,13 +117,70 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add event listener to toggle Canon settings visibility based on camera mode
     const cameraModeSelect = document.getElementById('cameraMode');
     if (cameraModeSelect) {
+        let originalCameraMode = cameraModeSelect.value;
+        
         cameraModeSelect.addEventListener('change', () => {
             const canonSettings = document.getElementById('canon-settings');
+            const selectedMode = cameraModeSelect.value;
             
-            if (cameraModeSelect.value === 'canon') {
-                canonSettings.style.display = 'block';
+            if (selectedMode === 'canon' && originalCameraMode !== 'canon') {
+                // Show confirmation modal before switching to Canon mode
+                showCameraModeModal();
+                
+                // Don't update UI yet until user confirms
+                cameraModeSelect.value = originalCameraMode;
             } else {
-                canonSettings.style.display = 'none';
+                // For other changes, just update UI
+                if (selectedMode === 'canon') {
+                    canonSettings.style.display = 'block';
+                } else {
+                    canonSettings.style.display = 'none';
+                }
+                originalCameraMode = selectedMode;
+            }
+        });
+    }
+    
+    // Camera mode change modal functionality
+    const modal = document.getElementById('camera-mode-modal');
+    const confirmButton = document.getElementById('confirm-camera-mode');
+    const cancelButton = document.getElementById('cancel-camera-mode');
+    
+    if (modal && confirmButton && cancelButton) {
+        confirmButton.addEventListener('click', async () => {
+            try {
+                // Save camera mode setting to global config
+                const globalConfig = await loadGlobalConfig();
+                globalConfig.cameraMode = 'canon'; // Set to canon mode
+                await saveGlobalConfig(globalConfig);
+                
+                // Close the modal
+                modal.style.display = 'none';
+                
+                // Show notification
+                showNotification('Настройки камеры сохранены. Приложение будет закрыто.', 'success');
+                
+                // Wait a moment for the user to see the notification
+                setTimeout(() => {
+                    // Close the application
+                    ipcRenderer.send('close-app');
+                }, 2000);
+            } catch (error) {
+                console.error('Error saving camera mode:', error);
+                showNotification('Ошибка сохранения настроек камеры: ' + error.message, 'error');
+                modal.style.display = 'none';
+            }
+        });
+        
+        cancelButton.addEventListener('click', () => {
+            // Close modal without making changes
+            modal.style.display = 'none';
+        });
+        
+        // Close modal if clicked outside
+        window.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
             }
         });
     }
@@ -1098,8 +1155,10 @@ function loadCameraSettings(configData, globalConfig) {
     }
     
     // Load camera rotation settings from event config
+    console.log(configData)
     document.getElementById('camera_rotation').value = configData.camera_rotation || 0;
-    document.getElementById('send_image_rotation').value = configData.send_image_rotation || 0;
+    // todo
+    // document.getElementById('send_image_rotation').value = configData.send_image_rotation || 0;
     document.getElementById('isEvf').checked = configData.isEvf || false;
     
     // Load Canon specific settings if available
@@ -1135,7 +1194,7 @@ function loadCameraSettings(configData, globalConfig) {
     showNotification('Camera settings loaded successfully', 'success');
 }
 
-// Function to save camera settings
+// Function to save camera settings - update to handle the modal confirmation flow
 async function saveCameraSettings() {
     if (!currentFolderPath) {
         showNotification('No event folder selected', 'error');
@@ -1143,13 +1202,25 @@ async function saveCameraSettings() {
     }
 
     try {
-        // Save camera mode to global config
-        const cameraMode = document.getElementById('cameraMode').value;
+        // Get current camera mode from select
+        const cameraModeSelect = document.getElementById('cameraMode');
+        const cameraMode = cameraModeSelect.value;
+        
+        // Get global config to check if mode is changing
         const globalConfig = await loadGlobalConfig();
+        const currentMode = globalConfig.cameraMode || 'pc';
+        
+        // If switching to canon mode, show confirmation instead of saving
+        if (cameraMode === 'canon' && currentMode !== 'canon') {
+            showCameraModeModal();
+            return; // Don't proceed with normal save
+        }
+        
+        // For all other cases, proceed with normal save
         globalConfig.cameraMode = cameraMode;
         await saveGlobalConfig(globalConfig);
         
-        // Save other camera settings to event config
+        // Continue with saving other camera settings to event config
         const configPath = path.join(currentFolderPath, 'config.json');
         let configData = {};
         
@@ -1187,6 +1258,14 @@ async function saveCameraSettings() {
     } catch (error) {
         console.error('Error saving camera settings:', error);
         showNotification('Error saving camera settings: ' + error.message, 'error');
+    }
+}
+
+// Function to show camera mode change modal
+function showCameraModeModal() {
+    const modal = document.getElementById('camera-mode-modal');
+    if (modal) {
+        modal.style.display = 'flex';
     }
 }
 
