@@ -8,6 +8,9 @@
     <script src="utils/datepicker.js"></script>
   </head>
   <body>
+    <!-- Authorization Button -->
+    <button id="authButton" class="auth-button">Авторизация</button>
+
     <div class="container">
       <h1>Фотобудка Лаунчер</h1>
       <div class="folder-section">
@@ -193,6 +196,48 @@
       </div>
     </div>
 
+    <!-- Модальное окно авторизации -->
+    <div id="authModal" class="modal">
+      <div class="modal-content auth-modal-content">
+        <div class="modal-header">
+          <h2>Авторизация</h2>
+          <span class="close-modal" id="closeAuthModal">&times;</span>
+        </div>
+        <div class="modal-body">
+          <div class="auth-container">
+            <div class="qr-section">
+              <div class="qr-display" id="qrDisplay">
+                <div class="qr-placeholder">QR-код для сканирования</div>
+              </div>
+            </div>
+            <div class="camera-section">
+              <div class="camera-view" id="cameraView">
+                <!-- Здесь будет видео с камеры -->
+                <div class="camera-placeholder">
+                  Камера для сканирования QR-кода
+                </div>
+              </div>
+              <div class="camera-status" id="cameraStatus">
+                Ожидание сканирования...
+              </div>
+            </div>
+            <div class="manual-section">
+              <input
+                type="text"
+                id="authKeyInput"
+                placeholder="Введите ключ авторизации вручную"
+              />
+              <button id="validateKeyButton" class="validate-key-button">
+                Проверить
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="launcher.js"></script>
+    <!-- Add jsQR library for QR code scanning -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   </body>
 </html>

@@ -832,6 +832,226 @@ function saveConfig(modal) {
   }
 }
 
+// Mock data for authentication (this would come from a server in a real implementation)
+const VALID_AUTH_KEY = "PHOTO-BOOTH-AUTH-12345";
+
+// Function to handle authorization modal
+function initAuthModal() {
+  const authButton = document.getElementById('authButton');
+  const authModal = document.getElementById('authModal');
+  const closeAuthModal = document.getElementById('closeAuthModal');
+  const validateKeyButton = document.getElementById('validateKeyButton');
+  const authKeyInput = document.getElementById('authKeyInput');
+  const cameraStatus = document.getElementById('cameraStatus');
+  const cameraView = document.getElementById('cameraView');
+  
+  // For demonstration purposes, create a simple QR code-like element
+  const qrDisplay = document.getElementById('qrDisplay');
+  qrDisplay.innerHTML = ''; // Clear placeholder
+  
+  // Create a mock QR code (just for UI representation)
+  const mockQrCode = document.createElement('div');
+  mockQrCode.style.width = '150px';
+  mockQrCode.style.height = '150px';
+  mockQrCode.style.background = 'repeating-linear-gradient(45deg, #333, #333 10px, #fff 10px, #fff 20px)';
+  mockQrCode.style.border = '8px solid white';
+  mockQrCode.style.boxShadow = '0 0 0 1px #ccc';
+  qrDisplay.appendChild(mockQrCode);
+  
+  // Open auth modal when clicking the auth button
+  authButton.addEventListener('click', () => {
+    authModal.style.display = 'flex';
+    authKeyInput.value = ''; // Clear input field
+    cameraStatus.textContent = 'Включение камеры...';
+    cameraStatus.style.color = '#666';
+    
+    // Start the real camera
+    startRealCamera();
+  });
+  
+  // Close auth modal
+  closeAuthModal.addEventListener('click', () => {
+    authModal.style.display = 'none';
+    stopRealCamera();
+  });
+  
+  // Validate key button click
+  validateKeyButton.addEventListener('click', () => {
+    validateAuthKey(authKeyInput.value.trim());
+  });
+  
+  // Also validate on Enter key
+  authKeyInput.addEventListener('keyup', (event) => {
+    if (event.key === 'Enter') {
+      validateAuthKey(authKeyInput.value.trim());
+    }
+  });
+}
+
+// Function to validate authentication key
+function validateAuthKey(key) {
+  const cameraStatus = document.getElementById('cameraStatus');
+  
+  if (!key) {
+    cameraStatus.textContent = 'Ошибка: Введите ключ авторизации';
+    cameraStatus.style.color = '#e53935';
+    return;
+  }
+  
+  // Compare with valid key
+  if (key === VALID_AUTH_KEY) {
+    cameraStatus.textContent = 'Авторизация успешна!';
+    cameraStatus.style.color = '#43a047';
+    
+    // Show success notification
+    showNotification('Авторизация прошла успешно!', 'success');
+    
+    // Close modal after short delay
+    setTimeout(() => {
+      document.getElementById('authModal').style.display = 'none';
+      stopRealCamera();
+    }, 1500);
+  } else {
+    cameraStatus.textContent = 'Неверный ключ авторизации';
+    cameraStatus.style.color = '#e53935';
+    showNotification('Ошибка авторизации: неверный ключ', 'error');
+  }
+}
+
+// Variables for real camera functionality
+let videoStream = null;
+let videoElement = null;
+let canvasElement = null;
+let scanning = false;
+let scanInterval = null;
+
+// Start real camera
+function startRealCamera() {
+  const cameraView = document.getElementById('cameraView');
+  const cameraStatus = document.getElementById('cameraStatus');
+  
+  // Clear the camera view
+  cameraView.innerHTML = '';
+  
+  // Create video element
+  videoElement = document.createElement('video');
+  videoElement.style.width = '100%';
+  videoElement.style.height = '100%';
+  videoElement.style.objectFit = 'cover';
+  cameraView.appendChild(videoElement);
+  
+  // Create canvas for QR scanning (hidden)
+  canvasElement = document.createElement('canvas');
+  canvasElement.style.display = 'none';
+  cameraView.appendChild(canvasElement);
+  
+  // Request camera access
+  navigator.mediaDevices.getUserMedia({ 
+    video: { 
+      facingMode: 'environment',  // Prefer back camera if available
+      width: { ideal: 1280 },
+      height: { ideal: 720 }
+    } 
+  })
+  .then(function(stream) {
+    videoStream = stream;
+    videoElement.srcObject = stream;
+    videoElement.setAttribute('playsinline', true); // Required for iOS
+    videoElement.play();
+    
+    cameraStatus.textContent = 'Камера активна. Наведите на QR-код или введите ключ вручную.';
+    
+    // Start QR code scanning
+    startQRScanning();
+  })
+  .catch(function(error) {
+    console.error('Ошибка доступа к камере:', error);
+    cameraStatus.textContent = 'Ошибка доступа к камере. Используйте ручной ввод ключа.';
+    cameraStatus.style.color = '#e53935';
+  });
+}
+
+// Stop real camera
+function stopRealCamera() {
+  if (scanning) {
+    scanning = false;
+    clearInterval(scanInterval);
+  }
+  
+  if (videoStream) {
+    videoStream.getTracks().forEach(track => {
+      track.stop();
+    });
+    videoStream = null;
+  }
+  
+  videoElement = null;
+  canvasElement = null;
+}
+
+// Start QR code scanning
+function startQRScanning() {
+  if (!videoElement || !canvasElement) return;
+  
+  // Configure canvas
+  const canvas = canvasElement;
+  const ctx = canvas.getContext('2d');
+  
+  // Set scanning flag
+  scanning = true;
+  
+  // Function to scan for QR codes
+  const scanQRCode = () => {
+    if (!scanning || !videoElement || !videoElement.videoWidth) return;
+    
+    // Set canvas dimensions to match video
+    canvas.width = videoElement.videoWidth;
+    canvas.height = videoElement.videoHeight;
+    
+    // Draw current video frame to canvas
+    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+    
+    try {
+      // Get image data from canvas
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      
+      // Use jsQR library to find QR codes in the image
+      if (typeof jsQR === 'function') { // Check if jsQR is available
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: "dontInvert",
+        });
+        
+        if (code) {
+          // QR code found
+          console.log("QR код обнаружен:", code.data);
+          
+          // Update input field with the QR code data
+          const authKeyInput = document.getElementById('authKeyInput');
+          authKeyInput.value = code.data;
+          
+          // Validate the key
+          validateAuthKey(code.data);
+          
+          // Pause scanning for a moment to prevent multiple detections
+          scanning = false;
+          setTimeout(() => {
+            if (videoElement) scanning = true;
+          }, 2000);
+        }
+      } else {
+        console.warn('jsQR library not loaded. QR scanning unavailable.');
+        const cameraStatus = document.getElementById('cameraStatus');
+        cameraStatus.textContent = 'Библиотека QR не загружена. Используйте ручной ввод.';
+      }
+    } catch (error) {
+      console.error('Error scanning QR code:', error);
+    }
+  };
+  
+  // Run the scan every 200ms
+  scanInterval = setInterval(scanQRCode, 200);
+}
+
 // Set up button event listeners
 document.addEventListener("DOMContentLoaded", () => {
   // Load folders
@@ -868,4 +1088,23 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("closeApp").addEventListener("click", () => {
     ipcRenderer.send("close-app")
   })
-})
+
+  // Initialize the authorization modal
+  initAuthModal();
+  
+  // Load jsQR library dynamically
+  loadJsQR();
+});
+
+// Function to dynamically load jsQR library
+function loadJsQR() {
+  const script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+  script.onload = () => {
+    console.log('jsQR library loaded successfully');
+  };
+  script.onerror = () => {
+    console.error('Failed to load jsQR library');
+  };
+  document.body.appendChild(script);
+}

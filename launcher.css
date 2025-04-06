@@ -840,3 +840,104 @@ button:active:not(.disabled) {
       transform: rotate(360deg);
    }
 }
+
+/* Authorization Button */
+.auth-button {
+   position: fixed;
+   top: 20px;
+   right: 20px;
+   background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+   color: white;
+   padding: 10px 15px;
+   border: none;
+   border-radius: 6px;
+   font-size: 14px;
+   font-weight: 500;
+   cursor: pointer;
+   box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+   transition: all 0.3s ease;
+   z-index: 50;
+}
+
+.auth-button:hover {
+   transform: translateY(-2px);
+   box-shadow: 0 6px 15px rgba(255, 107, 107, 0.4);
+}
+
+/* Auth Modal Styles */
+.auth-modal-content {
+   width: 500px; /* Reduced width since we removed the QR display */
+   max-width: 90%;
+}
+
+/* todo */
+.qr-display {
+   display: none;
+}
+
+.auth-container {
+   display: flex;
+   flex-direction: column;
+   gap: 20px;
+}
+
+/* Removed .qr-section related styles */
+
+.camera-section {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   gap: 10px;
+}
+
+.camera-view {
+   width: 400px; /* Increased camera view size */
+   height: 300px; /* Increased camera view size */
+   background-color: #333;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   border-radius: 8px;
+   overflow: hidden;
+}
+
+.camera-placeholder {
+   text-align: center;
+   color: #eee;
+   padding: 10px;
+   font-size: 14px;
+}
+
+.camera-status {
+   color: #666;
+   font-size: 14px;
+   font-style: italic;
+}
+
+.manual-section {
+   display: flex;
+   gap: 10px;
+}
+
+.manual-section input {
+   flex: 1;
+   padding: 10px;
+   border: 1px solid #ddd;
+   border-radius: 6px;
+   font-size: 14px;
+}
+
+.validate-key-button {
+   background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+   color: white;
+   border: none;
+   padding: 10px 15px;
+   border-radius: 6px;
+   font-size: 14px;
+   cursor: pointer;
+   transition: all 0.3s ease;
+}
+
+.validate-key-button:hover {
+   background: linear-gradient(135deg, #5a0fc9 0%, #1565fa 100%);
+}
