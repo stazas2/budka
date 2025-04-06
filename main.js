@@ -113,7 +113,7 @@ function createEmptyWindow(folderPath) {
     }
   });
 
-  emptyWindow.loadFile('empty.html');
+  emptyWindow.loadFile('configurator.html');
   
   emptyWindow.webContents.on("did-finish-load", () => {
     // Send the folder path to the renderer process after it's loaded
