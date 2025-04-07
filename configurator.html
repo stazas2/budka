@@ -45,22 +45,33 @@
                   </div>
                   <div class="mode-info">
                     <h4>DeepFake</h4>
-                    <p>Замена лица на фотографии на другое лицо</p>
+                    <p>Замена лица на заранее заготовленном шаблоне</p>
                   </div>
                 </div>
 
                 <div class="mode-card" data-mode="style_sdxl">
                   <div class="mode-image">
-                    <img src="./icons/style.jpg" alt="Style SDXL" />
+                    <img src="./icons/style.png" alt="Style SDXL" />
                   </div>
                   <div class="mode-info">
                     <h4>Стилизация SDXL</h4>
                     <p>
-                      Создание изображения в выбранном стиле на основе
-                      фотографии
+                      Полная стилизация фотографии, сохранение позы 
+                      и групповое фото
                     </p>
                   </div>
                 </div>
+
+                <div class="mode-card" data-mode="Avatar">
+                  <div class="mode-image">
+                    <img src="./icons/avatar.png" alt="Avatar" />
+                  </div>
+                  <div class="mode-info">
+                    <h4>Avatar</h4>
+                    <p>Креативное AI-фото на основе фотографии одного человека, один человек в кадре</p>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
@@ -70,6 +81,12 @@
             <div class="screen-header">
               <button id="back-to-modes" class="secondary-button">Назад</button>
               <h2 id="selected-mode-title">Управление стилями</h2>
+            </div>
+
+            <!-- Pinned styles section (always visible in styles screen) -->
+            <div id="pinned-styles-container-second" class="config-section">
+              <h3>Ваши выбранные стили</h3>
+              <div id="pinned-styles-second" class="modes-grid"></div>
             </div>
 
             <!-- My styles section -->

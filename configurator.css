@@ -843,7 +843,7 @@ input:checked + .toggle-slider:before {
 
 .mode-image,
 .style-image {
-   height: 150px;
+   height: 190px;
    overflow: hidden;
 }
 
@@ -938,4 +938,16 @@ input:checked + .toggle-slider:before {
 .add-style-button .add-text {
    color: #4361ee;
    font-weight: 500;
+}
+
+/* Empty state message for pinned styles */
+.empty-styles-message {
+   text-align: center;
+   color: #666;
+   font-style: italic;
+   padding: 1rem;
+   background-color: #f5f7fa;
+   border: 1px dashed #dde1e7;
+   border-radius: 0.5rem;
+   margin: 1rem 0;
 }

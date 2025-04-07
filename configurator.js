@@ -1159,7 +1159,7 @@ function loadCameraSettings(configData, globalConfig) {
     document.getElementById('camera_rotation').value = configData.camera_rotation || 0;
     // todo
     // document.getElementById('send_image_rotation').value = configData.send_image_rotation || 0;
-    document.getElementById('isEvf').checked = configData.isEvf || false;
+    // document.getElementById('isEvf').checked = configData.isEvf || false;
     
     // Load Canon specific settings if available
     if (configData.canonSettings) {
@@ -1318,8 +1318,14 @@ function initAITabFunctionality() {
     const availableModes = document.getElementById('available-modes');
     const selectedModeTitle = document.getElementById('selected-mode-title');
     const availableStyles = document.getElementById('available-styles');
+    
+    // First screen pinned styles elements
     const pinnedStylesContainer = document.getElementById('pinned-styles-container');
     const pinnedStyles = document.getElementById('pinned-styles');
+    
+    // Second screen pinned styles elements
+    const pinnedStylesContainerSecond = document.getElementById('pinned-styles-container-second');
+    const pinnedStylesSecond = document.getElementById('pinned-styles-second');
     
     let currentMode = '';
     let pinnedStylesList = [];
@@ -1532,22 +1538,42 @@ function initAITabFunctionality() {
         }
     }
     
-    // Function to update the pinned styles display
+    // Updated function to update the pinned styles display on both screens
     function updatePinnedStylesDisplay() {
-        if (!pinnedStyles) return;
-        
-        // Clear existing pinned styles
-        pinnedStyles.innerHTML = '';
-        
-        // Hide container if no pinned styles
-        if (pinnedStylesList.length === 0) {
-            pinnedStylesContainer.style.display = 'none';
-            return;
+        // First screen pinned styles
+        if (pinnedStyles) {
+            // Clear existing pinned styles
+            pinnedStyles.innerHTML = '';
+            
+            // Hide container if no pinned styles on first screen
+            if (pinnedStylesList.length === 0) {
+                pinnedStylesContainer.style.display = 'none';
+            } else {
+                pinnedStylesContainer.style.display = 'block';
+                createPinnedStyleCards(pinnedStyles);
+            }
         }
         
-        // Show container and add pinned styles
-        pinnedStylesContainer.style.display = 'block';
-        
+        // Second screen pinned styles - always visible, even if empty
+        if (pinnedStylesSecond) {
+            // Clear existing pinned styles
+            pinnedStylesSecond.innerHTML = '';
+            
+            if (pinnedStylesList.length === 0) {
+                // Add an empty state message on the second screen
+                const emptyMessage = document.createElement('p');
+                emptyMessage.className = 'empty-styles-message';
+                emptyMessage.textContent = 'У вас пока нет избранных стилей. Нажмите на стиль ниже, чтобы добавить его в избранное.';
+                pinnedStylesSecond.appendChild(emptyMessage);
+            } else {
+                // Create pinned style cards for the second screen
+                createPinnedStyleCards(pinnedStylesSecond);
+            }
+        }
+    }
+    
+    // Helper function to create pinned style cards in a specified container
+    function createPinnedStyleCards(container) {
         pinnedStylesList.forEach((style, index) => {
             // Get mode display name
             let modeDisplayName = style.mode;
@@ -1589,7 +1615,7 @@ function initAITabFunctionality() {
                 }
             });
             
-            pinnedStyles.appendChild(pinnedStyleCard);
+            container.appendChild(pinnedStyleCard);
         });
     }
     
