@@ -512,49 +512,48 @@ function initGenderButtons() {
       ? "block"
       : "none";
     
-    // Remove any existing event listeners by cloning and replacing elements
-    genderButtons.forEach((item) => {
-      const newItem = item.cloneNode(true);
-      if (item.parentNode) {
-        item.parentNode.replaceChild(newItem, item);
-      }
-    });
-    
-    // Get the fresh elements after replacement
+    // Get all gender buttons
     const freshGenderButtons = document.querySelectorAll("#gender-buttons .button-row_item");
+    
+    // Reset selected genders and UI state
+    selectedGenders = [];
+    freshGenderButtons.forEach(item => item.classList.remove("selected"));
     
     freshGenderButtons.forEach((item, index) => {
       item.style.animationDelay = `${index * 0.3}s`;
       item.classList.add("animate");
       
-      // Add a single click handler to each button
-      item.addEventListener("click", function genderButtonClickHandler(event) {
-        // Prevent event bubbling
-        event.stopPropagation();
-        
-        const button = item.querySelector(".button");
-        const gender = button.getAttribute("data-gender");
+      // Remove old click event listeners by cloning and replacing
+      const newItem = item.cloneNode(true);
+      if (item.parentNode) {
+        item.parentNode.replaceChild(newItem, item);
+      }
+      
+      // Add fresh click handler to each button
+      newItem.addEventListener("click", function() {
+        const gender = newItem.querySelector(".button").getAttribute("data-gender");
         console.log(`Gender button clicked: ${gender}`);
 
         if (config.allowMultipleGenderSelection) {
           const index = selectedGenders.indexOf(gender);
           if (index === -1) {
+            // Add gender if not already selected
             selectedGenders.push(gender);
-            item.classList.add("selected");
+            newItem.classList.add("selected");
             continueButton.disabled = false;
           } else {
+            // Remove gender if already selected
             selectedGenders.splice(index, 1);
-            item.classList.remove("selected");
+            newItem.classList.remove("selected");
           }
-          if (selectedGenders.length < 1) {
-            continueButton.disabled = true;
-          }
-
+          
+          // Disable continue button if no genders are selected
+          continueButton.disabled = selectedGenders.length === 0;
           console.log("▶️ Выбранные полы: ", selectedGenders);
         } else {
-          // Режим одиночного выбора
+          // Single selection mode
           freshGenderButtons.forEach((btn) => btn.classList.remove("selected"));
-          item.classList.add("selected");
+          newItem.classList.add("selected");
           selectedGenders = [gender];
           console.log("▶️ Выбранный пол: " + selectedGenders[0]);
           
@@ -568,17 +567,14 @@ function initGenderButtons() {
     });
 
     // Replace the continue button with a fresh one to remove old event listeners
-    if (continueButton && continueButton.parentNode) {
-      const newContinueButton = continueButton.cloneNode(true);
+    const newContinueButton = continueButton.cloneNode(true);
+    if (continueButton.parentNode) {
       continueButton.parentNode.replaceChild(newContinueButton, continueButton);
       continueButton = newContinueButton;
     }
     
     // Add a single click handler to the continue button
-    continueButton.addEventListener("click", function continueButtonClickHandler(event) {
-      // Prevent event bubbling
-      event.stopPropagation();
-      
+    continueButton.addEventListener("click", function() {
       if (selectedGenders.length > 0) {
         showScreen("style-screen");
         fetchStyles();
@@ -1253,6 +1249,9 @@ if (startOverButton) {
     showScreen("splash-screen")
     qrCodeImage.style.display = "none"
     qrCodeAgree.style.display = "initial"
+    document.querySelectorAll("#gender-buttons .button-row_item").forEach((item) => {
+      item.classList.remove("selected");
+    });
     // if (config) {
     //   try {
     //     config = loadConfig()
