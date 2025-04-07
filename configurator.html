@@ -19,7 +19,68 @@
       </div>
       <!-- Tabs content -->
       <div class="tab-contents">
-        <div id="tab1" class="tab-content active">Содержимое вкладки 1</div>
+        <div id="tab1" class="tab-content active">
+          <!-- Screen 1: Modes Selection -->
+          <div id="modes-screen" class="ai-screen active">
+            <h2>Выбор режима AI обработки</h2>
+
+            <!-- Pinned styles section -->
+            <div
+              id="pinned-styles-container"
+              class="config-section"
+              style="display: none"
+            >
+              <h3>Ваши выбранные стили</h3>
+              <div id="pinned-styles" class="modes-grid"></div>
+            </div>
+
+            <!-- Available modes section -->
+            <div class="config-section">
+              <h3>Доступные режимы</h3>
+              <div id="available-modes" class="modes-grid">
+                <!-- Modes will be populated dynamically -->
+                <div class="mode-card" data-mode="DeepFake">
+                  <div class="mode-image">
+                    <img src="./icons/deepfake.jpg" alt="DeepFake" />
+                  </div>
+                  <div class="mode-info">
+                    <h4>DeepFake</h4>
+                    <p>Замена лица на фотографии на другое лицо</p>
+                  </div>
+                </div>
+
+                <div class="mode-card" data-mode="style_sdxl">
+                  <div class="mode-image">
+                    <img src="./icons/style.jpg" alt="Style SDXL" />
+                  </div>
+                  <div class="mode-info">
+                    <h4>Стилизация SDXL</h4>
+                    <p>
+                      Создание изображения в выбранном стиле на основе
+                      фотографии
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Screen 2: Styles Management -->
+          <div id="styles-screen" class="ai-screen">
+            <div class="screen-header">
+              <button id="back-to-modes" class="secondary-button">Назад</button>
+              <h2 id="selected-mode-title">Управление стилями</h2>
+            </div>
+
+            <!-- My styles section -->
+            <div class="config-section">
+              <h3>Мои стили</h3>
+              <div id="available-styles" class="styles-grid">
+                <!-- Styles will be populated dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
         <div id="tab2" class="tab-content">
           <h2>Настройки интерфейса</h2>
           <div class="config-form">

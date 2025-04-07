@@ -1309,3 +1309,366 @@ function updateImagePreview(inputId, previewId) {
     
     previewContainer.appendChild(img);
 }
+
+// Function to initialize AI tab functionality
+function initAITabFunctionality() {
+    const modesScreen = document.getElementById('modes-screen');
+    const stylesScreen = document.getElementById('styles-screen');
+    const backButton = document.getElementById('back-to-modes');
+    const availableModes = document.getElementById('available-modes');
+    const selectedModeTitle = document.getElementById('selected-mode-title');
+    const availableStyles = document.getElementById('available-styles');
+    const pinnedStylesContainer = document.getElementById('pinned-styles-container');
+    const pinnedStyles = document.getElementById('pinned-styles');
+    
+    let currentMode = '';
+    let pinnedStylesList = [];
+    
+    // Load pinned styles from local storage or initialize empty array
+    try {
+        const savedStyles = localStorage.getItem('pinnedStyles');
+        if (savedStyles) {
+            pinnedStylesList = JSON.parse(savedStyles);
+            updatePinnedStylesDisplay();
+        }
+    } catch (error) {
+        console.error('Error loading pinned styles:', error);
+        pinnedStylesList = [];
+    }
+    
+    // Setup event listeners for mode cards
+    if (availableModes) {
+        const modeCards = availableModes.querySelectorAll('.mode-card');
+        modeCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const mode = card.getAttribute('data-mode');
+                currentMode = mode;
+                selectedModeTitle.textContent = 'Стили для режима: ' + card.querySelector('h4').textContent;
+                loadStylesForMode(mode);
+                showScreen('styles-screen');
+            });
+        });
+    }
+    
+    // Setup back button
+    if (backButton) {
+        backButton.addEventListener('click', () => {
+            showScreen('modes-screen');
+        });
+    }
+    
+    // Function to show a specific screen
+    function showScreen(screenId) {
+        document.querySelectorAll('.ai-screen').forEach(screen => {
+            screen.classList.remove('active');
+        });
+        document.getElementById(screenId).classList.add('active');
+    }
+    
+    // Function to load styles for the selected mode
+    function loadStylesForMode(mode) {
+        if (!availableStyles) return;
+        
+        // Clear existing styles
+        availableStyles.innerHTML = '';
+        
+        // Add the "Add Style" button first
+        const addButton = document.createElement('div');
+        addButton.className = 'style-card add-style-button';
+        addButton.innerHTML = `
+            <div class="add-icon">+</div>
+            <div class="add-text">Добавить стиль</div>
+        `;
+        addButton.addEventListener('click', () => {
+            selectStyleFromFolder(mode);
+        });
+        availableStyles.appendChild(addButton);
+        
+        // If we're using real folder paths, get the current folder path
+        if (currentFolderPath) {
+            loadStylesFromFolder(currentFolderPath, mode);
+        } else {
+            // Fallback to dummy styles if no folder is selected
+            loadDummyStyles(mode);
+        }
+    }
+    
+    // Function to load styles from the current event folder
+    function loadStylesFromFolder(folderPath, mode) {
+        try {
+            const stylesDir = path.join(folderPath, 'styles');
+            
+            if (!fs.existsSync(stylesDir)) {
+                console.warn(`Styles directory not found: ${stylesDir}`);
+                loadDummyStyles(mode);
+                return;
+            }
+            
+            // Check for gender folders
+            const genderFolders = ['man', 'woman', 'boy', 'girl', 'group'];
+            let stylesFound = false;
+            
+            for (const gender of genderFolders) {
+                const genderDir = path.join(stylesDir, gender);
+                
+                if (fs.existsSync(genderDir)) {
+                    const stylesFolders = fs.readdirSync(genderDir, { withFileTypes: true })
+                        .filter(dirent => dirent.isDirectory())
+                        .map(dirent => dirent.name);
+                    
+                    if (stylesFolders.length > 0) {
+                        stylesFound = true;
+                        
+                        stylesFolders.forEach(style => {
+                            // Check if this style is already pinned
+                            const isAlreadyPinned = pinnedStylesList.some(
+                                pinnedStyle => pinnedStyle.mode === mode && pinnedStyle.name === style
+                            );
+                            
+                            if (!isAlreadyPinned) {
+                                addStyleCard(style, mode, gender, genderDir);
+                            }
+                        });
+                    }
+                }
+            }
+            
+            if (!stylesFound) {
+                loadDummyStyles(mode);
+            }
+        } catch (error) {
+            console.error('Error loading styles from folder:', error);
+            loadDummyStyles(mode);
+        }
+    }
+    
+    // Function to add a style card to the grid
+    function addStyleCard(styleName, mode, gender, genderDir) {
+        try {
+            // Try to find a preview image for the style
+            let previewImg = './icons/default-style.jpg';
+            
+            const styleDir = path.join(genderDir, styleName);
+            if (fs.existsSync(styleDir)) {
+                const files = fs.readdirSync(styleDir);
+                const imageFiles = files.filter(file => /\.(jpg|jpeg|png)$/i.test(file));
+                
+                if (imageFiles.length > 0) {
+                    // Prefer images that start with '1' as they're typically previews
+                    const previewFiles = imageFiles.filter(file => file.startsWith('1'));
+                    const imgFile = previewFiles.length > 0 ? previewFiles[0] : imageFiles[0];
+                    previewImg = path.join(styleDir, imgFile);
+                }
+            }
+            
+            const styleCard = document.createElement('div');
+            styleCard.className = 'style-card';
+            styleCard.setAttribute('data-style', styleName);
+            styleCard.setAttribute('data-mode', mode);
+            styleCard.setAttribute('data-gender', gender);
+            
+            styleCard.innerHTML = `
+                <div class="style-image">
+                    <img src="${previewImg}" alt="${styleName}">
+                </div>
+                <div class="style-info">
+                    <h4>${styleName}</h4>
+                    <p>Пол: ${getGenderDisplayName(gender)}</p>
+                </div>
+            `;
+            
+            styleCard.addEventListener('click', () => {
+                addToPinnedStyles(mode, styleName, gender, previewImg);
+            });
+            
+            availableStyles.appendChild(styleCard);
+        } catch (error) {
+            console.error(`Error adding style card for ${styleName}:`, error);
+        }
+    }
+    
+    // Function to get readable gender name in Russian
+    function getGenderDisplayName(gender) {
+        const genderMap = {
+            'man': 'Мужчина',
+            'woman': 'Женщина',
+            'boy': 'Мальчик',
+            'girl': 'Девочка',
+            'group': 'Группа'
+        };
+        return genderMap[gender] || gender;
+    }
+    
+    // Function to add a style to the pinned styles list
+    function addToPinnedStyles(mode, styleName, gender, previewImg) {
+        try {
+            // Check if already in list
+            const exists = pinnedStylesList.some(
+                item => item.mode === mode && item.name === styleName
+            );
+            
+            if (!exists) {
+                pinnedStylesList.push({
+                    mode: mode,
+                    name: styleName,
+                    gender: gender,
+                    image: previewImg
+                });
+                
+                // Save to local storage
+                localStorage.setItem('pinnedStyles', JSON.stringify(pinnedStylesList));
+                
+                // Update UI
+                updatePinnedStylesDisplay();
+                
+                // Show notification
+                showNotification(`Стиль "${styleName}" добавлен в избранное`, 'success');
+            } else {
+                showNotification(`Стиль "${styleName}" уже в избранном`, 'info');
+            }
+        } catch (error) {
+            console.error('Error adding to pinned styles:', error);
+            showNotification('Ошибка при добавлении стиля', 'error');
+        }
+    }
+    
+    // Function to update the pinned styles display
+    function updatePinnedStylesDisplay() {
+        if (!pinnedStyles) return;
+        
+        // Clear existing pinned styles
+        pinnedStyles.innerHTML = '';
+        
+        // Hide container if no pinned styles
+        if (pinnedStylesList.length === 0) {
+            pinnedStylesContainer.style.display = 'none';
+            return;
+        }
+        
+        // Show container and add pinned styles
+        pinnedStylesContainer.style.display = 'block';
+        
+        pinnedStylesList.forEach((style, index) => {
+            // Get mode display name
+            let modeDisplayName = style.mode;
+            const modeElement = document.querySelector(`.mode-card[data-mode="${style.mode}"]`);
+            if (modeElement) {
+                modeDisplayName = modeElement.querySelector('h4').textContent;
+            }
+            
+            const pinnedStyleCard = document.createElement('div');
+            pinnedStyleCard.className = 'mode-card pinned-style';
+            pinnedStyleCard.setAttribute('data-index', index);
+            
+            pinnedStyleCard.innerHTML = `
+                <div class="style-badge">${modeDisplayName}</div>
+                <button class="delete-style" title="Удалить стиль">×</button>
+                <div class="mode-image">
+                    <img src="${style.image}" alt="${style.name}">
+                </div>
+                <div class="mode-info">
+                    <h4>${style.name}</h4>
+                    <p>Пол: ${getGenderDisplayName(style.gender)}</p>
+                </div>
+            `;
+            
+            // Add delete button event listener
+            pinnedStyleCard.querySelector('.delete-style').addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent card click
+                removePinnedStyle(index);
+            });
+            
+            // Make the whole card clickable
+            pinnedStyleCard.addEventListener('click', () => {
+                // If we're on the modes screen, go to styles screen
+                if (modesScreen.classList.contains('active')) {
+                    currentMode = style.mode;
+                    selectedModeTitle.textContent = 'Стили для режима: ' + modeDisplayName;
+                    loadStylesForMode(style.mode);
+                    showScreen('styles-screen');
+                }
+            });
+            
+            pinnedStyles.appendChild(pinnedStyleCard);
+        });
+    }
+    
+    // Function to remove a pinned style
+    function removePinnedStyle(index) {
+        try {
+            const removedStyle = pinnedStylesList[index];
+            pinnedStylesList.splice(index, 1);
+            
+            // Save to local storage
+            localStorage.setItem('pinnedStyles', JSON.stringify(pinnedStylesList));
+            
+            // Update UI
+            updatePinnedStylesDisplay();
+            
+            // Reload current mode styles if in styles screen
+            if (stylesScreen.classList.contains('active') && removedStyle.mode === currentMode) {
+                loadStylesForMode(currentMode);
+            }
+            
+            showNotification(`Стиль "${removedStyle.name}" удален из избранного`, 'info');
+        } catch (error) {
+            console.error('Error removing pinned style:', error);
+            showNotification('Ошибка при удалении стиля', 'error');
+        }
+    }
+    
+    // Function to select a style from folder dialog
+    function selectStyleFromFolder(mode) {
+        showNotification('Эта функция будет доступна в следующей версии', 'info');
+        // Placeholder for future implementation
+    }
+    
+    // Function to load dummy styles for demonstration
+    function loadDummyStyles(mode) {
+        const dummyStyles = [
+            { name: 'Классический', gender: 'man' },
+            { name: 'Неоновый', gender: 'woman' },
+            { name: 'Ретро', gender: 'boy' },
+            { name: 'Гламур', gender: 'girl' },
+            { name: 'Фэнтези', gender: 'group' }
+        ];
+        
+        dummyStyles.forEach(style => {
+            // Check if this style is already pinned
+            const isAlreadyPinned = pinnedStylesList.some(
+                pinnedStyle => pinnedStyle.mode === mode && pinnedStyle.name === style.name
+            );
+            
+            if (!isAlreadyPinned) {
+                const styleCard = document.createElement('div');
+                styleCard.className = 'style-card';
+                styleCard.setAttribute('data-style', style.name);
+                styleCard.setAttribute('data-mode', mode);
+                styleCard.setAttribute('data-gender', style.gender);
+                
+                styleCard.innerHTML = `
+                    <div class="style-image">
+                        <img src="./icons/default-style.jpg" alt="${style.name}">
+                    </div>
+                    <div class="style-info">
+                        <h4>${style.name}</h4>
+                        <p>Пол: ${getGenderDisplayName(style.gender)}</p>
+                    </div>
+                `;
+                
+                styleCard.addEventListener('click', () => {
+                    addToPinnedStyles(mode, style.name, style.gender, './icons/default-style.jpg');
+                });
+                
+                availableStyles.appendChild(styleCard);
+            }
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Existing code...
+    
+    // AI Tab functionality (Tab 1)
+    initAITabFunctionality();
+});
