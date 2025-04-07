@@ -22,18 +22,33 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
+    // Exit configurator button
+    const exitConfiguratorButton = document.getElementById('exit-configurator');
+    if (exitConfiguratorButton) {
+        exitConfiguratorButton.addEventListener('click', () => {
+            // Close the configurator window and return to launcher
+            ipcRenderer.send('return-to-launcher');
+        });
+    }
+
+    // Global save config button
+    const globalSaveButton = document.getElementById('save-config-global');
+    if (globalSaveButton) {
+        globalSaveButton.addEventListener('click', () => {
+            saveConfigSettings();
+        });
+    }
+
     // Button to open photobooth window
     const openPhotoboothButton = document.getElementById('open-photobooth');
     
     openPhotoboothButton.addEventListener('click', () => {
-        // If we're in the interface tab, save settings before opening
-        if (document.querySelector('[data-tab="tab2"]').classList.contains('active')) {
-            openPhotoboothWithCurrentSettings();
-        } else {
-            // Original behavior for other tabs
-            const folderPath = ipcRenderer.sendSync('get-selected-folder');
-            ipcRenderer.send('switch-to-photobooth', folderPath);
-        }
+        // Save settings before opening photobooth
+        saveConfigSettings();
+        
+        // Then switch to photobooth
+        const folderPath = ipcRenderer.sendSync('get-selected-folder');
+        ipcRenderer.send('switch-to-photobooth', folderPath);
     });
 
     // Get the current folder path
@@ -49,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadConfigSettings();
     }
 
-    // Add event listener for the save config button
+    // Keep the old save config button functionality for backward compatibility
     const saveConfigButton = document.getElementById('save-config');
     if (saveConfigButton) {
         saveConfigButton.addEventListener('click', saveConfigSettings);
@@ -838,7 +853,7 @@ async function loadAvailablePrinters() {
     }
 }
 
-// Function to save config settings
+// Function to save config settings - updated to be more aware of the active tab
 function saveConfigSettings() {
     if (!currentFolderPath) {
         showNotification('Папка событий не выбрана', 'error');
@@ -847,7 +862,9 @@ function saveConfigSettings() {
 
     const configPath = path.join(currentFolderPath, 'config.json');
     try {
-        const formData = collectFormData();
+        // Determine the currently active tab to prioritize its data collection
+        const activeTabId = document.querySelector('.tab-content.active').id;
+        const formData = collectFormData(activeTabId);
         let existingConfig = {};
 
         if (fs.existsSync(configPath)) {
@@ -870,15 +887,13 @@ function saveConfigSettings() {
     }
 }
 
-// Function to collect form data from active tab
-function collectFormData() {
-    const activeTab = document.querySelector('.tab-content.active');
-    if (!activeTab) return {};
-    
+// Function to collect form data - updated to accept specific tab ID
+function collectFormData(specificTabId = null) {
     const formData = {};
     
-    // Check which tab is active to collect the appropriate data
-    const tabId = activeTab.id;
+    // If specificTabId is provided, only collect data from that tab
+    // Otherwise, collect from the active tab
+    const tabId = specificTabId || document.querySelector('.tab-content.active').id;
     
     if (tabId === 'tab2') {
         // Basic settings

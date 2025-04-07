@@ -8,16 +8,20 @@
   </head>
   <body>
     <div class="container">
-      <!-- Tabs header -->
-      <div class="tabs">
-        <button class="tab-button active" data-tab="tab1">AI Обработка</button>
-        <button class="tab-button" data-tab="tab2">Интерфейс</button>
-        <button class="tab-button" data-tab="tab3">Брендирование</button>
-        <button class="tab-button" data-tab="tab4">Печать</button>
-        <button class="tab-button" data-tab="tab5">Камера</button>
-        <button class="tab-button" data-tab="tab6">Сбор данных</button>
+      <!-- Header with action buttons -->
+      <div class="header-actions">
+        <button id="exit-configurator" class="exit-button">Выход</button>
+        <div class="right-actions">
+          <button id="save-config-global" class="action-button">
+            Сохранить настройки
+          </button>
+          <button id="open-photobooth" class="action-button">
+            Открыть фотобудку
+          </button>
+        </div>
       </div>
-      <!-- Tabs content -->
+
+      <!-- Tab contents -->
       <div class="tab-contents">
         <div id="tab1" class="tab-content active">
           <!-- Screen 1: Modes Selection -->
@@ -56,8 +60,8 @@
                   <div class="mode-info">
                     <h4>Стилизация SDXL</h4>
                     <p>
-                      Полная стилизация фотографии, сохранение позы 
-                      и групповое фото
+                      Полная стилизация фотографии, сохранение позы и групповое
+                      фото
                     </p>
                   </div>
                 </div>
@@ -68,10 +72,12 @@
                   </div>
                   <div class="mode-info">
                     <h4>Avatar</h4>
-                    <p>Креативное AI-фото на основе фотографии одного человека, один человек в кадре</p>
+                    <p>
+                      Креативное AI-фото на основе фотографии одного человека,
+                      один человек в кадре
+                    </p>
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
@@ -769,9 +775,16 @@
         </div>
         <div id="tab6" class="tab-content">Содержимое вкладки 6</div>
       </div>
-      <button id="open-photobooth" class="action-button">
-        Открыть фотобудку
-      </button>
+
+      <!-- Tabs header moved to bottom -->
+      <div class="tabs sticky-tabs">
+        <button class="tab-button active" data-tab="tab1">AI Обработка</button>
+        <button class="tab-button" data-tab="tab2">Интерфейс</button>
+        <button class="tab-button" data-tab="tab3">Брендирование</button>
+        <button class="tab-button" data-tab="tab4">Печать</button>
+        <button class="tab-button" data-tab="tab5">Камера</button>
+        <button class="tab-button" data-tab="tab6">Сбор данных</button>
+      </div>
     </div>
 
     <!-- Camera mode change confirmation modal -->

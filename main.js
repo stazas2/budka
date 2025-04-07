@@ -105,7 +105,7 @@ function createEmptyWindow(folderPath) {
 
   emptyWindow = new BrowserWindow({
     width: 1080,
-    height: 900,
+    height: 1080,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -814,5 +814,21 @@ ipcMain.on('config-updated', (event, folderPath) => {
     reloadConfig(folderPath);
   } else {
     console.log(`Обновление конфига для невыбранной папки (${folderPath}), игнорируется.`);
+  }
+});
+
+// Handler to return to launcher from configurator
+ipcMain.on('return-to-launcher', () => {
+  console.log('Returning to launcher from configurator');
+  
+  // Close the empty window (configurator)
+  if (emptyWindow) {
+    emptyWindow.close();
+    emptyWindow = null;
+  }
+  
+  // Create launcher window if it doesn't exist
+  if (!launcherWindow) {
+    createLauncherWindow();
   }
 });
